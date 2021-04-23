@@ -81,6 +81,10 @@ void app_main()
         
         //usart_write(str, strlen(str)); 
         //spi_write_data(NULL , &data[0], 2);
+    //    uint8_t data[2] = {0, 0x12};
+        
+        //usart_write(str, strlen(str)); 
+    //    spi_write_data(NULL , &data[0], 2);
 
         uint8_t buffer[9];
         uint16_t word = 0;
