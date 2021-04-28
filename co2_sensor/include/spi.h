@@ -9,9 +9,8 @@
 spi_device_handle_t spi;
 
 // FUNCTION PROTOTYPES
-void gpio_init(void);
 void spi_init(void);
-void eink_init(void);
+void spi_gpio_init(void);
 void spi_write_command(spi_device_handle_t spi, uint8_t cmd);
 void spi_write_data(spi_device_handle_t spi, uint8_t *data, int len);
 
