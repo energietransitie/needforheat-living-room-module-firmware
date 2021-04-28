@@ -2,13 +2,14 @@
 #include "../include/spi.h"
 #include "../include/util.h"
 #include "../include/i2c.h"
-#include "../include/lightsleep.h"
 #include "../include/ModemSleep.h"
+#include "../include/lightsleep.h"
+#include "../include/Wifi.h"
 
 #include "../lib/generic_esp_32/generic_esp_32.h"
 
 #include <string.h>
-#include <stdio.h>
+#include <Stdio.h>
 #include <stdlib.h>
 
 // TODO: remove
@@ -22,13 +23,7 @@ void app_main()
     //const char *str = "Hello, World!\n";
     //usart_init(115200);
 
-    // all needed for WiFi
-    initialize_nvs();
-    initialize();
-    ESP_ERROR_CHECK(esp_netif_init());
-    enableWiFi();
-    initialize_time("CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00");
-
+    initialize_wifi();
 
     gpio_init();
     //spi_init();
@@ -39,10 +34,6 @@ void app_main()
 
     usart_init(115200);
     i2c_init();
-
-    //eink_init();
-    //gpio_init();
-    //spi_init();
     
     // FXIME: remove when not necessary anymore
     // the SCD41 takes 1 second to initialize itself, that's what this delay is for
@@ -68,19 +59,6 @@ void app_main()
     
     while(1)
     { 
-        //uint8_t data[10] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
-        
-        //usart_write(str, strlen(str)); 
-        //spi_write_data(NULL , &data[0], 2);
-
-        //spi_write_command(NULL, 0x12);
-        //spi_write_command(NULL, 0x24);
-        //spi_write_data(NULL, &data[0], 10);
-        //spi_write_command(NULL, 0x20);
-        //uint8_t data[2] = {0, 0x12};
-        
-        //usart_write(str, strlen(str)); 
-        //spi_write_data(NULL , &data[0], 2);
     //    uint8_t data[2] = {0, 0x12};
         
         //usart_write(str, strlen(str)); 
@@ -102,6 +80,7 @@ void app_main()
 
         usart_write("Done waiting!\n", 14);
             
+
         // read measurement
         err = i2c_write(SCD41, 0xec05, I2C_NO_STOP);
         delay(1);
@@ -118,23 +97,19 @@ void app_main()
         word = 0;
         delay(1000);
 
-        light_sleep_start();
+        // // set in modem sleep
+        // setModemSleep();
+        // printf("\nin modem sleep\n");
 
-        //uint8_t data2[10] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
-        //spi_write_command(NULL, 0x24);
-        //spi_write_data(NULL, &data2[0], 10);
-        //spi_write_command(NULL, 0x20);
+        // delay(10000);
 
-        //delay(1000);
-        // set in modem sleep
-        setModemSleep();
-        printf("\nin modem sleep\n");
+        // // wake up from modem sleep
+        // wakeModemSleep();
+        // printf("\nweer uit modem sleep\n");
+        // delay(10000);
 
-        delay(5000);
+        //light_sleep_start();
 
-        // wake up from modem sleep
-        wakeModemSleep();
-        printf("\nweer uit modem sleep\n");
-        delay(5000);
+        //send_HTTPS();
     }
 }

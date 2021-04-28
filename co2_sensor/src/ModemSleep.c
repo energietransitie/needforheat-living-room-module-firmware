@@ -10,16 +10,6 @@ void set_modem_sleep(void)
     esp_wifi_set_ps(WIFI_PS_MAX_MODEM);
 }
 
-// Function:    enable_wifi()
-// Params:      N/A
-// Returns:     N/A
-// Desription: Used to enable wifi
-void enable_wifi(void)
-{
-    wifi_prov_mgr_config_t config = initialize_provisioning();
-    start_provisioning(config);
-}
-
 // Function:    wake_modem_sleep()
 // Params:      N/A
 // Returns:     N/A
