@@ -3,6 +3,5 @@
 
 void setModemSleep();
 void wakeModemSleep();
-void enableWiFi();
 
 #endif // __MODEMSLEEP_H__
