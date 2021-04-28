@@ -3,6 +3,8 @@
 #include "../include/util.h"
 #include "../include/i2c.h"
 #include "../include/ModemSleep.h"
+#include "../include/lightsleep.h"
+#include "../include/Wifi.h"
 
 #include "../lib/generic_esp_32/generic_esp_32.h"
 
@@ -21,13 +23,7 @@ void app_main()
     //const char *str = "Hello, World!\n";
     //usart_init(115200);
 
-    // all needed for WiFi
-    initialize_nvs();
-    initialize();
-    ESP_ERROR_CHECK(esp_netif_init());
-    enableWiFi();
-    initialize_time("CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00");
-
+    initialize_wifi();
 
     gpio_init();
     //spi_init();
@@ -101,15 +97,19 @@ void app_main()
         word = 0;
         delay(1000);
 
-        // set in modem sleep
-        setModemSleep();
-        printf("\nin modem sleep\n");
+        // // set in modem sleep
+        // setModemSleep();
+        // printf("\nin modem sleep\n");
 
-        delay(5000);
+        // delay(10000);
 
-        // wake up from modem sleep
-        wakeModemSleep();
-        printf("\nweer uit modem sleep\n");
-        delay(5000);
+        // // wake up from modem sleep
+        // wakeModemSleep();
+        // printf("\nweer uit modem sleep\n");
+        // delay(10000);
+
+        //light_sleep_start();
+
+        //send_HTTPS();
     }
 }
