@@ -39,7 +39,7 @@ void usart_init(uint32_t baud_rate)
 //      - (char *) pointer to data buffer
 //      - (size_t) size of data buffer
 // Returns:     N/A
-// Description: Used to config usart for debugging purposes
+// Description: Used to write text to a monitor console
 void usart_write(const char *bfr, size_t size)
 {
     uart_write_bytes(USART_PORT, bfr, size);
