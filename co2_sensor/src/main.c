@@ -2,13 +2,14 @@
 #include "../include/spi.h"
 #include "../include/util.h"
 #include "../include/i2c.h"
-#include "../include/lightsleep.h"
 #include "../include/ModemSleep.h"
+#include "../include/lightsleep.h"
+#include "../include/Wifi.h"
 
 #include "../lib/generic_esp_32/generic_esp_32.h"
 
 #include <string.h>
-#include <stdio.h>
+#include <Stdio.h>
 #include <stdlib.h>
 
 // TODO: remove
@@ -41,6 +42,7 @@ void app_main()
     //char str[256];
     //uint8_t err;
     //uint8_t buffer[3];
+    initialize_wifi();
 
     // ---- DISABLE AUTOMATIC CALIBRATION ---- //
     //err = i2c_write(SCD41, (CAL_DISABLE_DATA & CAL_DATA_MASK), I2C_NO_STOP);
@@ -52,6 +54,20 @@ void app_main()
 
     //err = i2c_read(SCD41, &buffer[0], 3);
     //delay(1);
+    usart_init(115200);
+    i2c_init();
+    
+    // FXIME: remove when not necessary anymore
+    // the SCD41 takes 1 second to initialize itself, that's what this delay is for
+    delay(1024);
+    
+    // start periodic measurement
+    //err = i2c_write(SCD41, 0x21b1, I2C_NO_STOP);
+
+    //sprintf(&str[0], "init err = %d\n", err);
+    //usart_write(&str[0], strlen(&str[0])); 
+    
+    //delay(1000);
 
     //sprintf(&str[0], "return value = %d", ((buffer[0] << 8) | buffer[1]));
     //usart_write(&str[0], strlen(&str[0]));
@@ -71,6 +87,7 @@ void app_main()
     { 
         //delay(1000);
         // uint8_t data[10] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
+    //    uint8_t data[2] = {0, 0x12};
         
         // usart_write(str, strlen(str));
 
@@ -101,7 +118,8 @@ void app_main()
 
         //usart_write("Done waiting!\n", 14);
             
-        // ---- READ MEASUREMENT ---- //
+
+        // read measurement
         //err = i2c_write(SCD41, 0xec05, I2C_NO_STOP);
         //delay(1);
         //err = i2c_read(SCD41, (uint8_t *) &buffer[0], 9);
@@ -126,12 +144,23 @@ void app_main()
         // set ESP32 in modem sleep
         setModemSleep();
         printf("\nin modem sleep\n");
+        // // set in modem sleep
+        // setModemSleep();
+        // printf("\nin modem sleep\n");
 
-        delay(5000);
+        // delay(10000);
+
+        // // wake up from modem sleep
+        // wakeModemSleep();
+        // printf("\nweer uit modem sleep\n");
+        // delay(10000);
+
+        //light_sleep_start();
 
         // wake ESP32 up from modem sleep
         wakeModemSleep();
         printf("\nout of modem sleep\n");
         delay(5000);
+        //send_HTTPS();
     }
 }
