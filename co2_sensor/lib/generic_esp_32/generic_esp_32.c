@@ -1,6 +1,5 @@
 #include "generic_esp_32.h"
 
-
 #define MAX_HTTP_OUTPUT_BUFFER 2048
 #define MAX_HTTP_RECV_BUFFER 512
 
@@ -270,14 +269,18 @@ void post_http(char* url, char *data)
     esp_http_client_handle_t client = esp_http_client_init(&config);
 
     esp_http_client_set_method(client, HTTP_METHOD_POST);
-    esp_http_client_set_header(client, "Host", "energietransitiewindesheim.nl:4444");
+    esp_http_client_set_header(client, "Host", "httpbin.org");
     esp_http_client_set_header(client, "Content-Type", "text/plain");
     esp_http_client_set_post_field(client, data, strlen(data));
     esp_err_t err = esp_http_client_perform(client);
-    if (err != ESP_OK)
-    {
-        ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
+    if (err == ESP_OK) {
+        ESP_LOGI(TAG, "HTTP POST Status = %d, content_length = %d",
+                esp_http_client_get_status_code(client),
+                esp_http_client_get_content_length(client));
+    } else {
+        ESP_LOGE(TAG, "HTTP POST request failed: %s", esp_err_to_name(err));
     }
+
     esp_http_client_cleanup(client);
 }
 
@@ -292,13 +295,16 @@ void post_https(char* url, char *data, char* cert)
     esp_http_client_handle_t client = esp_http_client_init(&config);
 
     esp_http_client_set_method(client, HTTP_METHOD_POST);
-    esp_http_client_set_header(client, "Host", "energietransitiewindesheim.nl:4444");
+    esp_http_client_set_header(client, "Host", "httpbin.org");
     esp_http_client_set_header(client, "Content-Type", "text/plain");
     esp_http_client_set_post_field(client, data, strlen(data));
     esp_err_t err = esp_http_client_perform(client);
-    if (err != ESP_OK)
-    {
-        ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
+    if (err == ESP_OK) {
+        ESP_LOGI(TAG, "HTTP POST Status = %d, content_length = %d",
+                esp_http_client_get_status_code(client),
+                esp_http_client_get_content_length(client));
+    } else {
+        ESP_LOGE(TAG, "HTTP POST request failed: %s", esp_err_to_name(err));
     }
     esp_http_client_cleanup(client);
 }

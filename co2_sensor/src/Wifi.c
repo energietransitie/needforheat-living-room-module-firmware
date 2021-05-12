@@ -10,6 +10,7 @@ void connect_to_WiFi(){
     start_provisioning(config);
 }
 
+
 void initialize_wifi(){
     initialize_nvs();
     initialize();
@@ -19,7 +20,7 @@ void initialize_wifi(){
 }
 
 void send_HTTPS(){
-    char* url = "https://192.168.178.216:4444/set/house/opentherm";
+    char* url = "http://httpbin.org/post";
     static const char *TAG = "Twomes Example Application ESP32";
     char* dataPlain = "{\"deviceMac\":\"8C:AA:B5:85:A2:3D\",\"measurements\": [{\"property\":\"testy\",\"value\":\"hello_world\"}],\"time\":%d}";
     char data [strlen(dataPlain)];

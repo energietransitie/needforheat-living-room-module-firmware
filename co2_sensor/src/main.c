@@ -22,6 +22,7 @@
 //#define CAL_CHECK_DISABLE   0x2313          // see chapter 4 in SCD41 datasheet
 //#define CAL_DATA_MASK       0xFFFF00        // to disable automatic calibration, word[0] must be 0
 
+
 void app_main() 
 {
     // ---- PERIPHERALS INITIALIZATION ---- //
@@ -146,6 +147,15 @@ void app_main()
         // wake_modem_sleep();
         // printf("\nweer uit modem sleep\n");
         
+        // delay(10000);
+
+        //light_sleep_start();
+
+        send_HTTPS();
+        // wake ESP32 up from modem sleep
+        wakeModemSleep();
+        printf("\nout of modem sleep\n");
+        delay(5000);
         //send_HTTPS();
     }
 }
