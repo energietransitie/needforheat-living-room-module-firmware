@@ -4,30 +4,33 @@
 #include "string.h"
 #include "esp_sleep.h"
 #include "esp_wifi.h"
+
+#include "../lib/bluetooth/esp_bt.h"
+#include "../lib/bluetooth/esp_bt_main.h"
+
+//#include "C:/Users/laure/.platformio/packages/framework-espidf/components/bt/include/esp_bt.h"
+//#include "C:/Users/laure/.platformio/packages/framework-espidf/components/bt/host/bluedroid/api/include/api/esp_bt_main.h"
 #include <driver/timer.h>
 
 // DEFINES
 #define TIM_PRESC               40000
 #define TIM_STARTVAL            0
 #define MAX_INTR_COUNT          2000
-#define TIME_IN_LIGHTSLEEP      10000000   //microseconds --> 10 sec for testing purposes, real value = 600000000
+#define TIME_IN_LIGHTSLEEP      600000000   // microseconds --> 10 minutes
 
 // GLOBAL VARIABLES
 char str[256];
-volatile int intr_count = 0;
+//volatile int intr_count = 0;
 
-// FUNCTION PROTOTYPES
-void IRAM_ATTR timer_isr();
-
-// ----------------------------------- //
-// PUT ESP32 IN LIGHT SLEEP WITH TIMER //
-// ----------------------------------- //
-
+// Function:    light_sleep_start()
+// Params:      N/A
+// Returns:     N/A
+// Desription:  Used to enter light sleep, then wake up automatically after 10 minutes
 void light_sleep_start()
 {
     esp_wifi_stop();
 
-    esp_sleep_enable_timer_wakeup(TIME_IN_LIGHTSLEEP);          // wake up after specific time
+    esp_sleep_enable_timer_wakeup(TIME_IN_LIGHTSLEEP);
 
     sprintf(&str[0], "entering light sleep\n");
     usart_write(&str[0], strlen(&str[0]));
@@ -37,6 +40,7 @@ void light_sleep_start()
     sprintf(&str[0], "light sleep over\n");
     usart_write(&str[0], strlen(&str[0]));
 
+    // ---- TESTING PURPOSES ONLY - CAN BE REMOVED LATER ---- //
     int wakeup_reason;
     switch (esp_sleep_get_wakeup_cause()) 
     {
@@ -50,6 +54,16 @@ void light_sleep_start()
 
     sprintf(&str[0], "wakeup reason: %d\n", wakeup_reason);
     usart_write(&str[0], strlen(&str[0]));
+}
+
+// Function:    disable_bluetooth()
+// Params:      N/A
+// Returns:     N/A
+// Desription:  Used to disable bluetooth
+void disable_bluetooth()
+{
+    esp_bluedroid_disable();
+    esp_bt_controller_disable();
 }
 
 // -------------------------------- //

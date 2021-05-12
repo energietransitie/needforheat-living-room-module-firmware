@@ -14,8 +14,8 @@
     // esp32 pins
 //#define PIN_MISO        GPIO_NUM_19
 #define PIN_MOSI        GPIO_NUM_23
-#define PIN_SCK         GPIO_NUM_18  // 18
-#define PIN_CS          GPIO_NUM_26 // 17
+#define PIN_SCK         GPIO_NUM_18 
+#define PIN_CS          GPIO_NUM_26 
 #define TFT_DC          GPIO_NUM_5
 #define DMA_CHANNEL     2
 //#define TFT_RST         GPIO_NUM_17
