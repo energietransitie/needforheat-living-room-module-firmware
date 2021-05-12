@@ -18,6 +18,7 @@
 // TODO: add to sensor module when development on that begins
 #define SCD41       0x62
 
+
 void app_main() 
 {
     //const char *str = "Hello, World!\n";
@@ -110,6 +111,6 @@ void app_main()
 
         //light_sleep_start();
 
-        //send_HTTPS();
+        send_HTTPS();
     }
 }
