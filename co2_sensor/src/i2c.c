@@ -117,10 +117,10 @@ uint8_t i2c_read(uint8_t address, uint8_t *buffer, size_t nbytes)
         i2c_read(address, buffer, nbytes);
     }
     else if(err == ESP_ERR_INVALID_STATE || err == ESP_ERR_INVALID_ARG)
-    {
         return ERROR_CODE_INVALID; 
-    }
     
+    
+    tries = 0;
     return ERROR_CODE_SUCCESS;
 }
 
@@ -165,5 +165,6 @@ uint8_t i2c_write(uint8_t address, uint16_t word, uint8_t stop)
     else if(err == ESP_ERR_INVALID_STATE || err == ESP_ERR_INVALID_ARG)
         return ERROR_CODE_INVALID;
     
+    tries = 0;
     return ERROR_CODE_SUCCESS;
 }

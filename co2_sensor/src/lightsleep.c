@@ -10,7 +10,7 @@
 #define TIM_PRESC               40000
 #define TIM_STARTVAL            0
 #define MAX_INTR_COUNT          2000
-#define TIME_IN_LIGHTSLEEP      600000000   //microseconds
+#define TIME_IN_LIGHTSLEEP      10000000   //microseconds --> 10 sec for testing purposes, real value = 600000000
 
 // GLOBAL VARIABLES
 char str[256];
@@ -25,6 +25,8 @@ void IRAM_ATTR timer_isr();
 
 void light_sleep_start()
 {
+    esp_wifi_stop();
+
     esp_sleep_enable_timer_wakeup(TIME_IN_LIGHTSLEEP);          // wake up after specific time
 
     sprintf(&str[0], "entering light sleep\n");
