@@ -359,7 +359,7 @@ void start_provisioning(wifi_prov_mgr_config_t config){
 
     bool provisioned = false;
     /* Let's find out if the device is provisioned */
-    ESP_ERROR_CHECK(wifi_prov_mgr_is_provisioned(&provisioned));
+    //ESP_ERROR_CHECK(wifi_prov_mgr_is_provisioned(&provisioned));
 
     /* If device is not yet provisioned start provisioning service */
     if (!provisioned)

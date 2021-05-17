@@ -2,11 +2,9 @@
 #include "../include/spi.h"
 #include "../include/util.h"
 #include "../include/i2c.h"
-#include "../include/ModemSleep.h"
-#include "../include/lightsleep.h"
+#include "../include/sleepmodes.h"
 #include "../include/Wifi.h"
 #include "C:/Users/laure/.platformio/packages/framework-espidf/components/esp_rom/include/esp32/rom/crc.h"
-
 #include "../lib/generic_esp_32/generic_esp_32.h"
 
 #include <string.h>
@@ -22,53 +20,46 @@
 //#define CAL_CHECK_DISABLE   0x2313          // see chapter 4 in SCD41 datasheet
 //#define CAL_DATA_MASK       0xFFFF00        // to disable automatic calibration, word[0] must be 0
 
-
 void app_main() 
 {
     // ---- PERIPHERALS INITIALIZATION ---- //
     //gpio_init();
     //spi_init();
-    usart_init(115200);
-    i2c_init();
-    //disable_bluetooth();
+    //usart_init(115200);
+    //i2c_init();
 
-    // ---- NEEDED FOR WI-FI ---- //
-    // initialize_nvs();
-    // initialize();
-    // ESP_ERROR_CHECK(esp_netif_init());
-    // enableWiFi();
-    // initialize_time("CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00");
-    // initialize_wifi();
+    // ---- WI-FI ---- //
+    //initialize_wifi();
 
     // ---- GLOBAL VARIABLES ---- //
-    char str[256];
-    uint8_t err;
-    uint8_t buffer[3];
-    int data_disable = 0x2416;
-    int check_disable = 0x2313;
-    int mask = 0xffff00;
+    // char str[256];
+    // uint8_t err;
+    // uint8_t buffer[3];
+    // int data_disable = 0x2416;
+    // int check_disable = 0x2313;
+    // int mask = 0xffff00;
 
     // ---- DISABLE AUTOMATIC CALIBRATION ---- //
     // CRC
-    crc8_be(0, &buffer[0], 3);
+    //crc8_be(0, &buffer[0], 3);
 
     // SEND DATA
-    err = i2c_write(SCD41, ((data_disable << 8) & mask), I2C_NO_STOP);
-    ESP_ERROR_CHECK(err);
-    delay(1);
+    //err = i2c_write(SCD41, ((data_disable << 8) & mask), I2C_NO_STOP);
+    //ESP_ERROR_CHECK(err);
+    //delay(1);
 
-    err = i2c_write(SCD41, check_disable, I2C_NO_STOP);
-    ESP_ERROR_CHECK(err);
-    delay(1);
+    // err = i2c_write(SCD41, check_disable, I2C_NO_STOP);
+    // ESP_ERROR_CHECK(err);
+    // delay(1);
 
     // CHECK IF DISABLING WENT CORRECTLY
-    err = i2c_read(SCD41, &buffer[0], 3);
-    ESP_ERROR_CHECK(err);
-    delay(1);
+    // err = i2c_read(SCD41, &buffer[0], 3);
+    // ESP_ERROR_CHECK(err);
+    // delay(1);
     
     // PRINT OUT THE RESULTS
-    sprintf(&str[0], "return value = %d", ((buffer[0] << 8) | buffer[1]));
-    usart_write(&str[0], strlen(&str[0]));
+    // sprintf(&str[0], "return value = %d", ((buffer[0] << 8) | buffer[1]));
+    // usart_write(&str[0], strlen(&str[0]));
 
     // ---- remove when not necessary anymore ---- //
     // the SCD41 takes 1 second to initialize itself, that's what this delay is for
@@ -133,29 +124,9 @@ void app_main()
         //word = 0;
         //delay(1000);
 
-        // ---- LIGHT SLEEP ---- //
-        // light_sleep_start();
+        // ---- SWITCH BETWEEN MODEM AND LIGHT SLEEP ---- //
+        switch_modes();
 
-        // ---- MODEM SLEEP ---- //
-        // set in modem sleep
-        // set_modem_sleep();
-        // printf("\nin modem sleep\n");
-
-        // delay(10000);
-
-        // wake up from modem sleep
-        // wake_modem_sleep();
-        // printf("\nweer uit modem sleep\n");
-        
-        // delay(10000);
-
-        //light_sleep_start();
-
-        send_HTTPS();
-        // wake ESP32 up from modem sleep
-        wakeModemSleep();
-        printf("\nout of modem sleep\n");
-        delay(5000);
         //send_HTTPS();
     }
 }

@@ -10,7 +10,6 @@ void connect_to_WiFi(){
     start_provisioning(config);
 }
 
-
 void initialize_wifi(){
     initialize_nvs();
     initialize();
