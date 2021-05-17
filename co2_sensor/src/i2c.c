@@ -131,7 +131,7 @@ uint8_t i2c_read(uint8_t address, uint8_t *buffer, size_t nbytes)
 // Returns:     
 //      - (uint8_t) Error code
 // Desription: Used to write a byte to the i2c bus
-uint8_t i2c_write(uint8_t address, uint16_t word, uint8_t stop)
+uint8_t i2c_write(uint8_t address, uint16_t word, uint8_t stop, uint8_t bytes)
 {
     static uint8_t tries = 0;
 
@@ -143,9 +143,10 @@ uint8_t i2c_write(uint8_t address, uint16_t word, uint8_t stop)
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, (address << 1) | I2C_MASTER_WRITE, ACK_EN);
-    i2c_master_write_byte(cmd, (uint8_t) buffer[0], ACK_EN);
-    i2c_master_write_byte(cmd, (uint8_t) buffer[1], ACK_EN);
-    
+
+    for (uint8_t i = 0; i < bytes; ++i)
+        i2c_master_write_byte(cmd, buffer[i], ACK_EN);
+
     // when a command is sent that has a result that needs to be read
     // the SCD41 does not expect a STOP condition
     // so that's why this is here
@@ -160,8 +161,9 @@ uint8_t i2c_write(uint8_t address, uint16_t word, uint8_t stop)
     {
         // try again if fail
         tries++;
-        i2c_write(address, word, stop);
+        i2c_write(address, word, stop, 1);
     }
+
     else if(err == ESP_ERR_INVALID_STATE || err == ESP_ERR_INVALID_ARG)
         return ERROR_CODE_INVALID;
     
