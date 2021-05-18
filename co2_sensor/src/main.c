@@ -67,8 +67,6 @@ void app_main()
     
     while(1)
     { 
-        delay(500);
-
         uint8_t read_buffer[9];
         uint16_t word = 0;
 
@@ -91,12 +89,19 @@ void app_main()
         delay(1);
         err = i2c_read(SCD41, (uint8_t *) &read_buffer[0], 9);
 
+        // ---- CALCULATE CO2 ---- //
+        uint16_t co2 = ((read_buffer[0] << 8) | read_buffer[1]);
+
         // ---- CALCULATE TEMPERATURE ---- //
-        uint16_t a = ((read_buffer[3] << 8) | read_buffer[4]);
-        float temp = -45 + 175 * (float)a / 65536;
+        uint16_t b = ((read_buffer[3] << 8) | read_buffer[4]);
+        float temp = -45 + 175 * (float)b / 65536;
+
+        // ---- CALCULATE HUMIDITY ---- //
+        uint16_t c = ((read_buffer[6] << 8) | read_buffer[7]);
+        uint16_t rht = 100 * c / 65536;
 
         // ---- PRINT LAST I2C READ INFORMATION (ppm, temp, err_code) ---- //
-        sprintf(&str[0], "co2: %d ppm, temp: %.2f °C\n", ((read_buffer[0] << 8) | read_buffer[1]), temp);
+        sprintf(&str[0], "co2: %dppm, temp: %.2f°C, rht: %d%%\n",co2 , temp, rht);
         usart_write(&str[0], strlen(&str[0])); 
 
         word = 0;
