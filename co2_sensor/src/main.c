@@ -1,14 +1,13 @@
 #include "../include/usart.h"
-#include "../include/spi.h"
 #include "../include/util.h"
 #include "../include/i2c.h"
 #include "../include/sleepmodes.h"
-#include "../include/Wifi.h"
-#include "C:/Users/laure/.platformio/packages/framework-espidf/components/esp_rom/include/esp32/rom/crc.h"
+#include "../include/wifi.h"
+#include "../include/crc.h"
 #include "../lib/generic_esp_32/generic_esp_32.h"
 
 #include <string.h>
-#include <Stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 // TODO: remove
@@ -20,35 +19,35 @@
 void app_main() 
 {
     // ---- PERIPHERALS INITIALIZATION ---- //
-    //gpio_init();
-    //spi_init();
     usart_init(115200);
     i2c_init();
-
-    // ---- WI-FI ---- //
-    //initialize_wifi();
+    // initialize_wifi();
+    esp_bluedroid_disable();
 
     // ---- GLOBAL VARIABLES ---- //
     char str[256];
     uint8_t err;
-    // uint8_t buffer_calibration[3];
-    // int data_disable = 0x2416;
+    uint8_t buffer_calibration[3];
+    // const uint16_t data_disable = 0x2416;
     // int check_disable = 0x2313;
     // int mask = 0xffff00;
 
+    // ---- remove when not necessary anymore ---- //
+    // the SCD41 takes 1 second to initialize itself, that's what this delay is for
+    delay(1024);
+    
     // ---- DISABLE AUTOMATIC CALIBRATION ---- //
-    // CRC
-    //crc8_be(0, &buffer_calibration[0], 3);
-
-    //err = i2c_write(SCD41, ((data_disable << 8) & mask), I2C_NO_STOP);
-    //ESP_ERROR_CHECK(err);
-    //delay(1);
-
-    // err = i2c_write(SCD41, check_disable, I2C_NO_STOP);
+    // generate_crc(&data_disable, 2);
+    
+    // err = i2c_write(SCD41, ((data_disable << 8) & mask), I2C_NO_STOP);
     // ESP_ERROR_CHECK(err);
     // delay(1);
 
     // CHECK IF DISABLING WENT CORRECTLY
+    // err = i2c_write(SCD41, check_disable, I2C_NO_STOP);
+    // ESP_ERROR_CHECK(err);
+    // delay(1);
+
     // err = i2c_read(SCD41, &buffer_calibration[0], 3);
     // ESP_ERROR_CHECK(err);
     // delay(1);
@@ -57,16 +56,14 @@ void app_main()
     // sprintf(&str[0], "return value = %d", ((buffer_calibration[0] << 8) | buffer_calibration[1]));
     // usart_write(&str[0], strlen(&str[0]));
 
-    // ---- remove when not necessary anymore ---- //
-    // the SCD41 takes 1 second to initialize itself, that's what this delay is for
-    delay(1024);
-    
     // ---- START PERIODIC MEASUREMENT ---- //
     err = i2c_write(SCD41, 0x21b1, I2C_NO_STOP, 2);
     delay(1000);
     
     while(1)
     { 
+        delay(1000);
+
         uint8_t read_buffer[9];
         uint16_t word = 0;
 
@@ -80,8 +77,8 @@ void app_main()
         word = (read_buffer[0] << 8) | read_buffer[1];
         if(!(word & 0x7FFF))
         {
-            delay(100); 
-            continue;
+             delay(100); 
+             continue;
         }
             
         // ---- READ MEASUREMENT ---- //
