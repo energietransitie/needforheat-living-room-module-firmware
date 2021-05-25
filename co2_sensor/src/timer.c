@@ -10,14 +10,14 @@
 #include "usart.h"
 #include "../include/Wifi.h"
 
+#define interval 10000 // 1 is 0.0005s. with this you can calculate the interval
+
 char str[256];
 
 void IRAM_ATTR timer_isr(void *args)
 {
-    timer_set_alarm(TIMER_GROUP_0,TIMER_0,TIMER_ALARM_EN);
-    //send_HTTPS();
-    isSending = true;
-    
+    timer_set_alarm(TIMER_GROUP_0,TIMER_0,TIMER_ALARM_EN);      // set the alarm to go off again
+    isSending = true;       //set a bool to true so it knows it should send
 }
 
 void init_timer()
@@ -27,26 +27,23 @@ void init_timer()
         .counter_en     = false,
         .intr_type      = TIMER_INTR_T0,
         .counter_dir    = TIMER_COUNT_UP,
-        .auto_reload    = TIMER_AUTORELOAD_EN,
+        .auto_reload    = TIMER_AUTORELOAD_EN,  // enable that the counter resets when it hits the value
         .divider        = 40000                // see bottom of this file for value explanation
     };
 
     timer_init(TIMER_GROUP_0, TIMER_0, &timer_cfg);
-    timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0);
+    timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0);     // set the counter to 0 when it starts
 
-    timer_set_alarm_value(TIMER_GROUP_0,TIMER_0, 10000);
+    timer_set_alarm_value(TIMER_GROUP_0,TIMER_0, interval);     // set the alarm value to the interval defined above
     timer_set_alarm(TIMER_GROUP_0,TIMER_0,TIMER_ALARM_EN);
     timer_enable_intr(TIMER_GROUP_0, TIMER_0);
-    timer_isr_callback_add(TIMER_GROUP_0, TIMER_0, timer_isr, NULL, NULL);
-    timer_start(TIMER_GROUP_0, TIMER_0);
-
-    //timer_isr_handle_t isr_handler;
-    //timer_isr_register(TIMER_GROUP_0, TIMER_0, )
+    timer_isr_callback_add(TIMER_GROUP_0, TIMER_0, timer_isr, NULL, 0);      // add the interupt to the timer
+    timer_start(TIMER_GROUP_0, TIMER_0);        //start the timer
 }
 
 
 
-void read_timer()
+void read_timer()       // a function to read the timer
 {
     uint64_t task_counter_value;
     

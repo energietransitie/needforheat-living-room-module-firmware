@@ -23,8 +23,7 @@ void app_main()
     // ---- PERIPHERALS INITIALIZATION ---- //
     usart_init(115200);
     i2c_init();
-    // initialize_wifi();
-    esp_bluedroid_disable();
+    initialize_wifi();
 
     // ---- GLOBAL VARIABLES ---- //
     //char str[256];
