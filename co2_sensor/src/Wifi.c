@@ -23,6 +23,6 @@ void send_HTTPS(){
     static const char *TAG = "Twomes Example Application ESP32";
     char* dataPlain = "{\"deviceMac\":\"8C:AA:B5:85:A2:3D\",\"measurements\": [{\"property\":\"testy\",\"value\":\"hello_world\"}],\"time\":%d}";
     char data [strlen(dataPlain)];
-    ESP_LOGI(TAG, "Hello World!");
+    ESP_LOGI(TAG, "start sending!");
     post_https(url, data, NULL);
 }
