@@ -20,6 +20,7 @@ void app_main()
     i2c_init();
     scd41_init();
     initialize_wifi();
+    init_timer();
     
     while(1)
     {
