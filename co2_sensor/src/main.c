@@ -4,6 +4,7 @@
 #include "../include/wifi.h"
 #include "../include/crc.h"
 #include "../lib/generic_esp_32/generic_esp_32.h"
+#include "../include/timer.h"
 
 #include "../include/scd41.h"
 
@@ -13,6 +14,7 @@
 
 void app_main() 
 {
+    isSending = false;
     // ---- PERIPHERALS INITIALIZATION ---- //
     usart_init(115200);
     i2c_init();
