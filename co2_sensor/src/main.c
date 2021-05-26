@@ -21,14 +21,14 @@ void app_main()
 {
     isSending = false;
     // ---- PERIPHERALS INITIALIZATION ---- //
-    usart_init(115200);
-    i2c_init();
+    // usart_init(115200);
+    // i2c_init();
     initialize_wifi();
 
     // ---- GLOBAL VARIABLES ---- //
-    //char str[256];
-    uint8_t err;
-    uint8_t buffer_calibration[3];
+    // char str[256];
+    // uint8_t err;
+    // uint8_t buffer_calibration[3];
     // const uint16_t data_disable = 0x2416;
     // int check_disable = 0x2313;
     // int mask = 0xffff00;
@@ -58,31 +58,31 @@ void app_main()
     // usart_write(&str[0], strlen(&str[0]));
 
     // ---- START PERIODIC MEASUREMENT ---- //
-    err = i2c_write(SCD41, 0x21b1, I2C_NO_STOP, 2);
-    delay(1000);
+    // err = i2c_write(SCD41, 0x21b1, I2C_NO_STOP, 2);
+    // delay(1000);
 
     init_timer();
     
     while(1)
     { 
-        delay(1000);
+        //delay(1000);
 
-        uint8_t read_buffer[9];
-        uint16_t word = 0;
+        // uint8_t read_buffer[9];
+        // uint16_t word = 0;
 
         // ---- CHECK FOR AVAILABLE MEASUREMENT ---- //
-        err = i2c_write(SCD41, 0xe4b8, I2C_NO_STOP, 2);
-        delay(1);
-        err = i2c_read(SCD41, &read_buffer[0], 3);
+        // err = i2c_write(SCD41, 0xe4b8, I2C_NO_STOP, 2);
+        // delay(1);
+        // err = i2c_read(SCD41, &read_buffer[0], 3);
 
         // if one of or more of the last 11 bits are non-zero, a measurement
         // is available otherwise wait 100 ms and try again
-        word = (read_buffer[0] << 8) | read_buffer[1];
-        if(!(word & 0x7FFF))
-        {
-             delay(100); 
-             continue;
-        }
+        // word = (read_buffer[0] << 8) | read_buffer[1];
+        // if(!(word & 0x7FFF))
+        // {
+        //      delay(100); 
+        //      continue;
+        // }
             
         // // ---- READ MEASUREMENT ---- //
         // err = i2c_write(SCD41, 0xec05, I2C_NO_STOP, 2);

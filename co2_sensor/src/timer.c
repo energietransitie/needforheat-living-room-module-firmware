@@ -1,7 +1,3 @@
-// ------------------------------------------------------------------------------------------------------------ //
-// --------------- WE MIGHT NOT NEED THIS CODE IN OUR PROJECT, SO MAYBE IT CAN BE REMOVED LATER --------------- //
-// ------------------------------------------------------------------------------------------------------------ //
-
 #include "../include/timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -10,14 +6,14 @@
 #include "usart.h"
 #include "../include/Wifi.h"
 
-#define interval 10000 // 1 is 0.0005s. with this you can calculate the interval
+#define interval 20000 // 1 is 0.0005s. with this you can calculate the interval
 
 char str[256];
 
-void IRAM_ATTR timer_isr(void *args)
+bool IRAM_ATTR timer_isr(void *args)
 {
     timer_set_alarm(TIMER_GROUP_0,TIMER_0,TIMER_ALARM_EN);      // set the alarm to go off again
-    isSending = true;       //set a bool to true so it knows it should send
+    return isSending = true;       //set a bool to true so it knows it should send
 }
 
 void init_timer()
@@ -41,8 +37,6 @@ void init_timer()
     timer_start(TIMER_GROUP_0, TIMER_0);        //start the timer
 }
 
-
-
 void read_timer()       // a function to read the timer
 {
     uint64_t task_counter_value;
@@ -51,8 +45,6 @@ void read_timer()       // a function to read the timer
 
     printf("Timer value: %lld\n", task_counter_value);
 }
-
-
 
 // ---------------------------------------------------------------------------------------------------------------------------------------- //
 //                                                  TIMER VALUES EXPLANATION                                                                //
