@@ -4,6 +4,13 @@
 #define CRC8_POLYNOMIAL 0x31
 #define CRC8_INIT 0xFF
 
+// Function:    generate_crc()
+// Params:      
+//          - (uint16_t *) data --> every new byte at new index
+//          - (uint16_t) number of bytes (# of uint16_t's in array)
+// Returns:     
+//          - (uint8_t) crc
+// Desription:  Generates a CRC that can be sent too the SCD41
 uint8_t generate_crc(const uint16_t* data, uint16_t count) {
     uint16_t current_byte;
     uint8_t crc = CRC8_INIT;

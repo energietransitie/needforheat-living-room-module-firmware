@@ -6,13 +6,16 @@
 #include <esp32/rom/crc.h>
 
 #include <stdlib.h>
+#include <string.h>
+
+#include "../include/usart.h"
 
 // ==============================
 //          DEFINES
 // ==============================
 #define I2C_MASTER_SDA_IO       GPIO_NUM_21
 #define I2C_MASTER_SCL_IO       GPIO_NUM_22
-#define I2C_MASTER_FREQ         10000    // hz
+#define I2C_MASTER_FREQ         40000    // hz
 
 #define TIMEOUT_VAL             1040000
 
@@ -20,7 +23,7 @@
 
 #define ACK_EN                  (bool) 1
 
-#define I2C_MAX_TRIES           3
+#define I2C_MAX_TRIES           1   // used to be 3
 
 #define I2C_STATUS_REGISTER     0x3FF5302Cu     // see chapter 11.4 in reference manual
 #define I2C_STATUS_TIMEOUT      (1 << 9)        // see chapter 11.4 in reference manual
@@ -47,7 +50,7 @@ void i2c_init(void)
     
     // configure driver
     ESP_ERROR_CHECK(i2c_param_config(I2C_PORT, &conf));
-    ESP_ERROR_CHECK(i2c_driver_install(I2C_PORT, conf.mode, 0, 0, ESP_INTR_FLAG_LEVEL3)); 
+    ESP_ERROR_CHECK(i2c_driver_install(I2C_PORT, conf.mode, 0, 0, ESP_INTR_FLAG_LEVEL3)); // ESP_INTR_FLAG_LEVEL3
 
     // configure ISR (could not be tested properly, yet)
     //intr_handle_t handle;
@@ -91,7 +94,7 @@ uint8_t i2c_read(uint8_t address, uint8_t *buffer, size_t nbytes)
     static uint8_t tries = 0;
     uint8_t *data = buffer;
 
-    if(tries >= I2C_MAX_TRIES-1)
+    if(tries >= I2C_MAX_TRIES)
         return ERROR_CODE_FAIL; // tried max. times so it's time to stop and give up
         
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
@@ -107,7 +110,7 @@ uint8_t i2c_read(uint8_t address, uint8_t *buffer, size_t nbytes)
     i2c_master_stop(cmd);
 
     // send command and byte as soon as possible
-    esp_err_t err = i2c_master_cmd_begin(I2C_PORT, cmd, 100);
+    esp_err_t err = i2c_master_cmd_begin(I2C_PORT, cmd, 1350);
     i2c_cmd_link_delete(cmd);
 
     if(err == ESP_FAIL || err == ESP_ERR_TIMEOUT)
@@ -127,26 +130,28 @@ uint8_t i2c_read(uint8_t address, uint8_t *buffer, size_t nbytes)
 // Function:    i2c_write()
 // Params:
 //      - (uint8_t) slave address
-//      - (uint16_t) word to write
+//      - (uint16_t *) buffer with bytes to write
+//      - (uint8_t) enable or disable stop condition (defines in i2c.h)
+//      - (uint8_t) size of buffer
 // Returns:     
 //      - (uint8_t) Error code
 // Desription: Used to write a byte to the i2c bus
-uint8_t i2c_write(uint8_t address, uint16_t word, uint8_t stop, uint8_t bytes)
+uint8_t i2c_write(uint8_t address, uint8_t *buffer, uint8_t stop, uint8_t nbytes)
 {
     static uint8_t tries = 0;
 
-    if(tries >= I2C_MAX_TRIES-1)
+    if(tries >= I2C_MAX_TRIES)
         return ERROR_CODE_FAIL; // tried max. times so it's time to stop and give up
     
-    uint8_t buffer[2] = {(word >> 8) & 0xFF, (word & 0xFF)};
+    //uint8_t buffer[2] = {(word >> 8) & 0xFF, (word & 0xFF)};
 
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, (address << 1) | I2C_MASTER_WRITE, ACK_EN);
-
-    for (uint8_t i = 0; i < bytes; ++i)
-        i2c_master_write_byte(cmd, buffer[i], ACK_EN);
-
+    
+    for (uint8_t i = 0; i < nbytes; ++i)
+        i2c_master_write_byte(cmd, buffer[i], 0);
+    
     // when a command is sent that has a result that needs to be read
     // the SCD41 does not expect a STOP condition
     // so that's why this is here
@@ -154,14 +159,14 @@ uint8_t i2c_write(uint8_t address, uint16_t word, uint8_t stop, uint8_t bytes)
         i2c_master_stop(cmd);
 
     // send command and byte as soon as possible
-    esp_err_t err = i2c_master_cmd_begin(I2C_PORT, cmd, 100);
+    esp_err_t err = i2c_master_cmd_begin(I2C_PORT, cmd, 1350);
     i2c_cmd_link_delete(cmd);
 
     if(err == ESP_FAIL || err == ESP_ERR_TIMEOUT)
     {
         // try again if fail
         tries++;
-        i2c_write(address, word, stop, 1);
+        i2c_write(address, buffer, stop, nbytes);
     }
 
     else if(err == ESP_ERR_INVALID_STATE || err == ESP_ERR_INVALID_ARG)
