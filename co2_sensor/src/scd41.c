@@ -89,8 +89,11 @@ void scd41_disable_asc(void)
     // but it does so anyway
     i2c_read(SCD41_ADDR, (uint8_t *) &cmd_buffer[0], 5);
 
-    // starting at 2 since [0] and [1] are the previous command 
-    r = (cmd_buffer[2] << 8)  | cmd_buffer[3];
+    // fix for above
+    r = (cmd_buffer[0] << 8) | cmd_buffer[1];
+    if(r == SCD41_CMD_GET_ASC_EN)
+        r = (cmd_buffer[2] << 8) | cmd_buffer[3];
+
     if(r)
     {
         sprintf(&str[0], "SCD41: Warning: ASC not disabled (0x%x)\n", r);
