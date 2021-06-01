@@ -24,15 +24,23 @@ void app_main()
     
     while(1)
     {
-        // ---- MEASURE CO2, TEMP, RHT ---- // 
-        scd41_measure_co2_temp_rht();
-
+        // printf("going into light sleep!\n");
+        // set_light_sleep();
+        // printf("going out of light sleep!\n");
+        // printf("going into modem sleep!\n");
+        // set_modem_sleep();
+        // // ---- MEASURE CO2, TEMP, RHT ---- // 
+        // printf("start measurement!\n");
+        // scd41_measure_co2_temp_rht();
+        // printf("going out of modem sleep!\n");
+        // wake_modem_sleep();
         // ---- SEND DATA VIA HTTPS ---- //
-        read_timer();
         vTaskDelay(10);
         if(isSending){
+            printf("start sending\n");
             send_HTTPS();
             isSending = false;
         }
+        vTaskDelay(1000);
     }
 }

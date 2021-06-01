@@ -21,9 +21,15 @@
 #include <esp_netif.h>
 #include <esp_tls.h>
 #include <esp_http_client.h>
+#include <driver/gpio.h>
 
 #include <wifi_provisioning/manager.h>
-#include <wifi_provisioning/scheme_softap.h>
+
+#define BUTTON_BOOT   GPIO_NUM_0
+#define LED_ERROR   GPIO_NUM_19
+
+#define OUTPUT_BITMASK ((1ULL<<LED_ERROR))
+#define INPUT_BITMASK ((1ULL << BUTTON_BOOT))
 
 #ifdef CONFIG_EXAMPLE_PROV_TRANSPORT_BLE
 #include <wifi_provisioning/scheme_ble.h>
@@ -37,6 +43,13 @@
 void sntp_sync_time(struct timeval *tv);
 #endif
 
+
+void initGPIO();
+void blink(void *args);
+void buttonPressDuration(void *args);
+
+char* get_types(char* stringf, int count);
+int variable_sprintf_size(char* string, int count, ...);
 void initialize();
 void time_sync_notification_cb(struct timeval *tv);
 void prov_event_handler(void *arg, esp_event_base_t event_base,int32_t event_id, void *event_data);
@@ -48,12 +61,16 @@ esp_err_t custom_prov_data_handler(uint32_t session_id, const uint8_t *inbuf, ss
 void initialize_sntp(void);
 void obtain_time(void);
 void initialize_time(char* timezone);
-void post_http(char* url, char *data);
-void post_https(char* url, char *data, char* cert);
+void post_http(char* url, char *data, char* authenticationToken);
+char* post_https(char* url, char *data, char* cert, char* authenticationToken);
+char* get_bearer();
+void activate_device(char* url, uint32_t pop, char* cert);
+void get_http(char* url);
 
 void initialize_nvs();
 
 wifi_prov_mgr_config_t initialize_provisioning();
-void start_provisioning(wifi_prov_mgr_config_t config);
-
+void start_provisioning(wifi_prov_mgr_config_t config, char* pop, char* device_name, bool connect);
+void disable_wifi();
+void enable_wifi();
 #endif

@@ -4,8 +4,10 @@
 #define MAX_HTTP_RECV_BUFFER 512
 
 static const char *TAG = "Twomes Generic Firmware Library ESP32";
-
-char *https_url = "192.168.178.75:4444/set/house/opentherm";
+bool activation = false;
+//Interrupt Queue Handler:
+static xQueueHandle gpio_evt_queue = NULL;
+// char *https_url = "192.168.178.75:4444/set/house/opentherm";
 
 /* Signal Wi-Fi events on this event-group */
 const int WIFI_CONNECTED_EVENT = BIT0;
@@ -20,10 +22,43 @@ void sntp_sync_time(struct timeval *tv)
 }
 #endif
 
-void initialize(){
+//Gpio ISR handler:
+static void IRAM_ATTR gpio_isr_handler(void *arg) {
+    uint32_t gpio_num = (uint32_t)arg;
+    xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
+}//gpio_isr_handler
+
+
+//Function to initialise the buttons and LEDs on the gateway, with interrupts on the buttons
+void initGPIO() {
+    gpio_config_t io_conf;
+    //CONFIGURE OUTPUTS:
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    io_conf.mode = GPIO_MODE_OUTPUT;
+    io_conf.pin_bit_mask = OUTPUT_BITMASK;
+    io_conf.pull_down_en = 0;
+    io_conf.pull_up_en = 0;
+    gpio_config(&io_conf);
+    //CONFIGURE INPUTS:
+    io_conf.intr_type = GPIO_INTR_NEGEDGE;
+    io_conf.mode = GPIO_MODE_INPUT;
+    io_conf.pin_bit_mask = INPUT_BITMASK;
+    io_conf.pull_down_en = 0;
+    io_conf.pull_up_en = 1;
+    gpio_config(&io_conf);
+}
+
+void initialize()
+{
     /* Initialize the event loop */
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     wifi_event_group = xEventGroupCreate();
+    initGPIO();
+    //Attach interrupt handler to GPIO pins:
+    gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
+    xTaskCreatePinnedToCore(buttonPressDuration, "buttonPressDuration", 2048, NULL, 10, NULL, 1);
+    gpio_install_isr_service(0);
+    gpio_isr_handler_add(BUTTON_BOOT, gpio_isr_handler, (void *)BUTTON_BOOT);
 }
 
 void time_sync_notification_cb(struct timeval *tv)
@@ -31,9 +66,109 @@ void time_sync_notification_cb(struct timeval *tv)
     ESP_LOGI(TAG, "Notification of a time synchronization event");
 }
 
+/**Blink LEDs to test GPIO:
+ * Pass two arguments in uint8_t array:
+ * argument[0] = amount of blinks
+ * argument[1] = pin to blink on (LED_STATUS or LED_ERROR)
+ */
+void blink(void *args) {
+    uint8_t *arguments = (uint8_t *)args;
+    uint8_t amount = arguments[0];
+    uint8_t pin = arguments[1];
+    uint8_t i;
+    for (i = 0; i < amount; i++) {
+        gpio_set_level(pin, 1);
+        vTaskDelay(200 / portTICK_PERIOD_MS);
+        gpio_set_level(pin, 0);
+        vTaskDelay(200 / portTICK_PERIOD_MS);
+    }//for(i<amount)
+    //Delete the blink task after completion:
+    vTaskDelete(NULL);
+}//void blink;
+
+/**
+ * Check for input of buttons and the duration
+ * if the press duration was more than 5 seconds, erase the flash memory to restart provisioning
+ * otherwise, blink the status LED (and possibly run another task (sensor provisioning?))
+*/
+void buttonPressDuration(void *args) {
+    uint32_t io_num;
+    ESP_LOGI(TAG, "Button Press Duration is Here!");
+    while (1) {
+        if (xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY)) {
+            uint8_t seconds = 0;
+            while (!gpio_get_level(BUTTON_BOOT)) {
+                vTaskDelay(1000 / portTICK_PERIOD_MS);
+                seconds++;
+                if (seconds == 9) {
+                    ESP_LOGI("ISR", "Button held for over 10 seconds\n");
+                    char blinkArgs[2] = { 5, LED_ERROR };
+                    xTaskCreatePinnedToCore(blink, "blink longpress", 768, (void *)blinkArgs, 10, NULL, 1);
+                    //Long press on P2 is for full Reset, clearing provisioning memory:
+                    ESP_LOGI("ISR", "Resetting Provisioning and Restarting Device!");
+                    esp_wifi_restore();
+                    vTaskDelay(1000 / portTICK_PERIOD_MS); //Wait for blink to finish
+                    esp_restart();  //software restart, to get new provisioning. Sensors do NOT need to be paired again when gateway is reset (MAC address does not change) 
+                    break; //Exit loop
+                }
+            }
+        } 
+    } 
+} 
+
+char *get_types(char *stringf, int count)
+{
+    char *stringfBuffer = stringf;
+    char c = *stringf;
+    char *types = malloc(sizeof(char) * count);
+    for (int i = 0; i < strlen(stringf); i++)
+    {
+        c = *stringfBuffer;
+        if (c == '%')
+        {
+            char *tmp = ++stringfBuffer;
+            memcpy(types, tmp, sizeof(char));
+            types += sizeof(char);
+        }
+        else
+            stringfBuffer++;
+    }
+    types -= count * sizeof(char);
+    return types;
+}
+
+int variable_sprintf_size(char *string, int count, ...)
+{
+    va_list list;
+    va_start(list, count);
+    int extraSize = 0;
+    char *snBuf = "";
+    char *types = get_types(string, count);
+    for (int i = 0; i < count; i++)
+    {
+        char type = *types++;
+        switch (type)
+        {
+        case 'd':
+            // int tmp = va_arg(list, int);
+            extraSize += snprintf(snBuf, 0, "%d", va_arg(list, int));
+            break;
+        case 'u':
+            extraSize += snprintf(snBuf, 0, "%u", va_arg(list, u32_t));
+            break;
+        case 's':
+            extraSize += snprintf(snBuf, 0, "%s", va_arg(list, char *));
+            break;
+        }
+    }
+    int totalSize = strlen(string) * sizeof(char) + sizeof(char) * extraSize;
+    return totalSize;
+}
+
+
 /* Event handler for catching system events */
 void prov_event_handler(void *arg, esp_event_base_t event_base,
-                          int32_t event_id, void *event_data)
+                        int32_t event_id, void *event_data)
 {
     if (event_base == WIFI_PROV_EVENT)
     {
@@ -90,73 +225,83 @@ void prov_event_handler(void *arg, esp_event_base_t event_base,
 
 esp_err_t http_event_handler(esp_http_client_event_t *evt)
 {
-    static char *output_buffer;  // Buffer to store response of http request from event handler
-    static int output_len;       // Stores number of bytes read
-    switch(evt->event_id) {
-        case HTTP_EVENT_ERROR:
-            ESP_LOGD(TAG, "HTTP_EVENT_ERROR");
-            break;
-        case HTTP_EVENT_ON_CONNECTED:
-            ESP_LOGD(TAG, "HTTP_EVENT_ON_CONNECTED");
-            break;
-        case HTTP_EVENT_HEADER_SENT:
-            ESP_LOGD(TAG, "HTTP_EVENT_HEADER_SENT");
-            break;
-        case HTTP_EVENT_ON_HEADER:
-            ESP_LOGD(TAG, "HTTP_EVENT_ON_HEADER, key=%s, value=%s", evt->header_key, evt->header_value);
-            break;
-        case HTTP_EVENT_ON_DATA:
-            ESP_LOGD(TAG, "HTTP_EVENT_ON_DATA, len=%d", evt->data_len);
-            /*
+    static char *output_buffer; // Buffer to store response of http request from event handler
+    static int output_len;      // Stores number of bytes read
+    switch (evt->event_id)
+    {
+    case HTTP_EVENT_ERROR:
+        ESP_LOGD(TAG, "HTTP_EVENT_ERROR");
+        break;
+    case HTTP_EVENT_ON_CONNECTED:
+        ESP_LOGD(TAG, "HTTP_EVENT_ON_CONNECTED");
+        break;
+    case HTTP_EVENT_HEADER_SENT:
+        ESP_LOGD(TAG, "HTTP_EVENT_HEADER_SENT");
+        break;
+    case HTTP_EVENT_ON_HEADER:
+        ESP_LOGD(TAG, "HTTP_EVENT_ON_HEADER, key=%s, value=%s", evt->header_key, evt->header_value);
+        break;
+    case HTTP_EVENT_ON_DATA:
+        ESP_LOGD(TAG, "HTTP_EVENT_ON_DATA, len=%d", evt->data_len);
+        /*
              *  Check for chunked encoding is added as the URL for chunked encoding used in this example returns binary data.
              *  However, event handler can also be used in case chunked encoding is used.
              */
-            if (!esp_http_client_is_chunked_response(evt->client)) {
-                // If user_data buffer is configured, copy the response into the buffer
-                if (evt->user_data) {
-                    memcpy(evt->user_data + output_len, evt->data, evt->data_len);
-                } else {
-                    if (output_buffer == NULL) {
-                        output_buffer = (char *) malloc(esp_http_client_get_content_length(evt->client));
-                        output_len = 0;
-                        if (output_buffer == NULL) {
-                            ESP_LOGE(TAG, "Failed to allocate memory for output buffer");
-                            return ESP_FAIL;
-                        }
-                    }
-                    memcpy(output_buffer + output_len, evt->data, evt->data_len);
-                }
-                output_len += evt->data_len;
+        if (!esp_http_client_is_chunked_response(evt->client))
+        {
+            // If user_data buffer is configured, copy the response into the buffer
+            if (evt->user_data)
+            {
+                memcpy(evt->user_data + output_len, evt->data, evt->data_len);
             }
+            else
+            {
+                if (output_buffer == NULL)
+                {
+                    output_buffer = (char *)malloc(esp_http_client_get_content_length(evt->client));
+                    output_len = 0;
+                    if (output_buffer == NULL)
+                    {
+                        ESP_LOGE(TAG, "Failed to allocate memory for output buffer");
+                        return ESP_FAIL;
+                    }
+                }
+                memcpy(output_buffer + output_len, evt->data, evt->data_len);
+            }
+            output_len += evt->data_len;
+        }
 
-            break;
-        case HTTP_EVENT_ON_FINISH:
-            ESP_LOGD(TAG, "HTTP_EVENT_ON_FINISH");
-            if (output_buffer != NULL) {
-                // Response is accumulated in output_buffer. Uncomment the below line to print the accumulated response
-                // ESP_LOG_BUFFER_HEX(TAG, output_buffer, output_len);
+        break;
+    case HTTP_EVENT_ON_FINISH:
+        ESP_LOGD(TAG, "HTTP_EVENT_ON_FINISH");
+        if (output_buffer != NULL)
+        {
+            // Response is accumulated in output_buffer. Uncomment the below line to print the accumulated response
+            // ESP_LOG_BUFFER_HEX(TAG, output_buffer, output_len);
+            free(output_buffer);
+            output_buffer = NULL;
+            output_len = 0;
+        }
+        break;
+    case HTTP_EVENT_DISCONNECTED:
+        ESP_LOGI(TAG, "HTTP_EVENT_DISCONNECTED");
+        int mbedtls_err = 0;
+        esp_err_t err = esp_tls_get_and_clear_last_error(evt->data, &mbedtls_err, NULL);
+        if (err != 0)
+        {
+            if (output_buffer != NULL)
+            {
                 free(output_buffer);
                 output_buffer = NULL;
                 output_len = 0;
             }
-            break;
-        case HTTP_EVENT_DISCONNECTED:
-            ESP_LOGI(TAG, "HTTP_EVENT_DISCONNECTED");
-            int mbedtls_err = 0;
-            esp_err_t err = esp_tls_get_and_clear_last_error(evt->data, &mbedtls_err, NULL);
-            if (err != 0) {
-                if (output_buffer != NULL) {
-                    free(output_buffer);
-                    output_buffer = NULL;
-                    output_len = 0;
-                }
-                ESP_LOGI(TAG, "Last esp error code: 0x%x", err);
-                ESP_LOGI(TAG, "Last mbedtls failure: 0x%x", mbedtls_err);
-            }
-            break;
-        default:
-            ESP_LOGI(TAG, "GOT AN ERROR BUT DONT KNOW WHAT!");
-            break;
+            ESP_LOGI(TAG, "Last esp error code: 0x%x", err);
+            ESP_LOGI(TAG, "Last mbedtls failure: 0x%x", mbedtls_err);
+        }
+        break;
+    default:
+        ESP_LOGI(TAG, "GOT AN ERROR BUT DONT KNOW WHAT!");
+        break;
     }
     return ESP_OK;
 }
@@ -238,7 +383,8 @@ void obtain_time(void)
     localtime_r(&now, &timeinfo);
 }
 
-void initialize_time(char* timezone){
+void initialize_time(char *timezone)
+{
     time_t now;
     struct tm timeinfo;
     time(&now);
@@ -259,58 +405,228 @@ void initialize_time(char* timezone){
     ESP_LOGI(TAG, "The current date/time in Amsterdam is: %s", strftime_buf);
 }
 
-void post_http(char* url, char *data)
+void post_http(char *url, char *data, char *authenticationToken)
 {
     esp_http_client_config_t config = {
         .url = url,
         .transport_type = HTTP_TRANSPORT_OVER_TCP,
-        .event_handler = http_event_handler
-        };
+        .event_handler = http_event_handler};
     esp_http_client_handle_t client = esp_http_client_init(&config);
 
     esp_http_client_set_method(client, HTTP_METHOD_POST);
-    esp_http_client_set_header(client, "Host", "httpbin.org");
+    esp_http_client_set_header(client, "Host", "192.168.178.48:8000");
     esp_http_client_set_header(client, "Content-Type", "text/plain");
+    char *dataLenStr = malloc(sizeof(char) * 8);
+    itoa(strlen(data), dataLenStr, 10);
+    esp_http_client_set_header(client, "Content-Length", dataLenStr);
+    char *authenticationTokenStringPlain = "Bearer %s";
+    char *authenticationTokenString = "";
+    int strCount = snprintf(authenticationTokenString, 0, authenticationTokenStringPlain, authenticationToken) + 1;
+    authenticationTokenString = malloc(sizeof(char) * strCount);
+    snprintf(authenticationTokenString, strCount * sizeof(char), authenticationTokenStringPlain, authenticationToken);
+    esp_http_client_set_header(client, "Authorization", authenticationTokenString);
     esp_http_client_set_post_field(client, data, strlen(data));
     esp_err_t err = esp_http_client_perform(client);
-    if (err == ESP_OK) {
-        ESP_LOGI(TAG, "HTTP POST Status = %d, content_length = %d",
-                esp_http_client_get_status_code(client),
-                esp_http_client_get_content_length(client));
-    } else {
-        ESP_LOGE(TAG, "HTTP POST request failed: %s", esp_err_to_name(err));
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
     }
-
     esp_http_client_cleanup(client);
 }
 
-void post_https(char* url, char *data, char* cert)
+esp_err_t store_bearer(char *bearer)
 {
+    esp_err_t err;
+    nvs_handle_t bearer_handle;
+    err = nvs_open("twomes_storage", NVS_READWRITE, &bearer_handle);
+    if (err)
+    {
+        ESP_LOGE(TAG, "Failed to open NVS twomes_storage: %s", esp_err_to_name(err));
+    }
+    else
+    {
+        ESP_LOGE(TAG, "Succesfully opened NVS twomes_storage!");
+        err = nvs_set_str(bearer_handle, "bearer", bearer);
+        switch (err)
+        {
+        case ESP_OK:
+            ESP_LOGI(TAG, "The bearer has been written!\n");
+            ESP_LOGI(TAG, "The bearer is: %s\n", bearer);
+            break;
+        default:
+            ESP_LOGE(TAG, "Error (%s) reading!\n", esp_err_to_name(err));
+        }
+        err = nvs_commit(bearer_handle);
+        nvs_close(bearer_handle);
+    }
+    return err;
+}
+
+char *get_bearer()
+{
+    esp_err_t err;
+    char *bearer = NULL;
+    nvs_handle_t bearer_handle;
+    err = nvs_open("twomes_storage", NVS_READONLY, &bearer_handle);
+    if (err)
+    {
+        ESP_LOGE(TAG, "Failed to open NVS twomes_storage: %s", esp_err_to_name(err));
+    }
+    else
+    {
+        ESP_LOGE(TAG, "Succesfully opened NVS twomes_storage!");
+        size_t bearer_size;
+        nvs_get_str(bearer_handle, "bearer", NULL, &bearer_size);
+        bearer = malloc(bearer_size);
+        err = nvs_get_str(bearer_handle, "bearer", bearer, &bearer_size);
+        switch (err)
+        {
+        case ESP_OK:
+            ESP_LOGI(TAG, "The bearer has been read!\n");
+            ESP_LOGI(TAG, "The bearer is: %s\n", bearer);
+            break;
+        case ESP_ERR_NVS_NOT_FOUND:
+            ESP_LOGI(TAG, "The bearer has not been initialized yet!");
+            bearer = "";
+            break;
+        default:
+            bearer = NULL;
+            ESP_LOGE(TAG, "Error (%s) reading!\n", esp_err_to_name(err));
+        }
+        nvs_close(bearer_handle);
+    }
+    return bearer;
+}
+
+void activate_device(char *url, uint32_t pop, char *cert)
+{
+    esp_err_t err;
+    activation = true;
+    char *device_activation_plain = "{ \"proof_of_presence_id\":\"%u\"}";
+    int activation_data_size = variable_sprintf_size(device_activation_plain, 1, pop);
+    char *device_activation_data = malloc(activation_data_size);
+    snprintf(device_activation_data, activation_data_size, device_activation_plain, pop);
+    ESP_LOGI(TAG, "%s", device_activation_data);
+    char *bearer = post_https(url, device_activation_data, cert, NULL);
+    if (!bearer)
+    {
+        ESP_LOGE(TAG, "Failed to activate device!");
+    }
+    else
+    {
+        ESP_LOGE(TAG, "Bearer after post is: %s", bearer);
+        char *bearer_extracted = malloc(strlen(bearer) * sizeof(char));
+        sscanf(bearer, "{ \"session_token\":\"%s\" }", bearer_extracted);
+        ESP_LOGE(TAG, "Bearer Extracted: %s", bearer_extracted);
+        int extracted_size = strlen(bearer_extracted) * sizeof(char);
+        char *bearer_trimmed = malloc(extracted_size);
+        char c = *bearer;
+        int count = 0;
+        int length = 0;
+        bool done = false;
+        while (!done)
+        {
+            switch (c)
+            {
+            case '\"':
+                count++;
+                if(count == 4){
+                    *bearer_trimmed = '\0';
+                    done = true;
+                }
+                break;
+            default:
+                if (count == 3)
+                {
+                    *bearer_trimmed++ = c;
+                    length++;
+                }
+            }
+
+            c = *++bearer;
+        }
+        bearer_trimmed -= length;
+        ESP_LOGI(TAG, "Bearer Trimmed: %s", bearer_trimmed);
+        err = store_bearer(bearer_trimmed);
+        if (err != ESP_OK)
+        {
+            ESP_LOGE(TAG, "Error (%s) reading!\n", esp_err_to_name(err));
+        }
+    }
+}
+
+void get_http(char *url)
+{
+    esp_http_client_config_t config = {
+        .url = url,
+        .transport_type = HTTP_TRANSPORT_OVER_TCP,
+        .event_handler = http_event_handler};
+    esp_http_client_handle_t client = esp_http_client_init(&config);
+
+    esp_http_client_set_method(client, HTTP_METHOD_GET);
+    esp_http_client_set_header(client, "Host", "192.168.178.48:8000");
+    esp_err_t err = esp_http_client_perform(client);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
+    }
+    esp_http_client_cleanup(client);
+}
+
+char *post_https(char *url, char *data, char *cert, char *authenticationToken)
+{
+    int content_length;
+    int status_code = 0;
+    char *response = NULL;
     esp_http_client_config_t config = {
         .url = url,
         .transport_type = HTTP_TRANSPORT_OVER_SSL,
         .cert_pem = cert,
-        .event_handler = http_event_handler
-        };
+        .event_handler = http_event_handler};
     esp_http_client_handle_t client = esp_http_client_init(&config);
 
     esp_http_client_set_method(client, HTTP_METHOD_POST);
-    esp_http_client_set_header(client, "Host", "httpbin.org");
+    esp_http_client_set_header(client, "Host", "api.tst.energietransitiewindesheim.nl:8000");
     esp_http_client_set_header(client, "Content-Type", "text/plain");
+    if (authenticationToken)
+    {
+        char *authenticationTokenStringPlain = "Bearer %s";
+        char *authenticationTokenString = "";
+        int strCount = snprintf(authenticationTokenString, 0, authenticationTokenStringPlain, authenticationToken) + 1;
+        authenticationTokenString = malloc(sizeof(char) * strCount);
+        snprintf(authenticationTokenString, strCount * sizeof(char), authenticationTokenStringPlain, authenticationToken);
+        esp_http_client_set_header(client, "Authorization", authenticationTokenString);
+    }
     esp_http_client_set_post_field(client, data, strlen(data));
     esp_err_t err = esp_http_client_perform(client);
-    if (err == ESP_OK) {
-        ESP_LOGI(TAG, "HTTP POST Status = %d, content_length = %d",
-                esp_http_client_get_status_code(client),
-                esp_http_client_get_content_length(client));
-    } else {
-        ESP_LOGE(TAG, "HTTP POST request failed: %s", esp_err_to_name(err));
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
+    }
+    else
+    {
+        status_code = esp_http_client_get_status_code(client);
+        content_length = esp_http_client_get_content_length(client);
+        ESP_LOGE(TAG, "Status Code: %d Response Length: %d", status_code,
+                 content_length);
+        response = malloc(sizeof(char) * content_length);
+        esp_http_client_read(client, response, content_length);
+        ESP_LOGE(TAG, "Response: %s", response);
     }
     esp_http_client_cleanup(client);
+    if (response && status_code == 200)
+    {
+        return response;
+    }
+    else
+    {
+        return NULL;
+    }
 }
 
-wifi_prov_mgr_config_t initialize_provisioning(){
-       /* Register our event handler for Wi-Fi, IP and Provisioning related events */
+wifi_prov_mgr_config_t initialize_provisioning()
+{
+    /* Register our event handler for Wi-Fi, IP and Provisioning related events */
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_PROV_EVENT, ESP_EVENT_ANY_ID, &prov_event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &prov_event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &prov_event_handler, NULL));
@@ -352,8 +668,9 @@ wifi_prov_mgr_config_t initialize_provisioning(){
     return config;
 }
 
-void start_provisioning(wifi_prov_mgr_config_t config){
-/* Initialize provisioning manager with the
+void start_provisioning(wifi_prov_mgr_config_t config, char *pop, char *device_name, bool connect)
+{
+    /* Initialize provisioning manager with the
      * configuration parameters set above */
     ESP_ERROR_CHECK(wifi_prov_mgr_init(config));
 
@@ -371,8 +688,7 @@ void start_provisioning(wifi_prov_mgr_config_t config){
          *     - Wi-Fi SSID when scheme is wifi_prov_scheme_softap
          *     - device name when scheme is wifi_prov_scheme_ble
          */
-        char service_name[12];
-        get_device_service_name(service_name, sizeof(service_name));
+        char *service_name = device_name;
 
         /* What is the security level that we want (0 or 1):
          *      - WIFI_PROV_SECURITY_0 is simply plain text communication.
@@ -380,13 +696,14 @@ void start_provisioning(wifi_prov_mgr_config_t config){
          *          using X25519 key exchange and proof of possession (pop) and AES-CTR
          *          for encryption/decryption of messages.
          */
-        wifi_prov_security_t security = WIFI_PROV_SECURITY_0;
+        wifi_prov_security_t security = WIFI_PROV_SECURITY_1;
 
         /* Do we want a proof-of-possession (ignored if Security 0 is selected):
          *      - this should be a string with length > 0
          *      - NULL if not used
          */
-        const char *pop = "abcd1234";
+        char *pop_str = pop;
+        ESP_LOGI(TAG, "Pop: %s", pop_str);
 
         /* What is the service key (could be NULL)
          * This translates to :
@@ -433,15 +750,15 @@ void start_provisioning(wifi_prov_mgr_config_t config){
          * The endpoint name can be anything of your choice.
          * This call must be made before starting the provisioning.
          */
-        wifi_prov_mgr_endpoint_create("custom-data");
+        // wifi_prov_mgr_endpoint_create("custom-data");
         /* Start provisioning service */
-        ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(security, pop, service_name, service_key));
+        ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(security, pop_str, service_name, service_key));
 
         /* The handler for the optional endpoint created above.
          * This call must be made after starting the provisioning, and only if the endpoint
          * has already been created above.
          */
-        wifi_prov_mgr_endpoint_register("custom-data", custom_prov_data_handler, NULL);
+        // wifi_prov_mgr_endpoint_register("custom-data", custom_prov_data_handler, NULL);
 
         /* Uncomment the following to wait for the provisioning to finish and then release
          * the resources of the manager. Since in this case de-initialization is triggered
@@ -451,20 +768,51 @@ void start_provisioning(wifi_prov_mgr_config_t config){
     }
     else
     {
-        ESP_LOGI(TAG, "Already provisioned, starting Wi-Fi STA");
-
         /* We don't need the manager as device is already provisioned,
          * so let's release it's resources */
         wifi_prov_mgr_deinit();
-
-        /* Start Wi-Fi station */
-        wifi_init_sta();
+        if (connect)
+        {
+            ESP_LOGI(TAG, "Already provisioned, starting Wi-Fi STA");
+            /* Start Wi-Fi station */
+            wifi_init_sta();
+        }
+        else
+        {
+            ESP_LOGI(TAG, "Already provisioned, not starting WiFi because connecting is disabled");
+        }
     }
-        /* Wait for Wi-Fi connection */
-    xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_EVENT, false, true, portMAX_DELAY);
+    /* Wait for Wi-Fi connection */
+    if (connect)
+        xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_EVENT, false, true, portMAX_DELAY);
 }
 
-void initialize_nvs(){
+void disable_wifi()
+{
+    if (esp_wifi_stop() == ESP_OK)
+    {
+        ESP_LOGI(TAG, "Disabled WiFi");
+    }
+    else
+    {
+        ESP_LOGE(TAG, "Failed to disable WiFi");
+    }
+}
+
+void enable_wifi()
+{
+    if (esp_wifi_start() == ESP_OK)
+    {
+        ESP_LOGI(TAG, "Enabled WiFi");
+    }
+    else
+    {
+        ESP_LOGE(TAG, "Failed to enable WiFi");
+    }
+}
+
+void initialize_nvs()
+{
     /* Initialize NVS partition */
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES)
