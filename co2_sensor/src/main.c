@@ -5,12 +5,16 @@
 #include "../include/crc.h"
 #include "../lib/generic_esp_32/generic_esp_32.h"
 #include "../include/timer.h"
+#include "../include/util.h"
+#include "../include/espnow.h"
 
 #include "../include/scd41.h"
 
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#define ESP_NOW_RECEIVER
 
 void app_main() 
 {
@@ -22,25 +26,36 @@ void app_main()
     initialize_wifi();
     init_timer();
     
+    #ifndef USE_HTTP
+        espnow_init();
+
+        #ifdef ESP_NOW_RECEIVER
+            // with any power saving on, ESP-NOW doesn't work well
+            // (about every 9 out of 10 packets get lost)
+            esp_wifi_set_ps(WIFI_PS_NONE);
+        #endif // ESP_NOW_RECEIVER
+    #endif // USE_HTTP
+    
     while(1)
     {
-        // printf("going into light sleep!\n");
-        // set_light_sleep();
-        // printf("going out of light sleep!\n");
-        // printf("going into modem sleep!\n");
-        // set_modem_sleep();
-        // // ---- MEASURE CO2, TEMP, RHT ---- // 
-        // printf("start measurement!\n");
-        // scd41_measure_co2_temp_rht();
-        // printf("going out of modem sleep!\n");
-        // wake_modem_sleep();
+        // ---- MEASURE CO2, TEMP, RHT ---- // 
+        //scd41_measure_co2_temp_rht();
+
         // ---- SEND DATA VIA HTTPS ---- //
-        vTaskDelay(10);
-        if(isSending){
-            printf("start sending\n");
-            send_HTTPS();
-            isSending = false;
-        }
-        vTaskDelay(1000);
+        #ifdef USE_HTTP
+            read_timer();
+            vTaskDelay(10);
+            if(isSending){
+                send_HTTPS();
+                isSending = false;
+            }
+       #else
+            #ifndef ESP_NOW_RECEIVER
+                uint32_t data = 0;
+                espnow_send(&data, sizeof(uint32_t));
+            #endif // ESP_NOW_RECEIVER
+        #endif // USE_HTTP
+
+        delay(5000);
     }
 }
