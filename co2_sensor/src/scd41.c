@@ -4,6 +4,8 @@
 #include "../include/usart.h"
 #include "../include/util.h"
 
+#include "../include/espnow.h"
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -18,8 +20,12 @@
 
 #define SCD41_CMD_GET_TEMP_OFF  0x2318
 
+#ifdef USE_HTTP
+    #define SCD41_BUFFER_SIZE       128
+#else
+    #define SCD41_BUFFER_SIZE       ESPNOW_MAX_SAMPLES
+#endif // USE_HTPP
 
-#define SCD41_BUFFER_SIZE       128
 #define SCD41_STR_SIZE          64
 
 #ifdef USE_FIXEDPOINT   // TODO
@@ -27,6 +33,8 @@
 #else
     #define FLOAT_TYPE  float
 #endif // USE_FIXEDPOINT
+
+#define SCD41_SAMPLE_INTERVAL   600 // seconds (= 10 minutes)
 
 char str[SCD41_STR_SIZE];
 
@@ -111,7 +119,7 @@ void scd41_measure_co2_temp_rht(void)
     uint8_t read_buffer[9];
     uint8_t cmd_buffer[2];
     
-    // --- START SINGLE SHOT MEASUREMENT
+    // --- START SINGLE SHOT MEASUREMENT --- //
     cmd_buffer[0] = (uint8_t) (SCD41_CMD_SINGLESHOT >> 8) & 0xFF;
     cmd_buffer[1] = (uint8_t) SCD41_CMD_SINGLESHOT & 0xFF;
     
@@ -121,11 +129,33 @@ void scd41_measure_co2_temp_rht(void)
     // --- READ MEASUREMENT --- //
     cmd_buffer[0] = (uint8_t)(SCD41_CMD_READMEASURE >> 8);
     cmd_buffer[1] = (uint8_t) SCD41_CMD_READMEASURE & 0xFF;
+    
     err = i2c_write(SCD41_ADDR, (uint8_t *) &cmd_buffer[0], I2C_NO_STOP, 2);
     delay(1);
     err = i2c_read(SCD41_ADDR, (uint8_t *) &read_buffer[0], 9);
 
-    // ---- CALCULATE CO2 ---- //
+    scd41_store_measurements(&read_buffer[0]);
+
+    if(loc++ >= SCD41_BUFFER_SIZE-1)
+    {
+        #ifdef USE_HTTP
+            // TODO: send via http
+        #else
+            scd41_send_data_espnow();
+        #endif // USE_HTTP
+        
+        scd41_reset_buffers();
+    }
+}
+
+// Function:    scd41_store_measurements()
+// Params:      
+//        - (uint8_t *) buffer as read by i2c_write()
+// Returns:     N/A
+// Desription:  Stores the measurements given by the sensor into the right buffer
+void scd41_store_measurements(uint8_t *read_buffer)
+{
+     // ---- CALCULATE CO2 ---- //
     uint16_t co2 = ((read_buffer[0] << 8) | read_buffer[1]);
     buffer_co2[loc] = co2;
 
@@ -139,15 +169,32 @@ void scd41_measure_co2_temp_rht(void)
     uint8_t rht = (uint8_t) (100 * c / 65536);
     buffer_rht[loc] = rht;
 
-    if(loc++ >= SCD41_BUFFER_SIZE)
-    {
-        // TODO: send
-        scd41_reset_buffers();
-    }
-
     // FOR TESTING ONLY
     sprintf(&str[0], "co2: %dppm, temp: %.2f°C, rht: %d%%\n", co2 , temp, rht);
     usart_write(&str[0], strlen(&str[0])); 
+}
+
+// Function:    scd41_send_data_espnow()
+// Params:      N/A
+// Returns:     N/A
+// Desription:  Prepares an ESP-NOW message and sends it
+void scd41_send_data_espnow(void)
+{
+    uint16_t index = espnow_get_message_index();
+    
+    espnow_msg_t msg = 
+    {
+        .device_type = ESPNOW_DATATYPE_CO2,
+        .nmeasurements = ESPNOW_MAX_SAMPLES,
+        .index = index,
+        .interval = SCD41_SAMPLE_INTERVAL,
+    };
+
+    memcpy(&(msg.co2[0]), (uint16_t *) buffer_co2, SCD41_BUFFER_SIZE * sizeof(uint16_t));
+    memcpy(&(msg.temperature[0]), (FLOAT_TYPE *) buffer_temp, SCD41_BUFFER_SIZE * sizeof(FLOAT_TYPE));
+    memcpy(&(msg.rht[0]), (uint8_t *) buffer_rht, SCD41_BUFFER_SIZE * sizeof(uint8_t));
+    
+    espnow_send((uint8_t *) &msg, sizeof(espnow_msg_t));
 }
 
 // Function:    scd41_reset_buffers()

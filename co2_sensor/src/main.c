@@ -14,15 +14,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define ESP_NOW_RECEIVER
+//#define ESP_NOW_RECEIVER
 
 void app_main() 
 {
     isSending = false;
     // ---- PERIPHERALS INITIALIZATION ---- //
     usart_init(115200);
-    i2c_init();
-    scd41_init();
+
+    #ifndef ESP_NOW_RECEIVER
+        i2c_init();
+        scd41_init();
+    #endif // ESP_NOW_RECEIVER
     initialize_wifi();
     init_timer();
     
@@ -51,8 +54,7 @@ void app_main()
             }
        #else
             #ifndef ESP_NOW_RECEIVER
-                uint32_t data = 0;
-                espnow_send(&data, sizeof(uint32_t));
+               scd41_measure_co2_temp_rht();
             #endif // ESP_NOW_RECEIVER
         #endif // USE_HTTP
 
