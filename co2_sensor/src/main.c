@@ -26,6 +26,7 @@ void app_main()
         i2c_init();
         scd41_init();
     #endif // ESP_NOW_RECEIVER
+
     initialize_wifi();
     init_timer();
     
@@ -37,6 +38,8 @@ void app_main()
             // (about every 9 out of 10 packets get lost)
             esp_wifi_set_ps(WIFI_PS_NONE);
         #endif // ESP_NOW_RECEIVER
+
+
     #endif // USE_HTTP
     
     while(1)
@@ -45,19 +48,19 @@ void app_main()
         //scd41_measure_co2_temp_rht();
 
         // ---- SEND DATA VIA HTTPS ---- //
-        #ifdef USE_HTTP
-            read_timer();
-            vTaskDelay(10);
-            if(isSending){
-                send_HTTPS();
-                isSending = false;
-            }
-       #else
-            #ifndef ESP_NOW_RECEIVER
-               scd41_measure_co2_temp_rht();
-            #endif // ESP_NOW_RECEIVER
-        #endif // USE_HTTP
-
-        delay(5000);
+        //#ifdef USE_HTTP
+    //         read_timer();
+    //         vTaskDelay(10);
+    //         if(isSending){
+    //             send_HTTPS();
+    //             isSending = false;
+    //         }
+    //    #else
+    //         #ifndef ESP_NOW_RECEIVER
+    //            scd41_measure_co2_temp_rht();
+    //         #endif // ESP_NOW_RECEIVER
+    //     #endif // USE_HTTP
+        set_light_sleep();
+        //delay(5000);
     }
 }
