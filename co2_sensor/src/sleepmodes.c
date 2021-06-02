@@ -7,7 +7,7 @@
 #include <../lib/generic_esp_32/generic_esp_32.h>
 
 // DEFINES
-#define TIME_IN_LIGHTSLEEP      5000000   // microseconds --> 10 minutes
+#define TIME_IN_LIGHTSLEEP      20000000   // microseconds --> 10 minutes
 
 // GLOBAL VARIABLES
 char str[256];
@@ -20,8 +20,10 @@ void set_light_sleep()
 {
     esp_wifi_stop();
     esp_sleep_enable_timer_wakeup(TIME_IN_LIGHTSLEEP);
-    usart_write(&str[0], strlen(&str[0]));
+    //usart_write(&str[0], strlen(&str[0]));
     esp_light_sleep_start();
+    esp_wifi_start();
+    
 }
 
 // Function:    disable_bluetooth()
