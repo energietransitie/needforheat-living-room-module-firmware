@@ -29,7 +29,11 @@ void main_esp_now(void)
 
     while(1)
     {
-        set_light_sleep();
+        #ifndef ESP_NOW_RECEIVER
+            set_light_sleep();
+        #else
+            delay(5000); // fix for watchdog issues
+        #endif // ESP_NOW_RECEIVER
     }
 }
 #else
