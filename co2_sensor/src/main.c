@@ -16,6 +16,37 @@
 
 //#define ESP_NOW_RECEIVER
 
+#ifndef USE_HTTP
+void main_esp_now(void)
+{
+    espnow_init();
+
+    #ifdef ESP_NOW_RECEIVER
+        // with any power saving on, ESP-NOW doesn't work well
+        // (about every 9 out of 10 packets get lost)
+        esp_wifi_set_ps(WIFI_PS_NONE);
+    #endif // ESP_NOW_RECEIVER
+
+    while(1)
+    {
+        set_light_sleep();
+    }
+}
+#else
+void main_https(void)
+{
+    while(1)
+    {
+            read_timer();
+            vTaskDelay(10);
+            if(isSending){
+                send_HTTPS();
+                isSending = false;
+            }
+    }
+}
+#endif // USE_HTTP
+
 void app_main() 
 {
     isSending = false;
@@ -31,36 +62,8 @@ void app_main()
     init_timer();
     
     #ifndef USE_HTTP
-        espnow_init();
-
-        #ifdef ESP_NOW_RECEIVER
-            // with any power saving on, ESP-NOW doesn't work well
-            // (about every 9 out of 10 packets get lost)
-            esp_wifi_set_ps(WIFI_PS_NONE);
-        #endif // ESP_NOW_RECEIVER
-
-
+        main_esp_now();
+    #else
+        main_https();
     #endif // USE_HTTP
-    
-    while(1)
-    {
-        // ---- MEASURE CO2, TEMP, RHT ---- // 
-        //scd41_measure_co2_temp_rht();
-
-        // ---- SEND DATA VIA HTTPS ---- //
-        //#ifdef USE_HTTP
-    //         read_timer();
-    //         vTaskDelay(10);
-    //         if(isSending){
-    //             send_HTTPS();
-    //             isSending = false;
-    //         }
-    //    #else
-    //         #ifndef ESP_NOW_RECEIVER
-    //            scd41_measure_co2_temp_rht();
-    //         #endif // ESP_NOW_RECEIVER
-    //     #endif // USE_HTTP
-        set_light_sleep();
-        //delay(5000);
-    }
 }

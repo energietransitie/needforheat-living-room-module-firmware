@@ -4,12 +4,13 @@
 #include "string.h"
 #include "esp_sleep.h"
 #include "esp_wifi.h"
+#include "sleepmodes.h"
 #include <../lib/generic_esp_32/generic_esp_32.h>
 
 #include "../include/scd41.h"
 
 // DEFINES
-#define TIME_IN_LIGHTSLEEP      20000000   // microseconds --> 10 minutes
+#define TIME_IN_LIGHTSLEEP      60 * 10 * 1000 * 1000   // microseconds --> 10 minutes
 
 // GLOBAL VARIABLES
 char str[256];
@@ -24,7 +25,10 @@ void set_light_sleep()
     esp_sleep_enable_timer_wakeup(TIME_IN_LIGHTSLEEP);
     //usart_write(&str[0], strlen(&str[0]));
     esp_light_sleep_start();
+
+    // woke up when it gets here
     esp_wifi_start();   // maybe this can be removed? (add to modem_sleep wake-up)
+    set_modem_sleep();
 
     #ifndef USE_HTTP
         scd41_measure_co2_temp_rht();

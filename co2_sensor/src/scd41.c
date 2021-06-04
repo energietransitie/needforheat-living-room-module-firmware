@@ -3,6 +3,7 @@
 #include "../include/crc.h"
 #include "../include/usart.h"
 #include "../include/util.h"
+#include "../include/sleepmodes.h"
 
 #include "../include/espnow.h"
 
@@ -21,7 +22,7 @@
 #define SCD41_CMD_GET_TEMP_OFF  0x2318
 
 #ifdef USE_HTTP
-    #define SCD41_BUFFER_SIZE       128
+    #define SCD41_BUFFER_SIZE       144     // https
 #else
     #define SCD41_BUFFER_SIZE       ESPNOW_MAX_SAMPLES
 #endif // USE_HTPP
@@ -194,7 +195,9 @@ void scd41_send_data_espnow(void)
     memcpy(&(msg.temperature[0]), (FLOAT_TYPE *) buffer_temp, SCD41_BUFFER_SIZE * sizeof(FLOAT_TYPE));
     memcpy(&(msg.rht[0]), (uint8_t *) buffer_rht, SCD41_BUFFER_SIZE * sizeof(uint8_t));
     
+    wake_modem_sleep();
     espnow_send((uint8_t *) &msg, sizeof(espnow_msg_t));
+    set_modem_sleep();
 }
 
 // Function:    scd41_reset_buffers()
