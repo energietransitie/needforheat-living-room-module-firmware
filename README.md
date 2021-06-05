@@ -17,6 +17,9 @@ The data can be sent to the server in two ways. The first option is to send the 
 
 The data gathered will be analyzed to see when a room is being ventilated. This makes it possible to give advice about the environmental friendliness of your home.
 
+## Prerequisites
+Describe which (hardware and) software you need before you can deploy the software or develop with the source code. If the prerequisites are different for deploying users and developing users, you may want to move the prerequisites section as a subsection of each of those sections.
+
 ## Using binary releases
 TODO
 
