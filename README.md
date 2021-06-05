@@ -3,8 +3,8 @@ This repository contains the software for the CO2-measurement devices. The softw
 
 ## Table of contents
 * [General info](#general-info)
-* [Using binary releases](#using-binaries-releases)
-* [Developing with the source code ](#developing-with-the-source-code) 
+* [Deploying](#deploying)
+* [Developing](#developing) 
 * [Features](#features)
 * [Status](#status)
 * [License](#license)
@@ -17,24 +17,33 @@ The data can be sent to the server in two ways. The first option is to send the 
 
 The data gathered will be analyzed to see when a room is being ventilated. This makes it possible to give advice about the environmental friendliness of your home.
 
-## Prerequisites
-Describe which (hardware and) software you need before you can deploy the software or develop with the source code. If the prerequisites are different for deploying users and developing users, you may want to move the prerequisites section as a subsection of each of those sections.
-
-## Using binary releases
+## Deploying
 TODO
+### Prerequisites
+*   A device based on the ESP32 SoC, like the [LilyGO TTGO T7 Mini32 V1.3 ESP32](https://github.com/LilyGO/ESP32-MINI-32-V1.3) is required;
+*   An [SCD41](https://www.sensirion.com/en/environmental-sensors/carbon-dioxide-sensors/carbon-dioxide-sensor-scd4x/) should be connected via I2C to the device;
+*   A Micro USB cable to connect the device;
+*   A PC with USB port;
+*	[Python version 3.8 or above](https://docs.python.org/3/using/windows.html) installed, make sure to add the path to the Python executable to your PATH variable so you can use Python commands from the command prompt;
+*	[Esptool](https://github.com/espressif/esptool) installed, the Espressif SoC serial bootloader utility;
+*	[Arduino IDE](https://www.arduino.cc/en/software) or [PlatformIO plugin](https://platformio.org/install/ide?install=vscode) for [Visual Studio Code](https://code.visualstudio.com/download) installed.
 
-## Developing with the source code 
+## Developing
 TODO
+### Prerequisites
+* All prerequisites mentioned in [Deploying](#deploying)
+*	[Visual Studio Code](https://code.visualstudio.com/download) installed
+*	[PlatformIO for Visual Studio Code](https://platformio.org/install/ide?install=vscode) installed
+*	A local clone of this GitHub repository
 
 ## Features
-List of features ready and TODOs for future development. Ready:
-
-* Measure CO2, temperature and Relative Humidty (RH) using the SCD41
-* Send data via ESP-NOW
+*   Measure CO2, temperature and Relative Humidty (RH) using the SCD41
+*   Send data via ESP-NOW
+*   Supports modem- and lightsleep
 
 To-do:
 
-* ESP-NOW: getting a peer's MAC-address dynamically on power-up
+*   ESP-NOW: getting a peer's MAC-address dynamically on power-up
 
 ## Status
 Project is: _in progress_
@@ -43,13 +52,6 @@ Project is: _in progress_
 This software is available under the [Apache 2.0 license](./LICENSE.md), Copyright 2021 [Research group Energy Transition, Windesheim University of Applied Sciences](https://windesheim.nl/energietransitie) 
 
 ## Credits
-This software is a collaborative effort the following students and researchers:
-* <contributor name 1> ·  [@Github_handle_1](https://github.com/<github_handle_1>) ·  Twitter [@Twitter_handle_1](https://twitter.com/<twitter_handle_1>)
-* <contributor name 2> ·  [@Github_handle_2](https://github.com/<github_handle_2>) ·  Twitter [@Twitter_handle_2](https://twitter.com/<twitter_handle_2>)
-* <contributor name 3> ·  [@Github_handle_3](https://github.com/<github_handle_3>) ·  Twitter [@Twitter_handle_3](https://twitter.com/<twitter_handle_3>)
-* etc. 
-
-
 We use and gratefully aknowlegde the efforts of the makers of the following source code and libraries:
 
 * [ESP-IDF](https://github.com/espressif/esp-idf), by Copyright (C) 2015-2019 Espressif Systems, licensed under [Apache License 2.0](https://github.com/espressif/esp-idf/blob/9d34a1cd42f6f63b3c699c3fe8ec7216dd56f36a/LICENSE)
