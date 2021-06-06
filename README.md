@@ -18,7 +18,8 @@ The data can be sent to the server in two ways. The first option is to send the 
 The data gathered will be analyzed to see when a room is being ventilated. This makes it possible to give advice about the environmental friendliness of your home.
 
 ## Deploying
-TODO
+Currently, there are no binary releases since you need to configure the MAC-addresses for ESP-NOW manually.
+
 ### Prerequisites
 *   A device based on the ESP32 SoC, like the [LilyGO TTGO T7 Mini32 V1.3 ESP32](https://github.com/LilyGO/ESP32-MINI-32-V1.3) is required;
 *   An [SCD41](https://www.sensirion.com/en/environmental-sensors/carbon-dioxide-sensors/carbon-dioxide-sensor-scd4x/) should be connected via I2C to the device;
@@ -29,17 +30,36 @@ TODO
 *	[Arduino IDE](https://www.arduino.cc/en/software) or [PlatformIO plugin](https://platformio.org/install/ide?install=vscode) for [Visual Studio Code](https://code.visualstudio.com/download) installed.
 
 ## Developing
-TODO
+
 ### Prerequisites
 * All prerequisites mentioned in [Deploying](#deploying)
 *	[Visual Studio Code](https://code.visualstudio.com/download) installed
 *	[PlatformIO for Visual Studio Code](https://platformio.org/install/ide?install=vscode) installed
 *	A local clone of this GitHub repository
 
+### Building and flashing the project
+Open the project in PlatformIO:
+  1. In the top-left corner, select File -> Open Folder.
+  2. Select the `co2_sensor` folder where you cloned or extracted the repository.
+  3. Change any code as you see fit.
+  4. Click the PlatformIO Icon (the little alien in the left of the screen).
+  5. Unfold `ttgo-t7-v13-mini32`.
+  6. Click `upload and monitor`. 
+NOTE: The first time might take a while because PlatformIO needs to install and build the ESP-IDF before flashing.
+OPTIONAL: When it is done flashing, press `CTRL+T` and then `B`, then type `115200` so that it sets the right baud rate and you see text not gibberish.
+
+### Changes necessarry to get ESP-NOW working
+In order for ESP-NOW to work on your device you will need to change a few things in `src/espnow.c`. 
+
+In `src/espnow.c`, change the `WIFI_CHANNEL` define to the channel used by your WiFi. To find your WiFi channel flash this software to the device and provision it. In the serial monitor, you should be able to see a line resembling something like this: `wifi:connected with [YOUR_WIFI], aid = x, channel y, BW20, bssid = xx:xx:xx:xx:xx:xx`.
+
+Next, change the `MAC_ADDR_TEST_SENDER` and `MAC_ADDR_TEST_RECVR` to the MAC-address of your chosen sender and receiver, respectively. Make sure to leave the format the same (i.e. an array initialization using curly brackets `{ }`). You can find the MAC-address of your device by flashing this software to both devices. In the serial monitor, you should be able to see a line resembling something like this: `wifi:mode : sta (xx:xx:xx:xx:xx:xx)`. Use the number in between the normal brackets `( )` as the MAC-address for the device type in question (sender/receiver).
+
 ## Features
 *   Measure CO2, temperature and Relative Humidty (RH) using the SCD41
 *   Send data via ESP-NOW
 *   Supports modem- and lightsleep
+*   WiFi provisioning using SoftAP
 
 To-do:
 
