@@ -55,6 +55,9 @@ In `src/espnow.c`, change the `WIFI_CHANNEL` define to the channel used by your 
 
 Next, change the `MAC_ADDR_TEST_SENDER` and `MAC_ADDR_TEST_RECVR` to the MAC-address of your chosen sender and receiver, respectively. Make sure to leave the format the same (i.e. an array initialization using curly brackets `{ }`). You can find the MAC-address of your device by flashing this software to both devices. In the serial monitor, you should be able to see a line resembling something like this: `wifi:mode : sta (xx:xx:xx:xx:xx:xx)`. Use the number in between the normal brackets `( )` as the MAC-address for the device type in question (sender/receiver).
 
+### Toggling the ESP-NOW code between sender and receiver
+If you want to use a receiver to test this code, you can uncomment line 16 in `platformio.ini`: `#build_flags = -D ESP_NOW_RECEIVER`. Flash it to your chosen device and it will behave as a receiver.
+
 ## Features
 *   Measure CO2, temperature and Relative Humidty (RH) using the SCD41
 *   Send data via ESP-NOW
