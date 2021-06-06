@@ -46,6 +46,7 @@ Open the project in PlatformIO:
   5. Unfold `ttgo-t7-v13-mini32`.
   6. Click `upload and monitor`. 
 NOTE: The first time might take a while because PlatformIO needs to install and build the ESP-IDF before flashing.
+
 OPTIONAL: When it is done flashing, press `CTRL+T` and then `B`, then type `115200` so that it sets the right baud rate and you see text not gibberish.
 
 ### Changes necessarry to get ESP-NOW working
