@@ -35,6 +35,19 @@ void set_light_sleep()
     #endif     
 }
 
+// Function:    set_custom_lightsleep()
+// Params:      
+//      - (uint32_t) length of sleep
+// Returns:     N/A
+// Desription:  Used to enter light sleep with a non-10-minute sleep time
+void set_custom_lightsleep(uint32_t len)
+{
+    esp_wifi_stop();
+    esp_sleep_enable_timer_wakeup(len);
+    esp_light_sleep_start();
+    esp_wifi_start();
+}
+
 // Function:    disable_bluetooth()
 // Params:      N/A
 // Returns:     N/A
@@ -63,6 +76,8 @@ void set_modem_sleep()
 // Desription: Used to wake from modem sleep
 void wake_modem_sleep()
 {
+    esp_wifi_start();
+
     // turn the powersave mode off
     esp_wifi_set_ps(WIFI_PS_NONE);
 }
