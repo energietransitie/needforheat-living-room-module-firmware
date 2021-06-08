@@ -49,7 +49,7 @@ NOTE: The first time might take a while because PlatformIO needs to install and 
 
 OPTIONAL: When it is done flashing, press `CTRL+T` and then `B`, then type `115200` so that it sets the right baud rate and you see text not gibberish.
 
-### Changes necessarry to get ESP-NOW working
+### Changes necessary to get ESP-NOW working
 In order for ESP-NOW to work on your device you will need to change a few things in `src/espnow.c`. 
 
 In `src/espnow.c`, change the `WIFI_CHANNEL` define to the channel used by your WiFi. To find your WiFi channel flash this software to the device and provision it. In the serial monitor, you should be able to see a line resembling something like this: `wifi:connected with [YOUR_WIFI], aid = x, channel y, BW20, bssid = xx:xx:xx:xx:xx:xx`.
