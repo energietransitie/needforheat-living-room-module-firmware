@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-//#define ESP_NOW_RECEIVER
+#define USE_HTTP
 
 #ifndef USE_HTTP
 void main_esp_now(void)

@@ -25,17 +25,25 @@
 
 #include <wifi_provisioning/manager.h>
 
-#define BUTTON_BOOT   GPIO_NUM_0
+#define WIFI_RESET_BUTTON   GPIO_NUM_0
 #define LED_ERROR   GPIO_NUM_19
 
-#define OUTPUT_BITMASK ((1ULL<<LED_ERROR))
-#define INPUT_BITMASK ((1ULL << BUTTON_BOOT))
+#define SSID_PREFIX "TWOMES-"
+#define DEVICE_NAME_SIZE 14 /*SSID_PREFIX will be appended with six hexadecimal digits derived from the last 48 bits of the MAC address */ 
 
-#ifdef CONFIG_EXAMPLE_PROV_TRANSPORT_BLE
+#define MAX_HTTP_OUTPUT_BUFFER 2048
+#define MAX_HTTP_RECV_BUFFER 512
+
+#define LONG_BUTTON_PRESS_DURATION 10
+
+#define TWOMES_TEST_SERVER_HOSTNAME "api.tst.energietransitiewindesheim.nl"
+#define TWOMES_TEST_SERVER "https://api.tst.energietransitiewindesheim.nl"
+
+#ifdef CONFIG_TWOMES_PROV_TRANSPORT_BLE
 #include <wifi_provisioning/scheme_ble.h>
 #endif /* CONFIG_EXAMPLE_PROV_TRANSPORT_BLE */
 
-#ifdef CONFIG_EXAMPLE_PROV_TRANSPORT_SOFTAP
+#ifdef CONFIG_TWOMES_PROV_TRANSPORT_SOFTAP
 #include <wifi_provisioning/scheme_softap.h>
 #endif /* CONFIG_EXAMPLE_PROV_TRANSPORT_SOFTAP */
 
@@ -44,13 +52,19 @@ void sntp_sync_time(struct timeval *tv);
 #endif
 
 
-void initGPIO();
-void blink(void *args);
-void buttonPressDuration(void *args);
+#ifndef CONFIG_TWOMES_CUSTOM_GPIO
+#define OUTPUT_BITMASK ((1ULL<<LED_ERROR))
+#define INPUT_BITMASK ((1ULL << WIFI_RESET_BUTTON))
 
+void initGPIO();
+void buttonPressDuration(void *args);
+#endif
+void blink(void *args);
 char* get_types(char* stringf, int count);
 int variable_sprintf_size(char* string, int count, ...);
 void initialize();
+void create_dat();
+void prepare_device();
 void time_sync_notification_cb(struct timeval *tv);
 void prov_event_handler(void *arg, esp_event_base_t event_base,int32_t event_id, void *event_data);
 esp_err_t http_event_handler(esp_http_client_event_t *evt);
@@ -61,16 +75,17 @@ esp_err_t custom_prov_data_handler(uint32_t session_id, const uint8_t *inbuf, ss
 void initialize_sntp(void);
 void obtain_time(void);
 void initialize_time(char* timezone);
-void post_http(char* url, char *data, char* authenticationToken);
-char* post_https(char* url, char *data, char* cert, char* authenticationToken);
+void post_http(const char* url, char *data, char* authenticationToken);
+char* post_https(const char* url, char *data,const char* cert, char* authenticationToken);
+void upload_heartbeat(const char* variable_interval_upload_url, const char* root_cert, char* bearer);
 char* get_bearer();
-void activate_device(char* url, uint32_t pop, char* cert);
-void get_http(char* url);
+void activate_device(const char *url, char *name,const char *cert);
+void get_http(const char* url);
 
 void initialize_nvs();
 
 wifi_prov_mgr_config_t initialize_provisioning();
-void start_provisioning(wifi_prov_mgr_config_t config, char* pop, char* device_name, bool connect);
+void start_provisioning(wifi_prov_mgr_config_t config, bool connect);
 void disable_wifi();
 void enable_wifi();
 #endif
