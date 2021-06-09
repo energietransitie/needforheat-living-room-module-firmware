@@ -12,13 +12,11 @@
 
 // DEFINES
     // esp32 pins
-//#define PIN_MISO        GPIO_NUM_19
 #define PIN_MOSI        GPIO_NUM_23
 #define PIN_SCK         GPIO_NUM_18 
 #define PIN_CS          GPIO_NUM_26 
 #define TFT_DC          GPIO_NUM_5
 #define DMA_CHANNEL     2
-//#define TFT_RST         GPIO_NUM_17
     // other magic numbers
 #define BYTE_SIZE       8
 #define CLK_SPEED       5000000
@@ -50,22 +48,20 @@ void spi_init()
     spi_device_interface_config_t dev_interface_cfg = {
         .command_bits       = BYTE_SIZE,
         .address_bits       = 0,
-        .mode               = 0,                     // CPHA = 0, CPOL = 0
-        .duty_cycle_pos     = 0,                    // duty cycle of positive clock (50%)
-        .clock_speed_hz     = 1000000,              // clock speed 1 MHz (between 1-5 MHz are the frequencies with 50% duty cycles, higher does not work)
-        .input_delay_ns     = 0,                    // maximum data valid time of slave
+        .mode               = 0,                        // CPHA = 0, CPOL = 0
+        .duty_cycle_pos     = 0,                        // duty cycle of positive clock (50%)
+        .clock_speed_hz     = 1000000,                  // clock speed 1 MHz (between 1-5 MHz are the frequencies with 50% duty cycles, higher does not work)
+        .input_delay_ns     = 0,                        // maximum data valid time of slave
         .spics_io_num       = PIN_CS,              
-        .flags              = SPI_DEVICE_HALFDUPLEX, // use half duplex, seems to reolve some reliabillity issues
+        .flags              = SPI_DEVICE_HALFDUPLEX,    // use half duplex, seems to reolve some reliabillity issues
         .queue_size         = 7,
     };
-
-    //spi_init();
     
     // error args
-    err = spi_bus_initialize(SPI2_HOST, &bus_cfg, 0);                 // initialise the SPI bus
+    err = spi_bus_initialize(SPI2_HOST, &bus_cfg, 0);                           // initialise the SPI bus
     ESP_ERROR_CHECK(err);
 
-    err = spi_bus_add_device(SPI2_HOST, &dev_interface_cfg, &spi_handle);      // add LCD to the SPI bus
+    err = spi_bus_add_device(SPI2_HOST, &dev_interface_cfg, &spi_handle);       // add LCD to the SPI bus
     ESP_ERROR_CHECK(err);
 }
 
@@ -94,12 +90,12 @@ void spi_write_command(spi_device_handle_t spi, uint8_t cmd)
 
     memset(&t, 0, sizeof(t));
 
-    t.base.length    = 8;                        // 8-bit command 
-    t.base.cmd = cmd; 
-    t.base.addr = (uint16_t) 0;                             // fill transmit buffer with the command
-    t.base.flags = SPI_TRANS_VARIABLE_ADDR | SPI_TRANS_VARIABLE_CMD;
-    t.address_bits = 0;
-    t.command_bits = 8;
+    t.base.length   = 8;                // 8-bit command 
+    t.base.cmd      = cmd; 
+    t.base.addr     = (uint16_t) 0;     // fill transmit buffer with the command
+    t.base.flags    = SPI_TRANS_VARIABLE_ADDR | SPI_TRANS_VARIABLE_CMD;
+    t.address_bits  = 0;
+    t.command_bits  = 8;
 
     gpio_set_level(TFT_DC, 0);
     err = spi_device_polling_transmit(spi_handle, &t.base);           // transmit command
@@ -118,10 +114,10 @@ void spi_write_data(spi_device_handle_t spi, uint8_t* data, int len)
     esp_err_t err;
     spi_transaction_ext_t t;
 
-    if (len == 0)   return;             // no need to send data
+    if (len == 0)   return;     // no need to send data
     memset(&t, 0, sizeof(t));
 
-    t.base.length    = BYTE_SIZE + (len-1) * BYTE_SIZE;                        // 8-bit command 
+    t.base.length    = BYTE_SIZE + (len-1) * BYTE_SIZE;     // 8-bit command 
     t.base.cmd = 0; 
     t.base.addr = (uint16_t) 0;                             // fill transmit buffer with the command
     t.base.flags = SPI_TRANS_VARIABLE_ADDR | SPI_TRANS_VARIABLE_CMD;

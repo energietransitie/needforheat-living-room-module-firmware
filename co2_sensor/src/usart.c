@@ -3,14 +3,11 @@
 #include <driver/uart.h>
 #include <driver/gpio.h>
 
-// ==============================
-//          DEFINES
-// ==============================
-#define USART_BUFFER_SIZE       2048 // bytes
-#define USART_BUFFER_DEPTH      10 // # of buffers
+#define USART_BUFFER_SIZE       2048            // bytes
+#define USART_BUFFER_DEPTH      10              // # of buffers
 #define USART_PORT              UART_NUM_0
 
-#define TIMEOUT                 100 // ticks
+#define TIMEOUT                 100             // ticks
 
 QueueHandle_t usartq;
 

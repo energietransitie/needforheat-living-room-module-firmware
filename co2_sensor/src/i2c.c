@@ -1,6 +1,3 @@
-#include "../include/i2c.h"
-#include "../include/errorcode.h"
-
 #include <driver/i2c.h>
 #include <driver/gpio.h>
 #include <esp32/rom/crc.h>
@@ -9,13 +6,12 @@
 #include <string.h>
 
 #include "../include/usart.h"
+#include "../include/i2c.h"
+#include "../include/errorcode.h"
 
-// ==============================
-//          DEFINES
-// ==============================
 #define I2C_MASTER_SDA_IO       GPIO_NUM_21
 #define I2C_MASTER_SCL_IO       GPIO_NUM_22
-#define I2C_MASTER_FREQ         40000    // hz
+#define I2C_MASTER_FREQ         40000           // hz
 
 #define TIMEOUT_VAL             1040000
 
@@ -23,10 +19,10 @@
 
 #define ACK_EN                  (bool) 1
 
-#define I2C_MAX_TRIES           1   // used to be 3
+#define I2C_MAX_TRIES           1               // used to be 3
 
-#define I2C_STATUS_REGISTER     0x3FF5302Cu     // see chapter 11.4 in reference manual
-#define I2C_STATUS_TIMEOUT      (1 << 9)        // see chapter 11.4 in reference manual
+#define I2C_STATUS_REGISTER     0x3FF5302Cu     // see chapter 11.4 in reference manual ESP32
+#define I2C_STATUS_TIMEOUT      (1 << 9)        // see chapter 11.4 in reference manual ESP32
 
 uint8_t flag = 0;
 

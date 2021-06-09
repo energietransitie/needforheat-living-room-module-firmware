@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-void switch_modes(void);
 void set_light_sleep();
 void set_custom_lightsleep(uint32_t len);
 void set_modem_sleep();
