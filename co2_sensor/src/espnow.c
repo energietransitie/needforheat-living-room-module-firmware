@@ -20,7 +20,7 @@
 
 #define MAC_ADDR_TEST_SENDER    {0xc4, 0x4f, 0x33, 0x7f, 0xae, 0x95} // LOLIN TFT/I2C SHIELD ESP
 #define MAC_ADDR_TEST_RECVR     {0xc4, 0x4f, 0x33, 0x7f, 0xa8, 0x81} // SHIELD-LESS ESP
-#define WIFI_CHANNEL            11
+#define WIFI_CHANNEL            1
 
 #define MAX_SEND_ATTEMPTS       0xFF
 #define RETRY_DELAY             10 * 1000 * 1000 // microseconds (= 10 seconds)
@@ -89,9 +89,10 @@ void espnow_cb_ondatasend(const uint8_t *mac, esp_now_send_status_t stat)
 // Desription:  Initializes ESP-NOW
 void espnow_init(void)
 {
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    //ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    esp_wifi_set_channel(WIFI_CHANNEL, WIFI_SECOND_CHAN_NONE);
     ESP_ERROR_CHECK(esp_now_init());
-
+    
     // future TODO: change you can pass the new dynamically
     // received mac-address and wifi-channel to this function and
     // the code will configure espnow properly

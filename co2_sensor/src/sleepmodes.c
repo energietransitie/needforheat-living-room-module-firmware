@@ -21,14 +21,10 @@ char str[256];
 // Desription:  Used to enter light sleep, then wake up automatically after 10 minutes
 void set_light_sleep()
 {
-    esp_wifi_stop();
     esp_sleep_enable_timer_wakeup(TIME_IN_LIGHTSLEEP);
-    //usart_write(&str[0], strlen(&str[0]));
     esp_light_sleep_start();
 
-    // woke up when it gets here
-    esp_wifi_start();   // maybe this can be removed? (add to modem_sleep wake-up)
-    set_modem_sleep();
+    // woke up when it gets here   
 
     #ifndef USE_HTTP
         scd41_measure_co2_temp_rht();
@@ -67,6 +63,7 @@ void set_custom_lightsleep(uint32_t len)
 void set_modem_sleep()
 {
     // set the wifi powersave mode to max
+    esp_wifi_stop();
     esp_wifi_set_ps(WIFI_PS_MAX_MODEM);
 }
 

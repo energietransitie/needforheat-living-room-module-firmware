@@ -19,6 +19,7 @@
 #ifndef USE_HTTP
 void main_esp_now(void)
 {
+    wifi_init_espnow();
     espnow_init();
 
     #ifdef ESP_NOW_RECEIVER
@@ -26,6 +27,10 @@ void main_esp_now(void)
         // (about every 9 out of 10 packets get lost)
         esp_wifi_set_ps(WIFI_PS_NONE);
     #endif // ESP_NOW_RECEIVER
+
+    #ifndef ESP_NOW_RECEIVER
+        set_modem_sleep();
+    #endif
 
     while(1)
     {
@@ -39,6 +44,9 @@ void main_esp_now(void)
 #else
 void main_https(void)
 {
+    initialize_wifi();
+    init_timer();
+
     while(1)
     {
             read_timer();
@@ -61,9 +69,6 @@ void app_main()
         i2c_init();
         scd41_init();
     #endif // ESP_NOW_RECEIVER
-
-    initialize_wifi();
-    init_timer();
     
     #ifndef USE_HTTP
         main_esp_now();
