@@ -2,7 +2,6 @@
 #include "../include/usart.h"
 #include "../include/errorcode.h"
 #include "../include/util.h"
-
 #include "../include/sleepmodes.h"
 
 #include <esp_now.h>
@@ -12,14 +11,14 @@
 #include <string.h>
 #include <stdbool.h>
 
-#define DELAY_INTERVAL      2 // milliseconds
+#define DELAY_INTERVAL      2   // milliseconds
 #define ESPNOW_ACK          1
 #define ESPNOW_NACK         2
 
 #define MAC_ADDR_SIZE       6   // bytes
 
-#define MAC_ADDR_TEST_SENDER    {0xc4, 0x4f, 0x33, 0x7f, 0xae, 0x95} // LOLIN TFT/I2C SHIELD ESP
-#define MAC_ADDR_TEST_RECVR     {0xc4, 0x4f, 0x33, 0x7f, 0xa8, 0x81} // SHIELD-LESS ESP
+#define MAC_ADDR_TEST_SENDER    {0xc4, 0x4f, 0x33, 0x7f, 0xae, 0x95}    // LOLIN TFT/I2C SHIELD ESP
+#define MAC_ADDR_TEST_RECVR     {0xc4, 0x4f, 0x33, 0x7f, 0xa8, 0x81}    // SHIELD-LESS ESP
 #define WIFI_CHANNEL            1
 
 #define MAX_SEND_ATTEMPTS       0xFF
@@ -72,13 +71,14 @@ void espnow_cb_ondatasend(const uint8_t *mac, esp_now_send_status_t stat)
 {
     if(!stat)
     {
-        usart_write("received ACK\n", 13); // testing only
+        usart_write("received ACK\n", 13);      // testing only
         msg_index++;
         msg_ack = ESPNOW_ACK;
     }
+    
     else
     {
-        usart_write("received NACK -\n", 16); // testing only
+        usart_write("received NACK -\n", 16);   // testing only
         msg_ack = ESPNOW_NACK;
     }
 }
