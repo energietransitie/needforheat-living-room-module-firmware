@@ -206,7 +206,7 @@ int variable_sprintf_size(char *string, int count, ...)
             extraSize += snprintf(snBuf, 0, "%s", va_arg(list, char *));
             break;
         case 'f':
-            extraSize += snprintf(snBuf, 0, "%f", va_arg(list, float));
+            extraSize += snprintf(snBuf, 0, "%f", va_arg(list, double));
             break;
         }
     }

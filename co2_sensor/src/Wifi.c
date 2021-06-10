@@ -135,53 +135,32 @@ void upload_measurement_int(const char *variable_interval_upload_url, const char
     //Posting data over HTTPS, using url, msg and bearer token.
     ESP_LOGI(TAG, "Data: %s", msg);
     post_https(variable_interval_upload_url, msg, root_cert, bearer, NULL, 0);
+    vTaskDelay(500 / portTICK_PERIOD_MS);
 }
 
-void upload_measurements(const char *variable_interval_upload_url, const char *root_cert, char *bearer, https_meas_t vals)
-{    
+void upload_measurement_float(const char *variable_interval_upload_url, const char *root_cert, char *bearer, double value){
+    char *measurementType = "\"CO2concentration\""; //was measurements
+    //Updates Epoch Time
     time_t now = time(NULL);
-
     //Plain JSON request where values will be inserted.
-    char *msg_plain_float = "{\"upload_time\": \"%d\",\"property_measurements\": [    {"
+    char *msg_plain = "{\"upload_time\": \"%d\",\"property_measurements\": [    {"
                       "\"property_name\": %s,"
                       "\"timestamp\":\"%d\","
                       "\"timestamp_type\": \"start\","
                       "\"interval\": 0,"
                       "\"measurements\": ["
-                      "\"%.02f\""
-                      "] }" 
-                      "] }";
-    char *msg_plain_int = "{\"upload_time\": \"%d\",\"property_measurements\": [    {"
-                      "\"property_name\": %s,"
-                      "\"timestamp\":\"%d\","
-                      "\"timestamp_type\": \"start\","
-                      "\"interval\": 0,"
-                      "\"measurements\": ["
-                      "\"%d\""
-                      "] }" 
-                      "] }";
+                      "\"%f\""
+                      "]}]}";
     //Get size of the message after inputting variables.
-    int msgSize_co2 = variable_sprintf_size(msg_plain_int, 4, now, MEASUREMENT_TYPE_CO2, now, vals.co2);
-    int msgSize_temp = variable_sprintf_size(msg_plain_int, 4, now, MEASUREMENT_TYPE_ROOMTEMP, now, vals.temp);
-    int msgSize_rh = variable_sprintf_size(msg_plain_int, 4, now, MEASUREMENT_TYPE_RH, now, vals.rh);
-
+    int msgSize = variable_sprintf_size(msg_plain, 4, now, measurementType, now, value);
     //Allocating enough memory so inputting the variables into the string doesn't overflow
-    char *msg_co2 = malloc(msgSize_co2);
-    char *msg_temp = malloc(msgSize_temp) + FLOAT_COMPENSATION; // compensation necessary because float is not supported by variable_sprintf_size()
-    char *msg_rh = malloc(msgSize_rh);
-   
-    snprintf(msg_co2, msgSize_co2, msg_plain_int, now, MEASUREMENT_TYPE_CO2, now, vals.co2);
-    snprintf(msg_temp, msgSize_temp, msg_plain_float, now, MEASUREMENT_TYPE_ROOMTEMP, now, vals.temp);
-    snprintf(msg_rh, msgSize_rh, msg_plain_int, now, MEASUREMENT_TYPE_RH, now, vals.rh);
-    
-    // post all messages
-    post_https(variable_interval_upload_url, msg_co2, root_cert, bearer, NULL, 0);
-    vTaskDelay(500 / portTICK_PERIOD_MS);
-
-    post_https(variable_interval_upload_url, msg_rh, root_cert, bearer, NULL, 0);
-    vTaskDelay(500 / portTICK_PERIOD_MS);
-
-    post_https(variable_interval_upload_url, msg_temp, root_cert, bearer, NULL, 0);
+    char *msg = malloc(msgSize);
+    //Inputting variables into the plain json string from above(msgPlain).
+    snprintf(msg, msgSize, msg_plain, now, measurementType, now, value);
+    //usart_write(msg, strlen(msg));
+    //Posting data over HTTPS, using url, msg and bearer token.
+    ESP_LOGI(TAG, "Data: %s", msg);
+    post_https(variable_interval_upload_url, msg, root_cert, bearer, NULL, 0);
     vTaskDelay(500 / portTICK_PERIOD_MS);
 }
 
@@ -195,11 +174,11 @@ void send_HTTPS(uint16_t co2, float temp, uint8_t rh)
     //send_https_measurements(co2, temp, rh);
 
     https_meas_t vals = { .co2 = co2, .temp = temp, .rh = rh};
-    // upload_measurement_int(variable_interval_upload_url, rootCA, bearer, (int) co2);
-    // upload_measurement_int(variable_interval_upload_url, rootCA, bearer, (int) rh);
-    // upload_measurement_float(variable_interval_upload_url, rootCA, bearer, (float) temp);
+    upload_measurement_int(variable_interval_upload_url, rootCA, bearer, (int) co2);
+    upload_measurement_int(variable_interval_upload_url, rootCA, bearer, (int) rh);
+    upload_measurement_float(variable_interval_upload_url, rootCA, bearer, (double) temp);
 
-    upload_measurements(variable_interval_upload_url, rootCA, bearer, vals);
+    //upload_measurements(variable_interval_upload_url, rootCA, bearer, vals);
     
     //Wait to make sure uploading is finished.
     vTaskDelay(500 / portTICK_PERIOD_MS);

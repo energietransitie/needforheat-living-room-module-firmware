@@ -37,16 +37,20 @@ void main_esp_now(void)
     }
 }
 #else
-void main_https(void)
+void main_https(void * args)
 {
-    while(1)
-    {
-            read_timer();
-            vTaskDelay(10);
-            if(isSending){
-                send_HTTPS(0, 0, 0);
-                isSending = false;
-            }
+    // while(1)
+    // {
+    //         read_timer();
+    //         vTaskDelay(10);
+    //         if(isSending){
+    //             send_HTTPS(0, 0, 0);
+    //             isSending = false;
+    //         }
+    // }
+    while(1) {
+        scd41_measure_co2_temp_rht();
+        delay(1000);
     }
 }
 #endif // USE_HTTP
@@ -64,7 +68,8 @@ void app_main()
 
     initialize_wifi();
     //init_timer();
-    
+    //xTaskCreatePinnedToCore(main_https, "main_https", 0xFFFF, NULL, 5, NULL, 0);
+
     while(1) {
         scd41_measure_co2_temp_rht();
         delay(1000);
