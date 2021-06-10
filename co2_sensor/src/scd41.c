@@ -4,6 +4,7 @@
 #include "../include/usart.h"
 #include "../include/util.h"
 #include "../include/sleepmodes.h"
+#include "../include/Wifi.h"
 
 #include "../include/espnow.h"
 
@@ -137,16 +138,19 @@ void scd41_measure_co2_temp_rht(void)
 
     scd41_store_measurements(&read_buffer[0]);
 
-    if(loc++ >= SCD41_BUFFER_SIZE-1)
-    {
-        #ifdef USE_HTTP
-            // TODO: send via http
-        #else
-            scd41_send_data_espnow();
-        #endif // USE_HTTP
+    send_HTTPS((int) buffer_co2[0]);
+    scd41_reset_buffers();
+
+    // if(loc++ >= SCD41_BUFFER_SIZE-1)
+    // {
+    //     #ifdef USE_HTTP
+    //         // TODO: send via http
+    //     #else
+    //         scd41_send_data_espnow();
+    //     #endif // USE_HTTP
         
-        scd41_reset_buffers();
-    }
+    //     scd41_reset_buffers();
+    // }
 }
 
 // Function:    scd41_store_measurements()

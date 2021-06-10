@@ -1,5 +1,6 @@
 #include "../lib/generic_esp_32/generic_esp_32.h"
 #include "../include/usart.h"
+#include "string.h"
 //#include "../include/spi.h"
 #include "../include/util.h"
 #include "../include/i2c.h"
@@ -10,15 +11,12 @@
 #define HEARTBEAT_UPLOAD_INTERVAL 3600000     //ms, so one hour
 #define HEARTBEAT_MEASUREMENT_INTERVAL 600000 //ms, so 10 minutes; not yet in effect
 static const char *TAG = "Twomes Heartbeat Test Application ESP32";
+char strftime_buf[64];
 
 const char *device_activation_url = TWOMES_TEST_SERVER "/device/activate";
-const char *variable_interval_upload_url = TWOMES_TEST_SERVER "/device/measurements/variable-interval";
+const char *variable_interval_upload_url = TWOMES_TEST_SERVER "/device/measurements/fixed-interval";
 char *bearer;
 const char *rootCA;
-
-
-
-
 
 void initialize_wifi(){
  
@@ -73,15 +71,53 @@ void initialize_wifi(){
     //                    "{ \"timestamp\":\"%d\","
     //                    "\"value\":\"1\"}"
     //                   "]}]}";
+char *get_time(void)
+{
+    // time stuff
+    struct tm timeinfo;
+    time_t now;
+    time(&now);
+    
+    localtime_r(&now, &timeinfo);
+    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
 
+    return strftime_buf;
+}
 
-void send_HTTPS(){
-    //char *bearer = get_bearer();
+void upload_measurement(const char *variable_interval_upload_url, const char *root_cert, char *bearer, int value){
+    char *measurementType = "\"CO2concentration\""; //was measurements
+    //Updates Epoch Time
+    time_t now = time(NULL);
+    //Plain JSON request where values will be inserted.
+    char *msg_plain = "{\"upload_time\": \"%d\",\"property_measurements\": [    {"
+                      "\"property_name\": %s,"
+                      "\"timestamp\":\"%d\","
+                      "\"timestamp_type\": \"start\","
+                      "\"interval\": 0,"
+                      "\"measurements\": ["
+                      "\"%d\""
+                      "]}]}";
+    //Get size of the message after inputting variables.
+    int msgSize = variable_sprintf_size(msg_plain, 4, now, measurementType, now, value);
+    //Allocating enough memory so inputting the variables into the string doesn't overflow
+    char *msg = malloc(msgSize);
+    //Inputting variables into the plain json string from above(msgPlain).
+    snprintf(msg, msgSize, msg_plain, now, measurementType, now, value);
+    //usart_write(msg, strlen(msg));
+    //Posting data over HTTPS, using url, msg and bearer token.
+    ESP_LOGI(TAG, "Data: %s", msg);
+    post_https(variable_interval_upload_url, msg, root_cert, bearer, NULL, 0);
+}
+
+void send_HTTPS(int value)
+{
+    //bearer = get_bearer();
     enable_wifi();
     //Wait to make sure Wi-Fi is enabled.
     vTaskDelay(2000 / portTICK_PERIOD_MS);
     //Upload heartbeat
-    upload_heartbeat(variable_interval_upload_url, rootCA, bearer);
+    upload_measurement(variable_interval_upload_url, rootCA, bearer, (int) value);
+    
     //Wait to make sure uploading is finished.
     vTaskDelay(500 / portTICK_PERIOD_MS);
     //Disconnect WiFi

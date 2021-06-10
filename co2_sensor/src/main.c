@@ -44,7 +44,7 @@ void main_https(void)
             read_timer();
             vTaskDelay(10);
             if(isSending){
-                send_HTTPS();
+                send_HTTPS(0);
                 isSending = false;
             }
     }
@@ -63,11 +63,15 @@ void app_main()
     #endif // ESP_NOW_RECEIVER
 
     initialize_wifi();
-    init_timer();
+    //init_timer();
     
-    #ifndef USE_HTTP
+    while(1) {
+        scd41_measure_co2_temp_rht();
+        delay(1000);
+    }
+    /*#ifndef USE_HTTP
         main_esp_now();
     #else
         main_https();
-    #endif // USE_HTTP
+    #endif // USE_HTTP*/
 }
