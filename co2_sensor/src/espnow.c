@@ -6,8 +6,6 @@
 
 #include <esp_now.h>
 #include <esp_wifi.h>
-#include <esp_netif.h>
-#include <wifi_provisioning/manager.h>
 #include <string.h>
 #include <stdbool.h>
 
@@ -89,7 +87,6 @@ void espnow_cb_ondatasend(const uint8_t *mac, esp_now_send_status_t stat)
 // Desription:  Initializes ESP-NOW
 void espnow_init(void)
 {
-    //ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     esp_wifi_set_channel(WIFI_CHANNEL, WIFI_SECOND_CHAN_NONE);
     ESP_ERROR_CHECK(esp_now_init());
     
