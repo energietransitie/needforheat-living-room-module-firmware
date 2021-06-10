@@ -8,8 +8,29 @@
 #include "../include/timer.h"
 
 #define DEVICE_NAME "Generic-Test"
-#define HEARTBEAT_UPLOAD_INTERVAL 3600000     //ms, so one hour
-#define HEARTBEAT_MEASUREMENT_INTERVAL 600000 //ms, so 10 minutes; not yet in effect
+//#define HEARTBEAT_UPLOAD_INTERVAL 3600000     //ms, so one hour
+//#define HEARTBEAT_MEASUREMENT_INTERVAL 600000 //ms, so 10 minutes; not yet in effect
+
+#define FLOAT_COMPENSATION          4
+#define MEASUREMENT_TYPE_CO2        "\"CO2concentration\""
+#define MEASUREMENT_TYPE_RH         "\"relativeHumidity\""
+#define MEASUREMENT_TYPE_ROOMTEMP   "\"roomTemp\""
+
+char *MSG_PLAIN_INT = "{\"upload_time\": \"%ld\",\"property_measurements\": [    {" 
+                      "\"property_name\": %s," 
+                      "\"timestamp\":\"%ld\"," 
+                      "\"timestamp_type\": \"start\"," 
+                      "\"interval\": 0," 
+                      "\"measurements\": [" "\"%d\"" "]}]}";
+
+char *MSG_PLAIN_FLOAT = "{\"upload_time\": \"%ld\",\"property_measurements\": [    {" 
+                        "\"property_name\": %s," 
+                        "\"timestamp\":\"%ld\"," 
+                        "\"timestamp_type\": \"start\"," 
+                        "\"interval\": 0," 
+                        "\"measurements\": [" "\"%f\"" "]}]}";
+
+
 static const char *TAG = "Twomes Heartbeat Test Application ESP32";
 char strftime_buf[64];
 
@@ -17,6 +38,13 @@ const char *device_activation_url = TWOMES_TEST_SERVER "/device/activate";
 const char *variable_interval_upload_url = TWOMES_TEST_SERVER "/device/measurements/fixed-interval";
 char *bearer;
 const char *rootCA;
+
+typedef struct https_meas_t
+{
+    uint16_t co2;
+    float temp;
+    uint8_t rh;
+} https_meas_t;
 
 void initialize_wifi(){
  
@@ -84,7 +112,7 @@ char *get_time(void)
     return strftime_buf;
 }
 
-void upload_measurement(const char *variable_interval_upload_url, const char *root_cert, char *bearer, int value){
+void upload_measurement_int(const char *variable_interval_upload_url, const char *root_cert, char *bearer, int value){
     char *measurementType = "\"CO2concentration\""; //was measurements
     //Updates Epoch Time
     time_t now = time(NULL);
@@ -109,14 +137,69 @@ void upload_measurement(const char *variable_interval_upload_url, const char *ro
     post_https(variable_interval_upload_url, msg, root_cert, bearer, NULL, 0);
 }
 
-void send_HTTPS(int value)
+void upload_measurements(const char *variable_interval_upload_url, const char *root_cert, char *bearer, https_meas_t vals)
+{    
+    time_t now = time(NULL);
+
+    //Plain JSON request where values will be inserted.
+    char *msg_plain_float = "{\"upload_time\": \"%d\",\"property_measurements\": [    {"
+                      "\"property_name\": %s,"
+                      "\"timestamp\":\"%d\","
+                      "\"timestamp_type\": \"start\","
+                      "\"interval\": 0,"
+                      "\"measurements\": ["
+                      "\"%.02f\""
+                      "] }" 
+                      "] }";
+    char *msg_plain_int = "{\"upload_time\": \"%d\",\"property_measurements\": [    {"
+                      "\"property_name\": %s,"
+                      "\"timestamp\":\"%d\","
+                      "\"timestamp_type\": \"start\","
+                      "\"interval\": 0,"
+                      "\"measurements\": ["
+                      "\"%d\""
+                      "] }" 
+                      "] }";
+    //Get size of the message after inputting variables.
+    int msgSize_co2 = variable_sprintf_size(msg_plain_int, 4, now, MEASUREMENT_TYPE_CO2, now, vals.co2);
+    int msgSize_temp = variable_sprintf_size(msg_plain_int, 4, now, MEASUREMENT_TYPE_ROOMTEMP, now, vals.temp);
+    int msgSize_rh = variable_sprintf_size(msg_plain_int, 4, now, MEASUREMENT_TYPE_RH, now, vals.rh);
+
+    //Allocating enough memory so inputting the variables into the string doesn't overflow
+    char *msg_co2 = malloc(msgSize_co2);
+    char *msg_temp = malloc(msgSize_temp) + FLOAT_COMPENSATION; // compensation necessary because float is not supported by variable_sprintf_size()
+    char *msg_rh = malloc(msgSize_rh);
+   
+    snprintf(msg_co2, msgSize_co2, msg_plain_int, now, MEASUREMENT_TYPE_CO2, now, vals.co2);
+    snprintf(msg_temp, msgSize_temp, msg_plain_float, now, MEASUREMENT_TYPE_ROOMTEMP, now, vals.temp);
+    snprintf(msg_rh, msgSize_rh, msg_plain_int, now, MEASUREMENT_TYPE_RH, now, vals.rh);
+    
+    // post all messages
+    post_https(variable_interval_upload_url, msg_co2, root_cert, bearer, NULL, 0);
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+
+    post_https(variable_interval_upload_url, msg_rh, root_cert, bearer, NULL, 0);
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+
+    post_https(variable_interval_upload_url, msg_temp, root_cert, bearer, NULL, 0);
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+}
+
+void send_HTTPS(uint16_t co2, float temp, uint8_t rh)
 {
     //bearer = get_bearer();
     enable_wifi();
     //Wait to make sure Wi-Fi is enabled.
     vTaskDelay(2000 / portTICK_PERIOD_MS);
     //Upload heartbeat
-    upload_measurement(variable_interval_upload_url, rootCA, bearer, (int) value);
+    //send_https_measurements(co2, temp, rh);
+
+    https_meas_t vals = { .co2 = co2, .temp = temp, .rh = rh};
+    // upload_measurement_int(variable_interval_upload_url, rootCA, bearer, (int) co2);
+    // upload_measurement_int(variable_interval_upload_url, rootCA, bearer, (int) rh);
+    // upload_measurement_float(variable_interval_upload_url, rootCA, bearer, (float) temp);
+
+    upload_measurements(variable_interval_upload_url, rootCA, bearer, vals);
     
     //Wait to make sure uploading is finished.
     vTaskDelay(500 / portTICK_PERIOD_MS);
