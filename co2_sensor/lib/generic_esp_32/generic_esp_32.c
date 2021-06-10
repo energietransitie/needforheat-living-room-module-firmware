@@ -8,7 +8,40 @@ static EventGroupHandle_t wifi_event_group;
 /* Signal Wi-Fi events on this event-group */
 const int WIFI_CONNECTED_EVENT = BIT0;
 
+const char *isrgrootx1 = "-----BEGIN CERTIFICATE-----\n"
+                        "MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw\n"
+                        "TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh\n"
+                        "cmNoIEdyb3VwMRUwEwYDVQQDEwxJU1JHIFJvb3QgWDEwHhcNMTUwNjA0MTEwNDM4\n"
+                        "WhcNMzUwNjA0MTEwNDM4WjBPMQswCQYDVQQGEwJVUzEpMCcGA1UEChMgSW50ZXJu\n"
+                        "ZXQgU2VjdXJpdHkgUmVzZWFyY2ggR3JvdXAxFTATBgNVBAMTDElTUkcgUm9vdCBY\n"
+                        "MTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBAK3oJHP0FDfzm54rVygc\n"
+                        "h77ct984kIxuPOZXoHj3dcKi/vVqbvYATyjb3miGbESTtrFj/RQSa78f0uoxmyF+\n"
+                        "0TM8ukj13Xnfs7j/EvEhmkvBioZxaUpmZmyPfjxwv60pIgbz5MDmgK7iS4+3mX6U\n"
+                        "A5/TR5d8mUgjU+g4rk8Kb4Mu0UlXjIB0ttov0DiNewNwIRt18jA8+o+u3dpjq+sW\n"
+                        "T8KOEUt+zwvo/7V3LvSye0rgTBIlDHCNAymg4VMk7BPZ7hm/ELNKjD+Jo2FR3qyH\n"
+                        "B5T0Y3HsLuJvW5iB4YlcNHlsdu87kGJ55tukmi8mxdAQ4Q7e2RCOFvu396j3x+UC\n"
+                        "B5iPNgiV5+I3lg02dZ77DnKxHZu8A/lJBdiB3QW0KtZB6awBdpUKD9jf1b0SHzUv\n"
+                        "KBds0pjBqAlkd25HN7rOrFleaJ1/ctaJxQZBKT5ZPt0m9STJEadao0xAH0ahmbWn\n"
+                        "OlFuhjuefXKnEgV4We0+UXgVCwOPjdAvBbI+e0ocS3MFEvzG6uBQE3xDk3SzynTn\n"
+                        "jh8BCNAw1FtxNrQHusEwMFxIt4I7mKZ9YIqioymCzLq9gwQbooMDQaHWBfEbwrbw\n"
+                        "qHyGO0aoSCqI3Haadr8faqU9GY/rOPNk3sgrDQoo//fb4hVC1CLQJ13hef4Y53CI\n"
+                        "rU7m2Ys6xt0nUW7/vGT1M0NPAgMBAAGjQjBAMA4GA1UdDwEB/wQEAwIBBjAPBgNV\n"
+                        "HRMBAf8EBTADAQH/MB0GA1UdDgQWBBR5tFnme7bl5AFzgAiIyBpY9umbbjANBgkq\n"
+                        "hkiG9w0BAQsFAAOCAgEAVR9YqbyyqFDQDLHYGmkgJykIrGF1XIpu+ILlaS/V9lZL\n"
+                        "ubhzEFnTIZd+50xx+7LSYK05qAvqFyFWhfFQDlnrzuBZ6brJFe+GnY+EgPbk6ZGQ\n"
+                        "3BebYhtF8GaV0nxvwuo77x/Py9auJ/GpsMiu/X1+mvoiBOv/2X/qkSsisRcOj/KK\n"
+                        "NFtY2PwByVS5uCbMiogziUwthDyC3+6WVwW6LLv3xLfHTjuCvjHIInNzktHCgKQ5\n"
+                        "ORAzI4JMPJ+GslWYHb4phowim57iaztXOoJwTdwJx4nLCgdNbOhdjsnvzqvHu7Ur\n"
+                        "TkXWStAmzOVyyghqpZXjFaH3pO3JLF+l+/+sKAIuvtd7u+Nxe5AW0wdeRlN8NwdC\n"
+                        "jNPElpzVmbUq4JUagEiuTDkHzsxHpFKVK7q4+63SM1N95R1NbdWhscdCb+ZAJzVc\n"
+                        "oyi3B43njTOQ5yOf+1CceWxG1bQVs5ZufpsMljq4Ui0/1lvh+wjChP4kqKOJ2qxq\n"
+                        "4RgqsahDYVvTH9w7jXbyLeiNdd8XM2w9U/t7y0Ff/9yi0GE44Za4rF2LN9d11TPA\n"
+                        "mRGunUHBcnWEvgJBQl9nJEiU0Zsnvgc/ubhPgXRR4Xq37Z0j4r7g1SgEEzwxA57d\n"
+                        "emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=\n"
+                        "-----END CERTIFICATE-----\n";
+
 bool wifi_initialized = false;
+bool wifi_autoconnect = true;
 #ifdef CONFIG_SNTP_TIME_SYNC_METHOD_CUSTOM
 void sntp_sync_time(struct timeval *tv)
 {
@@ -109,18 +142,19 @@ void blink(void *args)
 
 void initialize()
 {
+    ESP_LOGI(TAG, "Generic Firmware Version: %s", VERSION);
+
     /* Initialize the event loop */
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     wifi_event_group = xEventGroupCreate();
-    #ifndef CONFIG_TWOMES_CUSTOM_GPIO
+#ifndef CONFIG_TWOMES_CUSTOM_GPIO
     initGPIO();
     //Attach interrupt handler to GPIO pins:
     gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
     xTaskCreatePinnedToCore(buttonPressDuration, "buttonPressDuration", 2048, NULL, 10, NULL, 1);
     gpio_install_isr_service(0);
     gpio_isr_handler_add(WIFI_RESET_BUTTON, gpio_isr_handler, (void *)WIFI_RESET_BUTTON);
-    #endif
-
+#endif
 }
 
 void time_sync_notification_cb(struct timeval *tv)
@@ -229,8 +263,12 @@ void prov_event_handler(void *arg, esp_event_base_t event_base,
     }
     else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED)
     {
-        ESP_LOGI(TAG, "Disconnected. Connecting to the AP again...");
-        esp_wifi_connect();
+        ESP_LOGI(TAG, "Disconnected.");
+        if (wifi_autoconnect)
+        {
+            ESP_LOGI(TAG, " Connecting to the AP again...");
+            esp_wifi_connect();
+        }
     }
 }
 
@@ -394,13 +432,17 @@ void get_dat(uint32_t *buf)
 
 void prepare_device()
 {
-    if(wifi_initialized){
+    if (wifi_initialized)
+    {
         ESP_LOGI(TAG, "Wi-Fi has been enabled for true random dat generation!");
         create_dat();
-    }else{
+    }
+    else
+    {
         ESP_LOGI(TAG, "Wi-Fi has not been enabled for true random dat generation, enabling Wi-Fi!");
         enable_wifi();
-        while(!wifi_initialized){
+        while (!wifi_initialized)
+        {
             ESP_LOGI(TAG, "Waiting for Wi-Fi enable to finish.");
             vTaskDelay(100 / portTICK_PERIOD_MS);
         };
@@ -411,19 +453,19 @@ void prepare_device()
     get_dat(&dat);
     char *device_name = malloc(DEVICE_NAME_SIZE);
     get_device_service_name(device_name, DEVICE_NAME_SIZE);
-    #ifdef CONFIG_TWOMES_PROV_TRANSPORT_BLE
+#ifdef CONFIG_TWOMES_PROV_TRANSPORT_BLE
     char *qr_code_payload_template = "\n\n{\"ver\":\"v1\",\"name\":\"%s\",\"pop\":\"%u\",\"transport\":\"ble\"}\n\n";
     int qr_code_payload_size = variable_sprintf_size(qr_code_payload_template, 2, device_name, dat);
     char *qr_code_payload = malloc(qr_code_payload_size);
     snprintf(qr_code_payload, qr_code_payload_size, qr_code_payload_template, device_name, dat);
-    #endif
-    #ifdef CONFIG_TWOMES_PROV_TRANSPORT_SOFTAP
+#endif
+#ifdef CONFIG_TWOMES_PROV_TRANSPORT_SOFTAP
     char *qr_code_payload_template = "\n\n{\"ver\":\"v1\",\"name\":\"%s\",\"pop\":\"%u\",\"transport\":\"ble\",\"security\":\"1\",\"password\":\"%s\"}\n\n";
     int qr_code_payload_size = variable_sprintf_size(qr_code_payload_template, 2, device_name, dat, dat);
     char *qr_code_payload = malloc(qr_code_payload_size);
     snprintf(qr_code_payload, qr_code_payload_size, qr_code_payload_template, device_name, dat, dat);
-    #endif
-    
+#endif
+
     ESP_LOGI(TAG, "QR Code Payload: ");
     ESP_LOGI(TAG, "%s", qr_code_payload);
     free(qr_code_payload);
@@ -522,7 +564,7 @@ void initialize_time(char *timezone)
     ESP_LOGI(TAG, "The current UTC/date/time is: %s", strftime_buf);
 }
 
-void upload_heartbeat(const char* variable_interval_upload_url, const char* root_cert, char* bearer)
+void upload_heartbeat(const char *variable_interval_upload_url, const char *root_cert, char *bearer)
 {
     char *measurementType = "\"heartbeat\"";
     //Updates Epoch Time
@@ -531,8 +573,8 @@ void upload_heartbeat(const char* variable_interval_upload_url, const char* root
     char *msg_plain = "{\"upload_time\": \"%d\",\"property_measurements\":[    {"
                       "\"property_name\": %s,"
                       "\"measurements\": ["
-                       "{ \"timestamp\":\"%d\","
-                       "\"value\":\"1\"}"
+                      "{ \"timestamp\":\"%d\","
+                      "\"value\":\"1\"}"
                       "]}]}";
     //Get size of the message after inputting variables.
     int msgSize = variable_sprintf_size(msg_plain, 3, now, measurementType, now);
@@ -542,41 +584,7 @@ void upload_heartbeat(const char* variable_interval_upload_url, const char* root
     snprintf(msg, msgSize, msg_plain, now, measurementType, now);
     //Posting data over HTTPS, using url, msg and bearer token.
     ESP_LOGI(TAG, "Data: %s", msg);
-    post_https(variable_interval_upload_url, msg, root_cert, bearer);
-}
-
-void post_http(const char *url, char *data, char *authenticationToken)
-{
-    esp_http_client_config_t config = {
-        .url = url,
-        .transport_type = HTTP_TRANSPORT_OVER_TCP,
-        .event_handler = http_event_handler};
-    esp_http_client_handle_t client = esp_http_client_init(&config);
-
-    esp_http_client_set_method(client, HTTP_METHOD_POST);
-    esp_http_client_set_header(client, "Host", TWOMES_TEST_SERVER_HOSTNAME);
-    esp_http_client_set_header(client, "Content-Type", "text/plain");
-    char *dataLenStr = malloc(sizeof(char) * 8);
-    itoa(strlen(data), dataLenStr, 10);
-    esp_http_client_set_header(client, "Content-Length", dataLenStr);
-    char *authenticationTokenStringPlain = "Bearer %s";
-    char *authenticationTokenString = "";
-    int strCount = snprintf(authenticationTokenString, 0, authenticationTokenStringPlain, authenticationToken) + 1;
-    authenticationTokenString = malloc(sizeof(char) * strCount);
-    snprintf(authenticationTokenString, strCount * sizeof(char), authenticationTokenStringPlain, authenticationToken);
-    esp_http_client_set_header(client, "Authorization", authenticationTokenString);
-    esp_http_client_set_post_field(client, data, strlen(data));
-    esp_err_t err = esp_http_client_perform(client);
-    if (err != ESP_OK)
-    {
-        ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
-    }
-    esp_http_client_cleanup(client);
-    free(dataLenStr);
-    free(data);
-    if(authenticationToken){
-        free(authenticationTokenString);
-    }
+    post_https(variable_interval_upload_url, msg, root_cert, bearer, NULL, 0);
 }
 
 esp_err_t store_bearer(char *bearer)
@@ -643,6 +651,16 @@ char *get_bearer()
     return bearer;
 }
 
+const char *get_root_ca()
+{
+    // Twomes servers at *.energietransitiewindesheim.nl use Let's Encrypt certificates
+    // based on https://letsencrypt.org/docs/dst-root-ca-x3-expiration-september-2021/
+    // we use the ISRG Root X1 certificate found at https://letsencrypt.org/certs/isrgrootx1.pem
+    // this certificate was translated to ESP32 code 
+    // by adding " at the befinning each line and \n" at the end of each line in the code
+    return isrgrootx1;
+}
+
 void activate_device(const char *url, char *name, const char *cert)
 {
     esp_err_t err;
@@ -655,7 +673,10 @@ void activate_device(const char *url, char *name, const char *cert)
     snprintf(device_activation_data, activation_data_size, device_activation_plain, dat);
 
     ESP_LOGI(TAG, "%s", device_activation_data);
-    char *bearer = post_https(url, device_activation_data, cert, NULL);
+    char *bearer = malloc(sizeof(char)*MAX_RESPONSE_LENGTH);
+    ESP_LOGI(TAG, "GOT HERE!"); 
+    post_https(url, device_activation_data, cert, NULL, bearer, MAX_RESPONSE_LENGTH);
+    ESP_LOGI(TAG, "Got Here!");
     if (!bearer)
     {
         ESP_LOGE(TAG, "Failed to activate device!");
@@ -701,25 +722,8 @@ void activate_device(const char *url, char *name, const char *cert)
     }
 }
 
-void get_http(const char *url)
-{
-    esp_http_client_config_t config = {
-        .url = url,
-        .transport_type = HTTP_TRANSPORT_OVER_TCP,
-        .event_handler = http_event_handler};
-    esp_http_client_handle_t client = esp_http_client_init(&config);
 
-    esp_http_client_set_method(client, HTTP_METHOD_GET);
-    esp_http_client_set_header(client, "Host", "192.168.178.48:8000");
-    esp_err_t err = esp_http_client_perform(client);
-    if (err != ESP_OK)
-    {
-        ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
-    }
-    esp_http_client_cleanup(client);
-}
-
-char *post_https(const char *url, char *data, const char *cert, char *authenticationToken)
+int post_https(const char *url, char *data, const char *cert, char *authenticationToken, char* response_buf, uint8_t resp_buf_size)
 {
     int content_length;
     int status_code = 0;
@@ -743,8 +747,10 @@ char *post_https(const char *url, char *data, const char *cert, char *authentica
         snprintf(authenticationTokenString, strCount * sizeof(char), authenticationTokenStringPlain, authenticationToken);
         esp_http_client_set_header(client, "Authorization", authenticationTokenString);
     }
+    ESP_LOGI(TAG, "Got Here 1");
     esp_http_client_set_post_field(client, data, strlen(data));
     esp_err_t err = esp_http_client_perform(client);
+    ESP_LOGI(TAG, "Got Here 2");
     if (err != ESP_OK)
     {
         ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
@@ -766,19 +772,20 @@ char *post_https(const char *url, char *data, const char *cert, char *authentica
             ESP_LOGE(TAG, "No proper response, response length: %d status_code: %d", content_length, status_code);
         }
     }
-    if(authenticationToken){
+    if (authenticationToken)
+    {
         free(authenticationTokenString);
     }
     free(data);
     esp_http_client_cleanup(client);
-    if (response && status_code == 200)
+    if (response&&resp_buf_size)
     {
-        return response;
+        int missed = snprintf(response_buf, resp_buf_size, "%s", response);
+        if(missed > resp_buf_size){
+            ESP_LOGE(TAG, "Buffer was too small, full string was not written. Missed %d amount of character space!", missed-resp_buf_size);
+        }
     }
-    else
-    {
-        return NULL;
-    }
+    return status_code;
 }
 
 wifi_prov_mgr_config_t initialize_provisioning()
@@ -972,6 +979,34 @@ void enable_wifi()
     else
     {
         ESP_LOGE(TAG, "Failed to enable Wi-Fi");
+    }
+}
+
+void disconnect_wifi()
+{
+    wifi_autoconnect = false;
+    esp_err_t err = esp_wifi_disconnect();
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(TAG, "Failed to disconnect Wi-Fi: %s", esp_err_to_name(err));
+    }
+    else
+    {
+        ESP_LOGI(TAG, "Disconnected Wi-Fi");
+    }
+}
+
+void connect_wifi()
+{
+    esp_err_t err = esp_wifi_connect();
+    wifi_autoconnect = true;
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(TAG, "Failed to connect to Wi-Fi: %s", esp_err_to_name(err));
+    }
+    else
+    {
+        ESP_LOGI(TAG, "Succesfully connected Wi-Fi");
     }
 }
 
