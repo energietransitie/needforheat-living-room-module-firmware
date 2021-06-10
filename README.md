@@ -84,7 +84,7 @@ This software is a collaborative effort of the following students:
 Product owner:
 * Henri ter Hofte  ·  [@henriterhofte](https://github.com/henriterhofte)
 
-We use and gratefully aknowlegde the efforts of the makers of the following source code and libraries:
+We use and gratefully acknowlegde the efforts of the makers of the following source code and libraries:
 
 * [ESP-IDF](https://github.com/espressif/esp-idf), by Copyright (C) 2015-2019 Espressif Systems, licensed under [Apache License 2.0](https://github.com/espressif/esp-idf/blob/9d34a1cd42f6f63b3c699c3fe8ec7216dd56f36a/LICENSE)
 * [Twomes Generic ESP Firmware](https://github.com/energietransitie/twomes-generic-esp-firmware), by Copyright (C) 2021 Research group Energy Transition, Windesheim University of Applied Sciences, licensed under [Apache License 2.0](https://github.com/energietransitie/twomes-generic-esp-firmware/blob/b17f346d78ac7dde6f2dff6b5e7639e98d55c348/LICENSE.md)
