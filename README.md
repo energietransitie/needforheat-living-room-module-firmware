@@ -82,6 +82,9 @@ This software is a collaborative effort of the following students:
 * Tristan Jongedijk  ·  [@tristanjongedijk](https://github.com/tristanjongedijk)
 * Laurens de Boer  ·  [@Laurenz02](https://github.com/Laurenz02)
 
+Product owner:
+* Henri ter Hofte  ·  [@henriterhofte](https://github.com/henriterhofte)
+
 We use and gratefully aknowlegde the efforts of the makers of the following source code and libraries:
 
 * [ESP-IDF](https://github.com/espressif/esp-idf), by Copyright (C) 2015-2019 Espressif Systems, licensed under [Apache License 2.0](https://github.com/espressif/esp-idf/blob/9d34a1cd42f6f63b3c699c3fe8ec7216dd56f36a/LICENSE)
