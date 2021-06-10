@@ -77,6 +77,11 @@ Project is: _in progress_
 This software is available under the [Apache 2.0 license](./LICENSE.md), Copyright 2021 [Research group Energy Transition, Windesheim University of Applied Sciences](https://windesheim.nl/energietransitie) 
 
 ## Credits
+This software is a collaborative effort of the following students:
+* Maarten Vermeulen  ·  [@m44rtn](https://github.com/m44rtn)
+* Tristan Jongedijk  ·  [@tristanjongedijk](https://github.com/tristanjongedijk)
+* Laurens de Boer  ·  [@Laurenz02](https://github.com/Laurenz02)
+
 We use and gratefully aknowlegde the efforts of the makers of the following source code and libraries:
 
 * [ESP-IDF](https://github.com/espressif/esp-idf), by Copyright (C) 2015-2019 Espressif Systems, licensed under [Apache License 2.0](https://github.com/espressif/esp-idf/blob/9d34a1cd42f6f63b3c699c3fe8ec7216dd56f36a/LICENSE)
