@@ -130,7 +130,6 @@ void append_floats(float *b, size_t size, char *msg_ptr, const char *type)
 
 void upload(uint16_t *b_co2, float *b_temp, uint8_t *b_rh, size_t size)
 {
-    uint32_t tries = 0;
     time_t now = time(NULL);
     char *msg = malloc(MESSAGE_BUFFER_SIZE);
 
@@ -159,7 +158,6 @@ void upload(uint16_t *b_co2, float *b_temp, uint8_t *b_rh, size_t size)
     // aaaand... send! :)
     if(post_https(variable_interval_upload_url, msg, rootCA, bearer, NULL, 0) != 200)
         usart_write("Error sending data!\n", 21);
-
     vTaskDelay(500 / portTICK_PERIOD_MS);
 }
 

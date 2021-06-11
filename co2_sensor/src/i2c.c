@@ -56,6 +56,26 @@ void i2c_init(void)
     i2c_set_timeout(I2C_PORT, TIMEOUT_VAL);
 }
 
+// Function:        i2c_isr()
+// Params:
+//      - (void *) arg --> ignored
+// Returns:         N/A
+// Description:     [FOR FUTURE REFERENCE] --> this may be needed in the future
+//                  i2c interrupt handler, which is used to allow clock stretching
+//                  it is (for now) only called when a time out occurs
+void IRAM_ATTR i2c_isr(void *arg)
+{
+    // reset flag
+    uint32_t *status = (uint32_t *) I2C_STATUS_REGISTER;
+
+    i2c_reset_tx_fifo(I2C_PORT);
+    i2c_reset_rx_fifo(I2C_PORT);
+
+    flag = 0xff;
+
+    *(status) &= ~I2C_STATUS_TIMEOUT;
+}
+
 // Function:    i2c_read()
 // Params:      
 //      - (uint8_t) slave address
