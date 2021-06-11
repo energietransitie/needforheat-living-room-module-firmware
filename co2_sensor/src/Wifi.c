@@ -1,7 +1,6 @@
 #include "../lib/generic_esp_32/generic_esp_32.h"
 #include "../include/usart.h"
 #include "string.h"
-//#include "../include/spi.h"
 #include "../include/util.h"
 #include "../include/i2c.h"
 #include "../include/wifi.h"
@@ -33,6 +32,10 @@ const char *variable_interval_upload_url = TWOMES_TEST_SERVER "/device/measureme
 char *bearer;
 const char *rootCA;
 
+// Function:    wifi_init_espnow()
+// Params:      N/A
+// Returns:     N/A
+// Description: used to initialise Wi-Fi for ESP-NOW
 void wifi_init_espnow(void)
 {
     initialize_nvs();
@@ -45,6 +48,10 @@ void wifi_init_espnow(void)
     ESP_ERROR_CHECK( esp_wifi_start());
 }
 
+// Function:    initialise_wifi()
+// Params:      N/A
+// Returns:     N/A
+// Description: used to intialize Wi-Fi for HTTPS
 void initialize_wifi(){
  
     initialize_nvs();
@@ -54,14 +61,16 @@ void initialize_wifi(){
 
     wifi_prov_mgr_config_t config = initialize_provisioning();
 
-    //Make sure to have this here otherwise the device names won't match because
-    //of config changes made by the above function call.
+    // make sure to have this here otherwise the device names won't match because
+    // of config changes made by the above function call.
     prepare_device();
-    //Starts provisioning if not provisioned, otherwise skips provisioning.
-    //If set to false it will not autoconnect after provisioning.
-    //If set to true it will autonnect.
+
+    // starts provisioning if not provisioned, otherwise skips provisioning.
+    // if set to false it will not autoconnect after provisioning.
+    // if set to true it will autonnect.
     start_provisioning(config, true);
-    //Initialize time with timezone UTC; building timezone is stored in central database
+
+    // initialize time with timezone UTC; building timezone is stored in central database
     initialize_time("UTC");
 
     // gets time as epoch time.
@@ -69,6 +78,7 @@ void initialize_wifi(){
     uint32_t now = time(NULL);
     ESP_LOGI(TAG, "Time is: %d", now);
 
+    // get bearer token
     bearer = get_bearer();
     char *device_name;
     device_name = malloc(DEVICE_NAME_SIZE);
@@ -93,6 +103,14 @@ void initialize_wifi(){
     }
 }
 
+// Function:        append_ints()
+// Params:
+//      - (uint32_t *)      buffer [TODO]
+//      - (size_t)          [TODO]
+//      - (char *)          pointer to message
+//      - (const char *)    type of measurement (CO2, temp or RH)
+// Returns:         N/A
+// Description:     puts measurements at the end of the buffer [TODO]
 void append_ints(uint32_t *b, size_t size, char *msg_ptr, const char *type)
 {
     time_t now = time(NULL);
@@ -142,6 +160,14 @@ void append_floats(float *b, size_t size, char *msg_ptr, const char *type)
     strcat(msg_ptr, temp);
 }
 
+// Function:        upload()
+// Params:
+//      - (uint16_t *)      buffer for CO2 measurements
+//      - (float *)         buffer for temperature measurements
+//      - (uint8_t *)       buffer for relative humidity measurements
+//      - (size_t)          [TODO]
+// Returns:         N/A
+// Description:     used to upload measurements to the API
 void upload(uint16_t *b_co2, float *b_temp, uint8_t *b_rh, size_t size)
 {
     time_t now = time(NULL);
@@ -166,16 +192,19 @@ void upload(uint16_t *b_co2, float *b_temp, uint8_t *b_rh, size_t size)
     vTaskDelay(500 / portTICK_PERIOD_MS);
 }
 
+// Function:        send_HTTPS()
+// Params:
+//      - (uint16_t *)      co2 buffer
+//      - (float *)         temperature buffer
+//      - (uint8_t *)       relative humidity buffer
+//      - (size_t)          [TODO]
+// Returns:         N/A
+// Description:     sends measurements to the API
 void send_HTTPS(uint16_t *co2, float *temp, uint8_t *rh, size_t size)
 {
     enable_wifi();
-    //Wait to make sure Wi-Fi is enabled.
-    vTaskDelay(2000 / portTICK_PERIOD_MS);
-    
-    upload(co2, temp, rh, size);
-
-    //Wait to make sure uploading is finished.
-    vTaskDelay(500 / portTICK_PERIOD_MS);
-    //Disconnect WiFi
+    vTaskDelay(2000 / portTICK_PERIOD_MS);  // wait to make sure Wi-Fi is enabled.
+    upload(co2, temp, rh, size);              
+    vTaskDelay(500 / portTICK_PERIOD_MS);   // wait to make sure uploading is finished.
     disable_wifi();
 }
