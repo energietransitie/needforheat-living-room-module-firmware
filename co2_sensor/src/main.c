@@ -15,11 +15,14 @@
 #include <stdlib.h>
 
 // TODO:
-// - remove unnecessary functions
+// - remove unnecessary functions (last to be done)
 // - improve scd41 readings (comment floats and divisions)
 // - instead of delay(1350), custom_lightsleep(1350 * 1000) watch wifi_stop and begin
 // - ESP_LOGI instead of usart_write
 // - improve ifndefs
+// - increase HTTP buffer size in scd41 (is this possible with current code?)
+// - proper interval for https measurements: 10 minutes [done] --> needs some more testing (time with stopwatch)
+// - dynamic MAC ESP-NOW ! ! ! ! !
 
 #ifndef USE_HTTP
 void main_esp_now(void)
@@ -51,11 +54,9 @@ void main_https(void)
 {
     initialize_wifi();
 
-    // TODO: use the right delay/sleep for 10 minute measurements
     while(1) {
-        //set_light_sleep();
-        scd41_measure_co2_temp_rht();
-        delay(1000);
+        set_light_sleep(); // creates the right timing and will measure after
+        delay(1000); // watchdogs aren't welcome
     }
 }
 #endif // USE_HTTP

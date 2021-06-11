@@ -23,10 +23,7 @@ void set_light_sleep()
     esp_light_sleep_start();
 
     // woke up when it gets here   
-
-    #ifndef USE_HTTP
-        scd41_measure_co2_temp_rht();
-    #endif     
+    scd41_measure_co2_temp_rht();
 }
 
 // Function:    set_custom_lightsleep()
