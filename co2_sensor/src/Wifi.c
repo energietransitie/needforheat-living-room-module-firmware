@@ -1,6 +1,7 @@
 #include "../lib/generic_esp_32/generic_esp_32.h"
 #include "../include/usart.h"
 #include "string.h"
+//#include "../include/spi.h"
 #include "../include/util.h"
 #include "../include/i2c.h"
 #include "../include/Wifi.h"
@@ -15,9 +16,6 @@
 #define MEASUREMENT_TYPE_RH         "\"relativeHumidity\""
 #define MEASUREMENT_TYPE_ROOMTEMP   "\"roomTemp\""
 
-#define MAX_RETRIES                 10
-
-// message send information
 char temp[64];
 char *msg_start = "{\"upload_time\": \"%d\",\"property_measurements\": [";
 char *meas_str  = "{\"property_name\": %s,"
@@ -28,16 +26,13 @@ char *meas_str  = "{\"property_name\": %s,"
 char *msg_end   = "] }";
     
 static const char *TAG = "Twomes Heartbeat Test Application ESP32";
+char strftime_buf[64]; // FIXME: weird things happen when you remove this one
 
 const char *device_activation_url = TWOMES_TEST_SERVER "/device/activate";
 const char *variable_interval_upload_url = TWOMES_TEST_SERVER "/device/measurements/fixed-interval";
 char *bearer;
 const char *rootCA;
 
-// Function:    initialize_wifi()
-// Params:      N/A
-// Returns:     N/A
-// Desription:  Initializes this wifi
 void initialize_wifi(){
  
     initialize_nvs();
@@ -140,49 +135,32 @@ void upload(uint16_t *b_co2, float *b_temp, uint8_t *b_rh, size_t size)
     int msgSize = variable_sprintf_size(msg_start, 1, now);
     snprintf(msg, msgSize, msg_start, now);
 
-    // append co2 data to existing msg
     append_ints(uint16_to_uint32(b_co2, size), size, msg, MEASUREMENT_TYPE_CO2); 
     strcat(msg, ",");
-
-    // append rh data to existing msg
     append_ints(uint8_to_uint32(b_rh, size), size, msg, MEASUREMENT_TYPE_RH);
     strcat(msg, ",");
-
-    // append room temperatures to existing msg
     append_floats(b_temp, size, msg, MEASUREMENT_TYPE_ROOMTEMP);
 
-    // end message
     strcat(msg, "] }");
 
-    // TESTING ONLY
     usart_write("data: ", 6);
     usart_write(msg, strlen(msg));
     usart_write("\n", 1);
 
-    // aaaand... send! :)
-    if(post_https(variable_interval_upload_url, msg, rootCA, bearer, NULL, 0) != 200)
-        usart_write("Error sending data!\n", 21);
+    post_https(variable_interval_upload_url, msg, rootCA, bearer, NULL, 0); // msg is freed by this function
     vTaskDelay(500 / portTICK_PERIOD_MS);
 }
 
-// Function:    send_HTTPS()
-// Params:      
-//      - (uint16_t) the co2 values
-//      - (float) the temperature values
-//      - (uint8_t) the relative humidity values
-//      - (size_t) # of elements in buffer
-// Returns:     N/A
-// Desription: takes the values and sends them with HTTPS
 void send_HTTPS(uint16_t *co2, float *temp, uint8_t *rh, size_t size)
 {
     enable_wifi();
-
     //Wait to make sure Wi-Fi is enabled.
     vTaskDelay(2000 / portTICK_PERIOD_MS);
     
-    // upload data
     upload(co2, temp, rh, size);
 
+    //Wait to make sure uploading is finished.
+    vTaskDelay(500 / portTICK_PERIOD_MS);
     //Disconnect WiFi
     disable_wifi();
 }
