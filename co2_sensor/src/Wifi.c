@@ -34,6 +34,10 @@ const char *variable_interval_upload_url = TWOMES_TEST_SERVER "/device/measureme
 char *bearer;
 const char *rootCA;
 
+// Function:    initialize_wifi()
+// Params:      N/A
+// Returns:     N/A
+// Desription:  Initializes this wifi
 void initialize_wifi(){
  
     initialize_nvs();
@@ -161,6 +165,14 @@ void upload(uint16_t *b_co2, float *b_temp, uint8_t *b_rh, size_t size)
     vTaskDelay(500 / portTICK_PERIOD_MS);
 }
 
+// Function:    send_HTTPS()
+// Params:      
+//      - (uint16_t) the co2 values
+//      - (float) the temperature values
+//      - (uint8_t) the relative humidity values
+//      - (size_t) # of elements in buffer
+// Returns:     N/A
+// Desription: takes the values and sends them with HTTPS
 void send_HTTPS(uint16_t *co2, float *temp, uint8_t *rh, size_t size)
 {
     enable_wifi();

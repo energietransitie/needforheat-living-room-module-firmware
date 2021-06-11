@@ -1,6 +1,3 @@
-#include "../include/i2c.h"
-#include "../include/errorcode.h"
-
 #include <driver/i2c.h>
 #include <driver/gpio.h>
 #include <esp32/rom/crc.h>
@@ -9,13 +6,12 @@
 #include <string.h>
 
 #include "../include/usart.h"
+#include "../include/i2c.h"
+#include "../include/errorcode.h"
 
-// ==============================
-//          DEFINES
-// ==============================
 #define I2C_MASTER_SDA_IO       GPIO_NUM_21
 #define I2C_MASTER_SCL_IO       GPIO_NUM_22
-#define I2C_MASTER_FREQ         40000    // hz
+#define I2C_MASTER_FREQ         40000           // hz
 
 #define TIMEOUT_VAL             1040000
 
@@ -23,10 +19,10 @@
 
 #define ACK_EN                  (bool) 1
 
-#define I2C_MAX_TRIES           1   // used to be 3
+#define I2C_MAX_TRIES           1               // used to be 3
 
-#define I2C_STATUS_REGISTER     0x3FF5302Cu     // see chapter 11.4 in reference manual
-#define I2C_STATUS_TIMEOUT      (1 << 9)        // see chapter 11.4 in reference manual
+#define I2C_STATUS_REGISTER     0x3FF5302Cu     // see chapter 11.4 in reference manual ESP32
+#define I2C_STATUS_TIMEOUT      (1 << 9)        // see chapter 11.4 in reference manual ESP32
 
 uint8_t flag = 0;
 
@@ -51,6 +47,11 @@ void i2c_init(void)
     // configure driver
     ESP_ERROR_CHECK(i2c_param_config(I2C_PORT, &conf));
     ESP_ERROR_CHECK(i2c_driver_install(I2C_PORT, conf.mode, 0, 0, ESP_INTR_FLAG_LEVEL3)); // ESP_INTR_FLAG_LEVEL3
+
+    // configure ISR (could not be tested properly, yet)
+    //intr_handle_t handle;
+    //ESP_ERROR_CHECK(esp_intr_alloc_intrstatus(ETS_I2C_EXT0_INTR_SOURCE, ESP_INTR_FLAG_LEVEL3, I2C_STATUS_REGISTER, I2C_STATUS_TIMEOUT, i2c_isr, NULL, &handle));
+    //ESP_ERROR_CHECK(i2c_isr_register(I2C_PORT, i2c_isr, NULL, ESP_INTR_FLAG_LEVEL3, &handle));
     
     // set a max. time out for 13ms
     i2c_set_timeout(I2C_PORT, TIMEOUT_VAL);

@@ -41,6 +41,8 @@ void main_https(void)
 {
     while(1) {
         //set_light_sleep();
+        scd41_measure_co2_temp_rht();
+        delay(1000);
     }
 }
 #endif // USE_HTTP
