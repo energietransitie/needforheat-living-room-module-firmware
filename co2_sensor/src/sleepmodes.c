@@ -8,7 +8,7 @@
 #include <../lib/generic_esp_32/generic_esp_32.h>
 #include "../include/scd41.h"
 
-#define TIME_IN_LIGHTSLEEP      1200 //60 * 10 * 1000 * 1000   // microseconds --> 10 minutes
+#define TIME_IN_LIGHTSLEEP      60 * 10 * 1000 * 1000   // microseconds --> 10 minutes
 #define TIME_IN_LIGHTSLEEP_TEST 60000000
 
 char str[256];
