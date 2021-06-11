@@ -184,9 +184,7 @@ void upload(uint16_t *b_co2, float *b_temp, uint8_t *b_rh, size_t size)
 
     strcat(msg, "] }");
 
-    usart_write("data: ", 6);
-    usart_write(msg, strlen(msg));
-    usart_write("\n", 1);
+    ESP_LOGI("test", "data: %s", msg );
 
     post_https(variable_interval_upload_url, msg, rootCA, bearer, NULL, 0); // msg is freed by this function
     vTaskDelay(500 / portTICK_PERIOD_MS);

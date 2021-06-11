@@ -4,10 +4,13 @@
 #include "../include/util.h"
 #include "../include/sleepmodes.h"
 
+#include <esp_log.h>
 #include <esp_now.h>
 #include <esp_wifi.h>
 #include <string.h>
 #include <stdbool.h>
+
+#define TAG "esp-now"
 
 #define DELAY_INTERVAL      2   // milliseconds
 #define ESPNOW_ACK          1
@@ -48,15 +51,15 @@ uint8_t mymac_addr[MAC_ADDR_SIZE],
 // Desription:  Used for testing - this function is the onDataReceive callback used to test if sending data works
 void espnow_cb_ondatarecv(const uint8_t *mac, const uint8_t *data, const uint32_t len)
 {
-    usart_write("received, eh... something\n", 28);
+    ESP_LOGI(TAG, "received, eh... something\n");
+    
 
     espnow_msg_t *msg = (espnow_msg_t *) data;
 
     char str[128];
 
     // TESTING ONLY
-    sprintf(&str[0], "type: %x, nmeasurements: %x, index: %x, co2: %i ppm\n", (msg->device_type), (msg->nmeasurements), (msg->index), (msg->co2[0]));
-    usart_write(&str[0], strlen(&str[0]));
+    ESP_LOGI(TAG, "type: %x, nmeasurements: %x, index: %x, co2: %i ppm", (msg->device_type), (msg->nmeasurements), (msg->index), (msg->co2[0]));
 }
 
 // Function:    espnow_cb_ondatasend()
@@ -69,14 +72,14 @@ void espnow_cb_ondatasend(const uint8_t *mac, esp_now_send_status_t stat)
 {
     if(!stat)
     {
-        usart_write("received ACK\n", 13);      // testing only
+        ESP_LOGI(TAG, "received ACK");       // testing only
         msg_index++;
         msg_ack = ESPNOW_ACK;
     }
     
     else
     {
-        usart_write("received NACK -\n", 16);   // testing only
+        ESP_LOGI(TAG, "received NACK -");   // testing only
         msg_ack = ESPNOW_NACK;
     }
 }
@@ -119,8 +122,7 @@ void espnow_config_peer(uint8_t channel, bool encrypt, uint8_t *peer_mac)
     char str[40];
 
     // TESTING ONLY
-    sprintf(&str[0], "peer mac: %x:%x:%x:%x:%x:%x\n", info.peer_addr[0], info.peer_addr[1], info.peer_addr[2], info.peer_addr[3], info.peer_addr[4], info.peer_addr[5]);
-    usart_write(&str[0], strlen(&str[0]));
+    ESP_LOGI(TAG, "peer mac: %x:%x:%x:%x:%x:%x\n", info.peer_addr[0], info.peer_addr[1], info.peer_addr[2], info.peer_addr[3], info.peer_addr[4], info.peer_addr[5]);
 
     ESP_ERROR_CHECK(esp_now_add_peer((esp_now_peer_info_t *) &info));
 }
@@ -150,8 +152,7 @@ uint8_t espnow_send(uint8_t *data, size_t size)
         msg_ack = 0;
 
         // TESTING ONLY
-        sprintf(&str[0], "sent msg, index: %x, msg_ack: %x\n", msg_index, msg_ack);
-        usart_write(&str[0], strlen(&str[0]));
+        ESP_LOGI(TAG, "sent msg, index: %x, msg_ack: %x\n", msg_index, msg_ack);
         
         if(attempt++ > MAX_SEND_ATTEMPTS-1)
            {msg_ack = 0; return ERROR_CODE_FAIL;}
