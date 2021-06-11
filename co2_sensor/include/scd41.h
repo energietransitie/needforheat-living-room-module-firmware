@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define SCD41_SAMPLE_INTERVAL   600 // seconds (= 10 minutes)
+
 void scd41_init(void);
 void scd41_disable_asc(void);
 void scd41_measure_co2_temp_rht(void);

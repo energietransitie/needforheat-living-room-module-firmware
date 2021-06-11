@@ -22,11 +22,11 @@
 
 #define SCD41_CMD_GET_TEMP_OFF  0x2318
 
-#ifdef USE_HTTP
-    #define SCD41_BUFFER_SIZE       1     // https
-#else
-    #define SCD41_BUFFER_SIZE       ESPNOW_MAX_SAMPLES
-#endif // USE_HTPP
+//#ifdef USE_HTTP
+    #define SCD41_BUFFER_SIZE       32     // https
+//#else
+//    #define SCD41_BUFFER_SIZE       ESPNOW_MAX_SAMPLES
+//#endif // USE_HTPP
 
 #define SCD41_STR_SIZE          64
 
@@ -35,8 +35,6 @@
 #else
     #define FLOAT_TYPE  float
 #endif // USE_FIXEDPOINT
-
-#define SCD41_SAMPLE_INTERVAL   600 // seconds (= 10 minutes)
 
 char str[SCD41_STR_SIZE];
 
@@ -138,19 +136,19 @@ void scd41_measure_co2_temp_rht(void)
 
     scd41_store_measurements(&read_buffer[0]);
 
-    send_HTTPS(buffer_co2[0], buffer_temp[0], buffer_rht[0]);
-    scd41_reset_buffers();
+    // send_HTTPS((uint16_t *) buffer_co2, (float *) buffer_temp, (uint8_t *) buffer_rht, 1);
+    // scd41_reset_buffers();
 
-    // if(loc++ >= SCD41_BUFFER_SIZE-1)
-    // {
-    //     #ifdef USE_HTTP
-    //         // TODO: send via http
-    //     #else
-    //         scd41_send_data_espnow();
-    //     #endif // USE_HTTP
+    if(loc++ >= SCD41_BUFFER_SIZE-1)
+    {
+        //#ifdef USE_HTTP
+            send_HTTPS((uint16_t *) buffer_co2, (float *) buffer_temp, (uint8_t *) buffer_rht, 32);
+        //#else
+        //    scd41_send_data_espnow();
+        //#endif // USE_HTTP
         
-    //     scd41_reset_buffers();
-    // }
+        scd41_reset_buffers();
+    }
 }
 
 // Function:    scd41_store_measurements()

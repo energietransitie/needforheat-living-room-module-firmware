@@ -7,30 +7,31 @@
 #include "../include/Wifi.h"
 #include "../include/timer.h"
 
+#include "../include/scd41.h"
+
 #define DEVICE_NAME "Generic-Test"
 //#define HEARTBEAT_UPLOAD_INTERVAL 3600000     //ms, so one hour
 //#define HEARTBEAT_MEASUREMENT_INTERVAL 600000 //ms, so 10 minutes; not yet in effect
 
+#define MESSAGE_BUFFER_SIZE         4096
 #define FLOAT_COMPENSATION          4
 #define MEASUREMENT_TYPE_CO2        "\"CO2concentration\""
 #define MEASUREMENT_TYPE_RH         "\"relativeHumidity\""
 #define MEASUREMENT_TYPE_ROOMTEMP   "\"roomTemp\""
 
-char *MSG_PLAIN_INT = "{\"upload_time\": \"%ld\",\"property_measurements\": [    {" 
-                      "\"property_name\": %s," 
-                      "\"timestamp\":\"%ld\"," 
-                      "\"timestamp_type\": \"start\"," 
-                      "\"interval\": 0," 
-                      "\"measurements\": [" "\"%d\"" "]}]}";
+#define BUFFER_TYPE_CO2             0
+#define BUFFER_TYPE_RH              1
 
-char *MSG_PLAIN_FLOAT = "{\"upload_time\": \"%ld\",\"property_measurements\": [    {" 
-                        "\"property_name\": %s," 
-                        "\"timestamp\":\"%ld\"," 
-                        "\"timestamp_type\": \"start\"," 
-                        "\"interval\": 0," 
-                        "\"measurements\": [" "\"%f\"" "]}]}";
-
-
+char temp[64];
+char msg[MESSAGE_BUFFER_SIZE];
+char *msg_start = "{\"upload_time\": \"%d\",\"property_measurements\": [";
+char *meas_str  = "{\"property_name\": %s,"
+                      "\"timestamp\":\"%d\","
+                      "\"timestamp_type\": \"end\","
+                      "\"interval\": %d,"
+                      "\"measurements\": [";
+char *msg_end   = "] }"    ;
+    
 static const char *TAG = "Twomes Heartbeat Test Application ESP32";
 char strftime_buf[64];
 
@@ -164,7 +165,79 @@ void upload_measurement_float(const char *variable_interval_upload_url, const ch
     vTaskDelay(500 / portTICK_PERIOD_MS);
 }
 
-void send_HTTPS(uint16_t co2, float temp, uint8_t rh)
+void append_ints(uint32_t *b, size_t size, char *msg_ptr, const char *type)
+{
+    time_t now = time(NULL);
+
+    // measurement type header
+    int msgSize = variable_sprintf_size(meas_str, 3, type, now, (SCD41_SAMPLE_INTERVAL * 1000));
+    snprintf(temp, msgSize, meas_str, type, now, (SCD41_SAMPLE_INTERVAL * 1000));
+    strcat(msg, temp);
+
+    // append measurements
+    for(uint32_t i = 0; i < size-1; i++)
+    {
+        msgSize = variable_sprintf_size("\"%u\",", 1, b[i]);
+        snprintf(temp, msgSize, "\"%u\",", b[i]);
+        strcat(msg, temp);
+    }
+    
+    // add last measurement and end of this object
+    msgSize = variable_sprintf_size("\"%u\"] }", 1, b[size-1]);
+    snprintf(temp, msgSize, "\"%u\"] }", b[size-1]);
+    strcat(msg, temp);
+
+    free(b);
+}
+
+void append_floats(float *b, size_t size, char *msg_ptr, const char *type)
+{
+    //char temp[64];
+    time_t now = time(NULL);
+
+    // measurement type header
+    int msgSize = variable_sprintf_size(meas_str, 3, type, now, (SCD41_SAMPLE_INTERVAL * 1000));
+    snprintf(temp, msgSize, meas_str, type, now, (SCD41_SAMPLE_INTERVAL * 1000));
+    strcat(msg, temp);
+
+    // append measurements
+    for(uint32_t i = 0; i < size-1; i++)
+    {
+        msgSize = variable_sprintf_size("\"%f\",", 1, (double) b[i]);
+        snprintf(temp, msgSize, "\"%f\",", (double) b[i]);
+        strcat(msg, temp);
+    }
+    
+    // add last measurement and end of this object
+    msgSize = variable_sprintf_size("\"%f\"] }", 1, (double) b[size-1]);
+    snprintf(temp, msgSize, "\"%f\"] }", (double) b[size-1]);
+    strcat(msg, temp);
+}
+
+void upload(uint16_t *b_co2, float *b_temp, uint8_t *b_rh, size_t size)
+{
+    time_t now = time(NULL);
+
+    int msgSize = variable_sprintf_size(msg_start, 1, now);
+    snprintf(msg, msgSize, msg_start, now);
+
+    append_ints(uint16_to_uint32(b_co2, size), size, msg, MEASUREMENT_TYPE_CO2); 
+    strcat(msg, ",");
+    append_ints(uint8_to_uint32(b_rh, size), size, msg, MEASUREMENT_TYPE_RH);
+    strcat(msg, ",");
+    append_floats(b_temp, size, msg, MEASUREMENT_TYPE_ROOMTEMP);
+
+    strcat(msg, "] }");
+
+    usart_write("data: ", 6);
+    usart_write(msg, strlen(msg));
+    usart_write("\n", 1);
+
+    post_https(variable_interval_upload_url, msg, rootCA, bearer, NULL, 0);
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+}
+
+void send_HTTPS(uint16_t *co2, float *temp, uint8_t *rh, size_t size)
 {
     //bearer = get_bearer();
     enable_wifi();
@@ -173,10 +246,11 @@ void send_HTTPS(uint16_t co2, float temp, uint8_t rh)
     //Upload heartbeat
     //send_https_measurements(co2, temp, rh);
 
-    https_meas_t vals = { .co2 = co2, .temp = temp, .rh = rh};
-    upload_measurement_int(variable_interval_upload_url, rootCA, bearer, (int) co2);
-    upload_measurement_int(variable_interval_upload_url, rootCA, bearer, (int) rh);
-    upload_measurement_float(variable_interval_upload_url, rootCA, bearer, (double) temp);
+    // upload_measurement_int(variable_interval_upload_url, rootCA, bearer, (int) co2);
+    // upload_measurement_int(variable_interval_upload_url, rootCA, bearer, (int) rh);
+    // upload_measurement_float(variable_interval_upload_url, rootCA, bearer, (double) temp);
+
+    upload(co2, temp, rh, size);
 
     //upload_measurements(variable_interval_upload_url, rootCA, bearer, vals);
     
