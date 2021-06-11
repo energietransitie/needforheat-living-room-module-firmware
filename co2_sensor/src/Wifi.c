@@ -46,6 +46,10 @@ typedef struct https_meas_t
     uint8_t rh;
 } https_meas_t;
 
+// Function:    initialize_wifi()
+// Params:      N/A
+// Returns:     N/A
+// Desription:  Initializes this wifi
 void initialize_wifi(){
  
     initialize_nvs();
@@ -92,26 +96,11 @@ void initialize_wifi(){
     }
 }
 
-    // Example Message Check generic_esp_32.c upload_hearbeat function to see a real example of this being filled.
-    // char *msg_plain = "{\"upload_time\": \"%d\",\"property_measurements\":[    {"
-    //                   "\"property_name\": %s,"
-    //                   "\"measurements\": ["
-    //                    "{ \"timestamp\":\"%d\","
-    //                    "\"value\":\"1\"}"
-    //                   "]}]}";
-char *get_time(void)
-{
-    // time stuff
-    struct tm timeinfo;
-    time_t now;
-    time(&now);
-    
-    localtime_r(&now, &timeinfo);
-    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-
-    return strftime_buf;
-}
-
+// Function:    upload_measurement_int()
+// Params:      
+//  	- (const char) a pointer to the url to upload
+// Returns:     N/A
+// Desription:  Initializes the wifi
 void upload_measurement_int(const char *variable_interval_upload_url, const char *root_cert, char *bearer, int value){
     char *measurementType = "\"CO2concentration\""; //was measurements
     //Updates Epoch Time
@@ -164,6 +153,13 @@ void upload_measurement_float(const char *variable_interval_upload_url, const ch
     vTaskDelay(500 / portTICK_PERIOD_MS);
 }
 
+// Function:    send_HTTPS()
+// Params:      
+//      - (uint16_t) the co2 values
+//      - (float) the temperature values
+//      - (uint8_t) the relative humidity values
+// Returns:     N/A
+// Desription: takes the values and sends them with HTTPS
 void send_HTTPS(uint16_t co2, float temp, uint8_t rh)
 {
     //bearer = get_bearer();
