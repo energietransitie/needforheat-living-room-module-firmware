@@ -1,8 +1,10 @@
 #ifndef __LIGHTSLEEP_H__
 #define __LIGHTSLEEP_H__
 
-void switch_modes(void);
+#include <stdint.h>
+
 void set_light_sleep();
+void set_custom_lightsleep(uint32_t len);
 void set_modem_sleep();
 void wake_modem_sleep();
 

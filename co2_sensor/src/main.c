@@ -14,11 +14,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define USE_HTTP
+// TODO:
+// - remove unnecessary functions
+// - improve scd41 readings (comment floats and divisions)
+// - instead of delay(1350), custom_lightsleep(1350 * 1000) watch wifi_stop and begin
+// - ESP_LOGI instead of usart_write
+// - improve ifndefs
 
 #ifndef USE_HTTP
 void main_esp_now(void)
 {
+    wifi_init_espnow();
     espnow_init();
 
     #ifdef ESP_NOW_RECEIVER
@@ -26,6 +32,10 @@ void main_esp_now(void)
         // (about every 9 out of 10 packets get lost)
         esp_wifi_set_ps(WIFI_PS_NONE);
     #endif // ESP_NOW_RECEIVER
+
+    #ifndef ESP_NOW_RECEIVER
+        set_modem_sleep();
+    #endif
 
     while(1)
     {
@@ -39,6 +49,9 @@ void main_esp_now(void)
 #else
 void main_https(void)
 {
+    initialize_wifi();
+
+    // TODO: use the right delay/sleep for 10 minute measurements
     while(1) {
         //set_light_sleep();
         scd41_measure_co2_temp_rht();
@@ -49,7 +62,6 @@ void main_https(void)
 
 void app_main() 
 {
-    isSending = false;
     // ---- PERIPHERALS INITIALIZATION ---- //
     usart_init(115200);
 
@@ -57,8 +69,6 @@ void app_main()
         i2c_init();
         scd41_init();
     #endif // ESP_NOW_RECEIVER
-
-    initialize_wifi();
 
     #ifndef USE_HTTP
         main_esp_now();

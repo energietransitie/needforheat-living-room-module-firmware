@@ -2,30 +2,34 @@
 #include "../include/usart.h"
 #include "../include/errorcode.h"
 #include "../include/util.h"
+#include "../include/sleepmodes.h"
 
 #include <esp_now.h>
 #include <esp_wifi.h>
-#include <esp_netif.h>
-#include <wifi_provisioning/manager.h>
 #include <string.h>
 #include <stdbool.h>
 
-#define DELAY_INTERVAL      2 // milliseconds
+#define DELAY_INTERVAL      2   // milliseconds
 #define ESPNOW_ACK          1
 #define ESPNOW_NACK         2
 
 #define MAC_ADDR_SIZE       6   // bytes
 
-#define MAC_ADDR_TEST_SENDER    {0xc4, 0x4f, 0x33, 0x7f, 0xae, 0x95} // LOLIN TFT/I2C SHIELD ESP
-#define MAC_ADDR_TEST_RECVR     {0xc4, 0x4f, 0x33, 0x7f, 0xa8, 0x81} // SHIELD-LESS ESP
-#define WIFI_CHANNEL            11
+#define MAC_ADDR_TEST_SENDER    {0xc4, 0x4f, 0x33, 0x7f, 0xae, 0x95}    // LOLIN TFT/I2C SHIELD ESP
+#define MAC_ADDR_TEST_RECVR     {0xc4, 0x4f, 0x33, 0x7f, 0xa8, 0x81}    // SHIELD-LESS ESP
+#define WIFI_CHANNEL            1
 
-#define MAX_SEND_ATTEMPTS       0xFFFF
+#define MAX_SEND_ATTEMPTS       0xFF
+#define RETRY_DELAY             10 * 1000 * 1000 // microseconds (= 10 seconds)
 
 esp_now_peer_info_t info;           // needs to be global (ESP argument error if not)
 volatile uint16_t msg_index = 0;
 volatile uint8_t msg_ack = 0;
 
+// future TODO: If you want to change this code to add dynamic mac and wifi-channels
+//              you can do this by setting the peermac_addr dynamically in espnow_init().
+//              At that point you may want to remove the mymac_addr array and the
+//              above defines.
 uint8_t mymac_addr[MAC_ADDR_SIZE],
         peermac_addr[MAC_ADDR_SIZE] = 
         
@@ -33,7 +37,7 @@ uint8_t mymac_addr[MAC_ADDR_SIZE],
             MAC_ADDR_TEST_SENDER;
         #else
             MAC_ADDR_TEST_RECVR;
-        #endif 
+        #endif // ESP_NOW_RECEIVER
 
 // Function:    espnow_cb_ondatarecv()
 // Params:      
@@ -65,13 +69,14 @@ void espnow_cb_ondatasend(const uint8_t *mac, esp_now_send_status_t stat)
 {
     if(!stat)
     {
-        usart_write("received ACK\n", 13); // testing only
+        usart_write("received ACK\n", 13);      // testing only
         msg_index++;
         msg_ack = ESPNOW_ACK;
     }
+    
     else
     {
-        usart_write("received NACK -\n", 16); // testing only
+        usart_write("received NACK -\n", 16);   // testing only
         msg_ack = ESPNOW_NACK;
     }
 }
@@ -82,9 +87,12 @@ void espnow_cb_ondatasend(const uint8_t *mac, esp_now_send_status_t stat)
 // Desription:  Initializes ESP-NOW
 void espnow_init(void)
 {
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    esp_wifi_set_channel(WIFI_CHANNEL, WIFI_SECOND_CHAN_NONE);
     ESP_ERROR_CHECK(esp_now_init());
-
+    
+    // future TODO: change you can pass the new dynamically
+    // received mac-address and wifi-channel to this function and
+    // the code will configure espnow properly
     espnow_config_peer(WIFI_CHANNEL, false, &peermac_addr[0]);
 
     // register callbacks
@@ -147,6 +155,11 @@ uint8_t espnow_send(uint8_t *data, size_t size)
         
         if(attempt++ > MAX_SEND_ATTEMPTS-1)
            {msg_ack = 0; return ERROR_CODE_FAIL;}
+
+        // delay for retry by going back to light sleep
+        set_custom_lightsleep(RETRY_DELAY);
+
+        delay(200); // I hate watchdogs        
     }
 
     return ERROR_CODE_SUCCESS;

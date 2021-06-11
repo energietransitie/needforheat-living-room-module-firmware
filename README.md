@@ -49,12 +49,12 @@ NOTE: The first time might take a while because PlatformIO needs to install and 
 
 OPTIONAL: When it is done flashing, press `CTRL+T` and then `B`, then type `115200` so that it sets the right baud rate and you see text not gibberish.
 
-### Changes necessarry to get ESP-NOW working
+### Changes necessary to get ESP-NOW working
 In order for ESP-NOW to work on your device you will need to change a few things in `src/espnow.c`. 
 
-In `src/espnow.c`, change the `WIFI_CHANNEL` define to the channel used by your WiFi. To find your WiFi channel flash this software to the device and provision it. In the serial monitor, you should be able to see a line resembling something like this: `wifi:connected with [YOUR_WIFI], aid = x, channel y, BW20, bssid = xx:xx:xx:xx:xx:xx`.
+Change the `MAC_ADDR_TEST_SENDER` and `MAC_ADDR_TEST_RECVR` to the MAC-address of your chosen sender and receiver, respectively. Make sure to leave the format the same (i.e. an array initialization using curly brackets `{ }`). You can find the MAC-address of your device by flashing this software to both devices. In the serial monitor, you should be able to see a line resembling something like this: `wifi:mode : sta (xx:xx:xx:xx:xx:xx)`. Use the number in between the normal brackets `( )` as the MAC-address for the device type in question (sender/receiver).
 
-Next, change the `MAC_ADDR_TEST_SENDER` and `MAC_ADDR_TEST_RECVR` to the MAC-address of your chosen sender and receiver, respectively. Make sure to leave the format the same (i.e. an array initialization using curly brackets `{ }`). You can find the MAC-address of your device by flashing this software to both devices. In the serial monitor, you should be able to see a line resembling something like this: `wifi:mode : sta (xx:xx:xx:xx:xx:xx)`. Use the number in between the normal brackets `( )` as the MAC-address for the device type in question (sender/receiver).
+Optionally, in `src/espnow.c`, change the `WIFI_CHANNEL` define to a different channel. 
 
 ### Toggling the ESP-NOW code between sender and receiver
 If you want to use a receiver to test this code, you can uncomment line 16 in `platformio.ini`: `#build_flags = -D ESP_NOW_RECEIVER`. Flash it to your chosen device and it will behave as a receiver.
@@ -68,6 +68,7 @@ If you want to use a receiver to test this code, you can uncomment line 16 in `p
 To-do:
 
 *   ESP-NOW: getting a peer's MAC-address dynamically on power-up
+*   HTTPS: sending data to the API (smartphone app needed?)
 
 ## Status
 Project is: _in progress_

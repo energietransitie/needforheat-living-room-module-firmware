@@ -6,16 +6,24 @@
 #include "usart.h"
 #include "../include/Wifi.h"
 
-#define interval 20000 // 1 is 0.0005s. with this you can calculate the interval
+#define interval 20000  // 1 is 0.0005s. with this you can calculate the interval
 
 char str[256];
 
+// Function:   timer_isr()
+// Params:     N/A
+// Returns:    N/A
+// Desription: interrupt from the 24 hour timer
 bool IRAM_ATTR timer_isr(void *args)
 {
     timer_set_alarm(TIMER_GROUP_0,TIMER_0,TIMER_ALARM_EN);      // set the alarm to go off again
-    return isSending = true;       //set a bool to true so it knows it should send
+    return isSending = true;                                    // set a bool to true so the device knows it should send
 }
 
+// Function:   init_timer()
+// Params:     N/A
+// Returns:    N/A
+// Desription: Used to initialise the 24 hour timer
 void init_timer()
 {
     timer_config_t timer_cfg = {
@@ -23,21 +31,25 @@ void init_timer()
         .counter_en     = false,
         .intr_type      = TIMER_INTR_T0,
         .counter_dir    = TIMER_COUNT_UP,
-        .auto_reload    = TIMER_AUTORELOAD_EN,  // enable that the counter resets when it hits the value
-        .divider        = 40000                // see bottom of this file for value explanation
+        .auto_reload    = TIMER_AUTORELOAD_EN,      // enable that the counter resets when it hits the value
+        .divider        = 40000                     // see bottom of this file for value explanation
     };
 
     timer_init(TIMER_GROUP_0, TIMER_0, &timer_cfg);
-    timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0);     // set the counter to 0 when it starts
+    timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0);         // set the counter to 0 when it starts
 
     timer_set_alarm_value(TIMER_GROUP_0,TIMER_0, interval);     // set the alarm value to the interval defined above
     timer_set_alarm(TIMER_GROUP_0,TIMER_0,TIMER_ALARM_EN);
     timer_enable_intr(TIMER_GROUP_0, TIMER_0);
-    timer_isr_callback_add(TIMER_GROUP_0, TIMER_0, timer_isr, NULL, 0);      // add the interupt to the timer
-    timer_start(TIMER_GROUP_0, TIMER_0);        //start the timer
+    timer_isr_callback_add(TIMER_GROUP_0, TIMER_0, timer_isr, NULL, 0);     // add the interupt to the timer
+    timer_start(TIMER_GROUP_0, TIMER_0);                                    // start the timer
 }
 
-void read_timer()       // a function to read the timer
+// Function:   read_timer()
+// Params:     N/A
+// Returns:    N/A
+// Desription: Used to read the 24 hour timer (TESTING PURPOSES ONLY)
+void read_timer()
 {
     uint64_t task_counter_value;
     
@@ -46,9 +58,9 @@ void read_timer()       // a function to read the timer
     printf("Timer value: %lld\n", task_counter_value);
 }
 
-// ---------------------------------------------------------------------------------------------------------------------------------------- //
-//                                                  TIMER VALUES EXPLANATION                                                                //
-// ---------------------------------------------------------------------------------------------------------------------------------------- //
+// --------------------------------------------------------------------------------------------------------------------- //
+//                                                  TIMER VALUES EXPLANATION                                             //
+// --------------------------------------------------------------------------------------------------------------------- //
 // Fclk = 80MHz
 // max presc = 65.536
 // Fclk / max presc = ~1220Hz

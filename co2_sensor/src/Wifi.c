@@ -4,7 +4,7 @@
 //#include "../include/spi.h"
 #include "../include/util.h"
 #include "../include/i2c.h"
-#include "../include/Wifi.h"
+#include "../include/wifi.h"
 #include "../include/timer.h"
 
 #include "../include/scd41.h"
@@ -33,11 +33,23 @@ const char *variable_interval_upload_url = TWOMES_TEST_SERVER "/device/measureme
 char *bearer;
 const char *rootCA;
 
+void wifi_init_espnow(void)
+{
+    initialize_nvs();
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
+    ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
+    ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
+    ESP_ERROR_CHECK( esp_wifi_start());
+}
+
 void initialize_wifi(){
  
     initialize_nvs();
     initialize();
-    /* Initialize TCP/IP */
+    /* initialize TCP/IP */
     ESP_ERROR_CHECK(esp_netif_init());
 
     wifi_prov_mgr_config_t config = initialize_provisioning();
@@ -52,7 +64,7 @@ void initialize_wifi(){
     //Initialize time with timezone UTC; building timezone is stored in central database
     initialize_time("UTC");
 
-    //Gets time as epoch time.
+    // gets time as epoch time.
     ESP_LOGI(TAG, "Getting time!");
     uint32_t now = time(NULL);
     ESP_LOGI(TAG, "Time is: %d", now);
@@ -67,12 +79,14 @@ void initialize_wifi(){
     {
         ESP_LOGI(TAG, "Bearer read: %s", bearer);
     }
+
     else if (strcmp(bearer, "") == 0)
     {
         ESP_LOGI(TAG, "Bearer not found, activating device!");
         activate_device(device_activation_url, device_name, rootCA);
         bearer = get_bearer();
     }
+
     else if (!bearer)
     {
         ESP_LOGE(TAG, "Something went wrong whilst reading the bearer!");
@@ -104,6 +118,7 @@ void append_ints(uint32_t *b, size_t size, char *msg_ptr, const char *type)
     free(b);
 }
 
+// TODO: REMOVE
 void append_floats(float *b, size_t size, char *msg_ptr, const char *type)
 {
     time_t now = time(NULL);

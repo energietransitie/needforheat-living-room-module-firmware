@@ -141,11 +141,11 @@ void scd41_measure_co2_temp_rht(void)
 
     if(loc++ >= SCD41_BUFFER_SIZE-1)
     {
-        //#ifdef USE_HTTP
+        #ifdef USE_HTTP
             send_HTTPS((uint16_t *) buffer_co2, (float *) buffer_temp, (uint8_t *) buffer_rht, 32);
-        //#else
-        //    scd41_send_data_espnow();
-        //#endif // USE_HTTP
+        #else
+            scd41_send_data_espnow();
+        #endif // USE_HTTP
         
         scd41_reset_buffers();
     }
@@ -177,6 +177,7 @@ void scd41_store_measurements(uint8_t *read_buffer)
     usart_write(&str[0], strlen(&str[0])); 
 }
 
+#ifndef USE_HTTP
 // Function:    scd41_send_data_espnow()
 // Params:      N/A
 // Returns:     N/A
@@ -201,6 +202,7 @@ void scd41_send_data_espnow(void)
     espnow_send((uint8_t *) &msg, sizeof(espnow_msg_t));
     set_modem_sleep();
 }
+#endif
 
 // Function:    scd41_reset_buffers()
 // Params:      N/A

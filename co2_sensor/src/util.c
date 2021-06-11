@@ -22,7 +22,7 @@ void delay(uint32_t ms)
 uint32_t *uint16_to_uint32(uint16_t *b, size_t s)
 {
     uint32_t *nb = malloc(s * sizeof(uint32_t));
-    
+    // TODO: REMOVE
     for(uint32_t i = 0; i < s; ++i)
         nb[i] = (uint32_t) b[i];
 
@@ -37,6 +37,8 @@ uint32_t *uint16_to_uint32(uint16_t *b, size_t s)
 // Desription:  copies a uint8_t * buffer to a uint32_t * buffer
 uint32_t *uint8_to_uint32(uint8_t *b, size_t s)
 {
+
+    // TODO: REMOVE
     uint32_t *nb = malloc(s * sizeof(uint32_t));
     
     for(uint32_t i = 0; i < s; ++i)
