@@ -1,7 +1,6 @@
 #include "../lib/generic_esp_32/generic_esp_32.h"
 #include "../include/usart.h"
 #include "string.h"
-//#include "../include/spi.h"
 #include "../include/util.h"
 #include "../include/i2c.h"
 #include "../include/Wifi.h"
@@ -10,18 +9,15 @@
 #include "../include/scd41.h"
 
 #define DEVICE_NAME "Generic-Test"
-//#define HEARTBEAT_UPLOAD_INTERVAL 3600000     //ms, so one hour
-//#define HEARTBEAT_MEASUREMENT_INTERVAL 600000 //ms, so 10 minutes; not yet in effect
 
 #define MESSAGE_BUFFER_SIZE         4096
-#define FLOAT_COMPENSATION          4
 #define MEASUREMENT_TYPE_CO2        "\"CO2concentration\""
 #define MEASUREMENT_TYPE_RH         "\"relativeHumidity\""
 #define MEASUREMENT_TYPE_ROOMTEMP   "\"roomTemp\""
 
-#define BUFFER_TYPE_CO2             0
-#define BUFFER_TYPE_RH              1
+#define MAX_RETRIES                 10
 
+// message send information
 char temp[64];
 char *msg_start = "{\"upload_time\": \"%d\",\"property_measurements\": [";
 char *meas_str  = "{\"property_name\": %s,"
@@ -29,22 +25,14 @@ char *meas_str  = "{\"property_name\": %s,"
                       "\"timestamp_type\": \"end\","
                       "\"interval\": %d,"
                       "\"measurements\": [";
-char *msg_end   = "] }"    ;
+char *msg_end   = "] }";
     
 static const char *TAG = "Twomes Heartbeat Test Application ESP32";
-char strftime_buf[64];
 
 const char *device_activation_url = TWOMES_TEST_SERVER "/device/activate";
 const char *variable_interval_upload_url = TWOMES_TEST_SERVER "/device/measurements/fixed-interval";
 char *bearer;
 const char *rootCA;
-
-typedef struct https_meas_t
-{
-    uint16_t co2;
-    float temp;
-    uint8_t rh;
-} https_meas_t;
 
 void initialize_wifi(){
  
@@ -92,78 +80,6 @@ void initialize_wifi(){
     }
 }
 
-    // Example Message Check generic_esp_32.c upload_hearbeat function to see a real example of this being filled.
-    // char *msg_plain = "{\"upload_time\": \"%d\",\"property_measurements\":[    {"
-    //                   "\"property_name\": %s,"
-    //                   "\"measurements\": ["
-    //                    "{ \"timestamp\":\"%d\","
-    //                    "\"value\":\"1\"}"
-    //                   "]}]}";
-char *get_time(void)
-{
-    // time stuff
-    struct tm timeinfo;
-    time_t now;
-    time(&now);
-    
-    localtime_r(&now, &timeinfo);
-    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-
-    return strftime_buf;
-}
-
-void upload_measurement_int(const char *variable_interval_upload_url, const char *root_cert, char *bearer, int value){
-    char *measurementType = "\"CO2concentration\""; //was measurements
-    //Updates Epoch Time
-    time_t now = time(NULL);
-    //Plain JSON request where values will be inserted.
-    char *msg_plain = "{\"upload_time\": \"%d\",\"property_measurements\": [    {"
-                      "\"property_name\": %s,"
-                      "\"timestamp\":\"%d\","
-                      "\"timestamp_type\": \"start\","
-                      "\"interval\": 0,"
-                      "\"measurements\": ["
-                      "\"%d\""
-                      "]}]}";
-    //Get size of the message after inputting variables.
-    int msgSize = variable_sprintf_size(msg_plain, 4, now, measurementType, now, value);
-    //Allocating enough memory so inputting the variables into the string doesn't overflow
-    char *msg = malloc(msgSize);
-    //Inputting variables into the plain json string from above(msgPlain).
-    snprintf(msg, msgSize, msg_plain, now, measurementType, now, value);
-    //usart_write(msg, strlen(msg));
-    //Posting data over HTTPS, using url, msg and bearer token.
-    ESP_LOGI(TAG, "Data: %s", msg);
-    post_https(variable_interval_upload_url, msg, root_cert, bearer, NULL, 0);
-    vTaskDelay(500 / portTICK_PERIOD_MS);
-}
-
-void upload_measurement_float(const char *variable_interval_upload_url, const char *root_cert, char *bearer, double value){
-    char *measurementType = "\"CO2concentration\""; //was measurements
-    //Updates Epoch Time
-    time_t now = time(NULL);
-    //Plain JSON request where values will be inserted.
-    char *msg_plain = "{\"upload_time\": \"%d\",\"property_measurements\": [    {"
-                      "\"property_name\": %s,"
-                      "\"timestamp\":\"%d\","
-                      "\"timestamp_type\": \"start\","
-                      "\"interval\": 0,"
-                      "\"measurements\": ["
-                      "\"%f\""
-                      "]}]}";
-    //Get size of the message after inputting variables.
-    int msgSize = variable_sprintf_size(msg_plain, 4, now, measurementType, now, value);
-    //Allocating enough memory so inputting the variables into the string doesn't overflow
-    char *msg = malloc(msgSize);
-    //Inputting variables into the plain json string from above(msgPlain).
-    snprintf(msg, msgSize, msg_plain, now, measurementType, now, value);
-    //usart_write(msg, strlen(msg));
-    //Posting data over HTTPS, using url, msg and bearer token.
-    ESP_LOGI(TAG, "Data: %s", msg);
-    post_https(variable_interval_upload_url, msg, root_cert, bearer, NULL, 0);
-    vTaskDelay(500 / portTICK_PERIOD_MS);
-}
-
 void append_ints(uint32_t *b, size_t size, char *msg_ptr, const char *type)
 {
     time_t now = time(NULL);
@@ -191,7 +107,6 @@ void append_ints(uint32_t *b, size_t size, char *msg_ptr, const char *type)
 
 void append_floats(float *b, size_t size, char *msg_ptr, const char *type)
 {
-    //char temp[64];
     time_t now = time(NULL);
 
     // measurement type header
@@ -215,47 +130,49 @@ void append_floats(float *b, size_t size, char *msg_ptr, const char *type)
 
 void upload(uint16_t *b_co2, float *b_temp, uint8_t *b_rh, size_t size)
 {
+    uint32_t tries = 0;
     time_t now = time(NULL);
     char *msg = malloc(MESSAGE_BUFFER_SIZE);
 
     int msgSize = variable_sprintf_size(msg_start, 1, now);
     snprintf(msg, msgSize, msg_start, now);
 
+    // append co2 data to existing msg
     append_ints(uint16_to_uint32(b_co2, size), size, msg, MEASUREMENT_TYPE_CO2); 
     strcat(msg, ",");
+
+    // append rh data to existing msg
     append_ints(uint8_to_uint32(b_rh, size), size, msg, MEASUREMENT_TYPE_RH);
     strcat(msg, ",");
+
+    // append room temperatures to existing msg
     append_floats(b_temp, size, msg, MEASUREMENT_TYPE_ROOMTEMP);
 
+    // end message
     strcat(msg, "] }");
 
+    // TESTING ONLY
     usart_write("data: ", 6);
     usart_write(msg, strlen(msg));
     usart_write("\n", 1);
 
-    post_https(variable_interval_upload_url, msg, rootCA, bearer, NULL, 0); // msg is freed by this function
+    // aaaand... send! :)
+    if(post_https(variable_interval_upload_url, msg, rootCA, bearer, NULL, 0) != 200)
+        usart_write("Error sending data!\n", 21);
+
     vTaskDelay(500 / portTICK_PERIOD_MS);
 }
 
 void send_HTTPS(uint16_t *co2, float *temp, uint8_t *rh, size_t size)
 {
-    //bearer = get_bearer();
     enable_wifi();
+
     //Wait to make sure Wi-Fi is enabled.
     vTaskDelay(2000 / portTICK_PERIOD_MS);
-    //Upload heartbeat
-    //send_https_measurements(co2, temp, rh);
-
-    // upload_measurement_int(variable_interval_upload_url, rootCA, bearer, (int) co2);
-    // upload_measurement_int(variable_interval_upload_url, rootCA, bearer, (int) rh);
-    // upload_measurement_float(variable_interval_upload_url, rootCA, bearer, (double) temp);
-
+    
+    // upload data
     upload(co2, temp, rh, size);
 
-    //upload_measurements(variable_interval_upload_url, rootCA, bearer, vals);
-    
-    //Wait to make sure uploading is finished.
-    vTaskDelay(500 / portTICK_PERIOD_MS);
     //Disconnect WiFi
     disable_wifi();
 }
