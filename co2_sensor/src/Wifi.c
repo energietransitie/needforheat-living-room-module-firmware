@@ -23,7 +23,6 @@
 #define BUFFER_TYPE_RH              1
 
 char temp[64];
-char msg[MESSAGE_BUFFER_SIZE];
 char *msg_start = "{\"upload_time\": \"%d\",\"property_measurements\": [";
 char *meas_str  = "{\"property_name\": %s,"
                       "\"timestamp\":\"%d\","
@@ -172,20 +171,20 @@ void append_ints(uint32_t *b, size_t size, char *msg_ptr, const char *type)
     // measurement type header
     int msgSize = variable_sprintf_size(meas_str, 3, type, now, (SCD41_SAMPLE_INTERVAL * 1000));
     snprintf(temp, msgSize, meas_str, type, now, (SCD41_SAMPLE_INTERVAL * 1000));
-    strcat(msg, temp);
+    strcat(msg_ptr, temp);
 
     // append measurements
     for(uint32_t i = 0; i < size-1; i++)
     {
         msgSize = variable_sprintf_size("\"%u\",", 1, b[i]);
         snprintf(temp, msgSize, "\"%u\",", b[i]);
-        strcat(msg, temp);
+        strcat(msg_ptr, temp);
     }
     
     // add last measurement and end of this object
     msgSize = variable_sprintf_size("\"%u\"] }", 1, b[size-1]);
     snprintf(temp, msgSize, "\"%u\"] }", b[size-1]);
-    strcat(msg, temp);
+    strcat(msg_ptr, temp);
 
     free(b);
 }
@@ -198,25 +197,26 @@ void append_floats(float *b, size_t size, char *msg_ptr, const char *type)
     // measurement type header
     int msgSize = variable_sprintf_size(meas_str, 3, type, now, (SCD41_SAMPLE_INTERVAL * 1000));
     snprintf(temp, msgSize, meas_str, type, now, (SCD41_SAMPLE_INTERVAL * 1000));
-    strcat(msg, temp);
+    strcat(msg_ptr, temp);
 
     // append measurements
     for(uint32_t i = 0; i < size-1; i++)
     {
         msgSize = variable_sprintf_size("\"%f\",", 1, (double) b[i]);
         snprintf(temp, msgSize, "\"%f\",", (double) b[i]);
-        strcat(msg, temp);
+        strcat(msg_ptr, temp);
     }
     
     // add last measurement and end of this object
     msgSize = variable_sprintf_size("\"%f\"] }", 1, (double) b[size-1]);
     snprintf(temp, msgSize, "\"%f\"] }", (double) b[size-1]);
-    strcat(msg, temp);
+    strcat(msg_ptr, temp);
 }
 
 void upload(uint16_t *b_co2, float *b_temp, uint8_t *b_rh, size_t size)
 {
     time_t now = time(NULL);
+    char *msg = malloc(MESSAGE_BUFFER_SIZE);
 
     int msgSize = variable_sprintf_size(msg_start, 1, now);
     snprintf(msg, msgSize, msg_start, now);
@@ -233,7 +233,7 @@ void upload(uint16_t *b_co2, float *b_temp, uint8_t *b_rh, size_t size)
     usart_write(msg, strlen(msg));
     usart_write("\n", 1);
 
-    post_https(variable_interval_upload_url, msg, rootCA, bearer, NULL, 0);
+    post_https(variable_interval_upload_url, msg, rootCA, bearer, NULL, 0); // msg is freed by this function
     vTaskDelay(500 / portTICK_PERIOD_MS);
 }
 

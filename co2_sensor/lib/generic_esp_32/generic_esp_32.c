@@ -779,10 +779,7 @@ int post_https(const char *url, char *data, const char *cert, char *authenticati
     {
         free(authenticationTokenString);
     }
-
-    // our data is not dynamically allocated
-    //free(data);
-    
+    free(data);
     esp_http_client_cleanup(client);
     if (response&&resp_buf_size)
     {
