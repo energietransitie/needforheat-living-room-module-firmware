@@ -7,6 +7,7 @@
 #include "../include/Wifi.h"
 
 #include "../include/espnow.h"
+#include "esp_log.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -74,8 +75,8 @@ void scd41_disable_asc(void)
     cmd_buffer[4] = generate_crc((const uint16_t *) &data, 2);
 
     // TESTING ONLY
-    sprintf(&str[0], "SCD41: CRC: %x\n", cmd_buffer[4]);
-    usart_write(&str[0], strlen(&str[0]));
+    ESP_LOGI("SCD41", "CRC: %x", cmd_buffer[4]);
+    
 
     // write command and data
     i2c_write(SCD41_ADDR, &cmd_buffer[0], I2C_STOP, 5); 
@@ -104,8 +105,7 @@ void scd41_disable_asc(void)
 
     if(r)
     {
-        sprintf(&str[0], "SCD41: Warning: ASC not disabled (0x%x)\n", r);
-        usart_write(&str[0], strlen(&str[0]));
+        ESP_LOGI("SCD41", "Warning: ADC not disables(0x%x)", r);
     }
 }
 
@@ -173,8 +173,7 @@ void scd41_store_measurements(uint8_t *read_buffer)
     buffer_rht[loc] = rht;
 
     // FOR TESTING ONLY
-    sprintf(&str[0], "co2: %dppm, temp: %.2f°C, rht: %d%%\n", co2 , temp, rht);
-    usart_write(&str[0], strlen(&str[0])); 
+    ESP_LOGI("CO2", "%dppm, temp: %.2f°C, rht: %d%%", co2 , temp, rht);
 }
 
 #ifndef USE_HTTP
@@ -235,6 +234,5 @@ void scd41_print_serial_number(void)
     // since its a big endian number it's already in the right order
     uint64_t sn = ((uint64_t) buffer[0] << 40) | ((uint64_t) buffer[1] << 32) | ((uint64_t) buffer[3] << 24) | ((uint64_t) buffer[4] << 16) | ((uint64_t) buffer[6] << 8) | (uint64_t) buffer[7];
 
-    sprintf(&str[0], "SCD41: Serial number: %lld\n", sn);
-    usart_write(&str[0], strlen(&str[0]));
+    ESP_LOGI("SCD41", "Serial number: %lld\n", sn);
 }
