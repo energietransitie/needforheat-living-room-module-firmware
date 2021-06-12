@@ -124,7 +124,7 @@ void scd41_measure_co2_temp_rht(void)
     cmd_buffer[1] = (uint8_t) SCD41_CMD_SINGLESHOT & 0xFF;
     
     uint8_t err = i2c_write(SCD41_ADDR, (uint8_t *) &cmd_buffer[0], I2C_STOP, 2);
-    delay(1350);
+    delay(SCD41_SINGLE_SHOT_DELAY);
 
     // --- READ MEASUREMENT --- //
     cmd_buffer[0] = (uint8_t)(SCD41_CMD_READMEASURE >> 8);

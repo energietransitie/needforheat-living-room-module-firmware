@@ -8,7 +8,9 @@
 #include <../lib/generic_esp_32/generic_esp_32.h>
 #include "../include/scd41.h"
 
-#define TIME_IN_LIGHTSLEEP      60 * 10 * 1000 * 1000   // microseconds --> 10 minutes
+#define TIME_IN_LIGHTSLEEP     (SCD41_SAMPLE_INTERVAL * 1000 * 1000) - \
+                               (SCD41_SINGLE_SHOT_DELAY * 1000)   // microseconds --> 10 minutes - sensor measuremen delay 
+                                                                  // to avoid time shifting
 #define TIME_IN_LIGHTSLEEP_TEST 60000000
 
 char str[256];
