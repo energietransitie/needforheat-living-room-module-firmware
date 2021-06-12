@@ -102,7 +102,7 @@ void initialize_wifi(){
     }
 }
 
-// Function:        append_ints()
+// Function:        append_uint16()
 // Params:
 //      - (uint32_t *)      buffer [TODO]
 //      - (size_t)          [TODO]
@@ -110,7 +110,7 @@ void initialize_wifi(){
 //      - (const char *)    type of measurement (CO2, temp or RH)
 // Returns:         N/A
 // Description:     puts measurements at the end of the buffer [TODO]
-void append_ints(uint32_t *b, size_t size, char *msg_ptr, const char *type)
+void append_uint16(uint16_t *b, size_t size, char *msg_ptr, const char *type)
 {
     time_t now = time(NULL);
 
@@ -167,7 +167,7 @@ void append_floats(float *b, size_t size, char *msg_ptr, const char *type)
 //      - (size_t)          [TODO]
 // Returns:         N/A
 // Description:     used to upload measurements to the API
-void upload(uint16_t *b_co2, float *b_temp, uint8_t *b_rh, size_t size)
+void upload(uint16_t *b_co2, uint16_t *b_temp, uint16_t *b_rh, size_t size)
 {
     time_t now = time(NULL);
     char *msg = malloc(MESSAGE_BUFFER_SIZE);
@@ -175,11 +175,11 @@ void upload(uint16_t *b_co2, float *b_temp, uint8_t *b_rh, size_t size)
     int msgSize = variable_sprintf_size(msg_start, 1, now);
     snprintf(msg, msgSize, msg_start, now);
 
-    append_ints(uint16_to_uint32(b_co2, size), size, msg, MEASUREMENT_TYPE_CO2); 
+    append_uint16(b_co2, size, msg, MEASUREMENT_TYPE_CO2); 
     strcat(msg, ",");
-    append_ints(uint8_to_uint32(b_rh, size), size, msg, MEASUREMENT_TYPE_RH);
+    append_uint16(b_rh, size, msg, MEASUREMENT_TYPE_RH);
     strcat(msg, ",");
-    append_floats(b_temp, size, msg, MEASUREMENT_TYPE_ROOMTEMP);
+    append_uint16(b_temp, size, msg, MEASUREMENT_TYPE_ROOMTEMP);
 
     strcat(msg, "] }");
 
@@ -197,7 +197,7 @@ void upload(uint16_t *b_co2, float *b_temp, uint8_t *b_rh, size_t size)
 //      - (size_t)          [TODO]
 // Returns:         N/A
 // Description:     sends measurements to the API
-void send_HTTPS(uint16_t *co2, float *temp, uint8_t *rh, size_t size)
+void send_HTTPS(uint16_t *co2, uint16_t *temp, uint16_t *rh, size_t size)
 {
     enable_wifi();
     vTaskDelay(2000 / portTICK_PERIOD_MS);  // wait to make sure Wi-Fi is enabled.

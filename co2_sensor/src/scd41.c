@@ -30,15 +30,9 @@
 
 #define SCD41_STR_SIZE          64
 
-#ifdef USE_FIXEDPOINT   // TODO
-    #define FLOAT_TYPE  uint16_t
-#else
-    #define FLOAT_TYPE  float
-#endif // USE_FIXEDPOINT
-
 volatile uint16_t *buffer_co2;
-volatile FLOAT_TYPE *buffer_temp; // TODO: FIXED POINT?
-volatile uint8_t *buffer_rht;
+volatile uint16_t *buffer_temp;
+volatile uint16_t *buffer_rht;
 volatile uint8_t loc = 0;
 
 // Function:    scd41_init()
@@ -51,8 +45,8 @@ void scd41_init(void)
     delay(1000);
     
     buffer_co2 = malloc(SCD41_BUFFER_SIZE * sizeof(uint16_t));
-    buffer_temp = malloc(SCD41_BUFFER_SIZE * sizeof(FLOAT_TYPE));
-    buffer_rht = malloc(SCD41_BUFFER_SIZE * sizeof(uint8_t));
+    buffer_temp = malloc(SCD41_BUFFER_SIZE * sizeof(uint16_t));
+    buffer_rht = malloc(SCD41_BUFFER_SIZE * sizeof(uint16_t));
 
     // TODO: non-periodic measurement stuff
     scd41_disable_asc();
@@ -139,7 +133,7 @@ void scd41_measure_co2_temp_rht(void)
     if(loc++ >= SCD41_BUFFER_SIZE-1)
     {
         #ifdef USE_HTTP
-            send_HTTPS((uint16_t *) buffer_co2, (float *) buffer_temp, (uint8_t *) buffer_rht, 32);
+            send_HTTPS((uint16_t *) buffer_co2, (uint16_t *) buffer_temp, (uint16_t *) buffer_rht, 32);
         #else
             scd41_send_data_espnow();
         #endif // USE_HTTP
@@ -155,22 +149,19 @@ void scd41_measure_co2_temp_rht(void)
 // Desription:  Stores the measurements given by the sensor into the right buffer
 void scd41_store_measurements(uint8_t *read_buffer)
 {
-     // ---- CALCULATE CO2 ---- //
-    uint16_t co2 = ((read_buffer[0] << 8) | read_buffer[1]);
-    buffer_co2[loc] = co2;
+    uint16_t d = ((read_buffer[0] << 8) | read_buffer[1]);
+    buffer_co2[loc] = d;
 
-    // ---- CALCULATE TEMPERATURE ---- //
-    uint16_t b = ((read_buffer[3] << 8) | read_buffer[4]);
-    float temp = -45 + 175 * (float)b / 65536; // TODO: fixed point?
-    buffer_temp[loc] = temp;
+    d = ((read_buffer[3] << 8) | read_buffer[4]);
+    // float temp = -45 + 175 * (float)b / 65536; // TODO: fixed point?
+    buffer_temp[loc] = d;
 
-    // ---- CALCULATE HUMIDITY ---- //
-    uint16_t c = ((read_buffer[6] << 8) | read_buffer[7]);
-    uint8_t rht = (uint8_t) (100 * c / 65536);
-    buffer_rht[loc] = rht;
+    d = ((read_buffer[6] << 8) | read_buffer[7]);
+    // uint8_t rht = (uint8_t) (100 * c / 65536);
+    buffer_rht[loc] = d;
 
     // FOR TESTING ONLY
-    ESP_LOGI("CO2", "%dppm, temp: %.2f°C, rht: %d%%", co2 , temp, rht);
+    ESP_LOGI("CO2", "%dppm, temp: %d, rht: %d", buffer_co2[loc] , buffer_temp[loc], buffer_rht[loc]);
 }
 
 #ifndef USE_HTTP
@@ -191,8 +182,8 @@ void scd41_send_data_espnow(void)
     };
 
     memcpy(&(msg.co2[0]), (uint16_t *) buffer_co2, SCD41_BUFFER_SIZE * sizeof(uint16_t));
-    memcpy(&(msg.temperature[0]), (FLOAT_TYPE *) buffer_temp, SCD41_BUFFER_SIZE * sizeof(FLOAT_TYPE));
-    memcpy(&(msg.rht[0]), (uint8_t *) buffer_rht, SCD41_BUFFER_SIZE * sizeof(uint8_t));
+    memcpy(&(msg.temperature[0]), (uint16_t *) buffer_temp, SCD41_BUFFER_SIZE * sizeof(uint16_t));
+    memcpy(&(msg.rht[0]), (uint16_t *) buffer_rht, SCD41_BUFFER_SIZE * sizeof(uint16_t));
     
     wake_modem_sleep();
     espnow_send((uint8_t *) &msg, sizeof(espnow_msg_t));
@@ -209,7 +200,7 @@ void scd41_reset_buffers(void)
     loc = 0;
     memset((uint16_t *) buffer_co2, 0, SCD41_BUFFER_SIZE);
     memset((uint16_t *) buffer_temp, 0, SCD41_BUFFER_SIZE);
-    memset((uint8_t *) buffer_rht, 0, SCD41_BUFFER_SIZE);
+    memset((uint16_t *) buffer_rht, 0, SCD41_BUFFER_SIZE);
 }
 
 // Function:    scd41_print_serial_number()
