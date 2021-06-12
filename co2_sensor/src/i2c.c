@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../include/usart.h"
 #include "../include/i2c.h"
 #include "../include/errorcode.h"
 

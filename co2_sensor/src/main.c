@@ -1,4 +1,3 @@
-#include "../include/usart.h"
 #include "../include/i2c.h"
 #include "../include/sleepmodes.h"
 #include "../include/wifi.h"
@@ -63,9 +62,6 @@ void main_https(void)
 
 void app_main() 
 {
-    // ---- PERIPHERALS INITIALIZATION ---- //
-    usart_init(115200);
-
     #ifndef ESP_NOW_RECEIVER
         i2c_init();
         scd41_init();

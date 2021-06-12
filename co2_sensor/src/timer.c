@@ -3,12 +3,9 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include "driver/timer.h"
-#include "usart.h"
 #include "../include/Wifi.h"
 
 #define interval 20000  // 1 is 0.0005s. with this you can calculate the interval
-
-char str[256];
 
 // Function:   timer_isr()
 // Params:     N/A
@@ -54,8 +51,6 @@ void read_timer()
     uint64_t task_counter_value;
     
     timer_get_counter_value(TIMER_GROUP_0, TIMER_0, &task_counter_value);
-
-    printf("Timer value: %lld\n", task_counter_value);
 }
 
 // --------------------------------------------------------------------------------------------------------------------- //

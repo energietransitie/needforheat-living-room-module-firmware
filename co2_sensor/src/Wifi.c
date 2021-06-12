@@ -1,5 +1,4 @@
 #include "../lib/generic_esp_32/generic_esp_32.h"
-#include "../include/usart.h"
 #include "string.h"
 #include "../include/util.h"
 #include "../include/i2c.h"

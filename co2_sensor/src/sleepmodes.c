@@ -1,5 +1,4 @@
 #include "stdio.h"
-#include "usart.h"
 #include "string.h"
 #include "esp_sleep.h"
 #include "esp_wifi.h"
@@ -12,8 +11,6 @@
                                (SCD41_SINGLE_SHOT_DELAY * 1000)   // microseconds --> 10 minutes - sensor measuremen delay 
                                                                   // to avoid time shifting
 #define TIME_IN_LIGHTSLEEP_TEST 60000000
-
-char str[256];
 
 // Function:    light_sleep_start()
 // Params:      N/A

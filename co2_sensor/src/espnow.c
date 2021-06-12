@@ -1,5 +1,4 @@
 #include "../include/espnow.h"
-#include "../include/usart.h"
 #include "../include/errorcode.h"
 #include "../include/util.h"
 #include "../include/sleepmodes.h"
@@ -55,8 +54,6 @@ void espnow_cb_ondatarecv(const uint8_t *mac, const uint8_t *data, const uint32_
     
 
     espnow_msg_t *msg = (espnow_msg_t *) data;
-
-    char str[128];
 
     // TESTING ONLY
     ESP_LOGI(TAG, "type: %x, nmeasurements: %x, index: %x, co2: %i ppm", (msg->device_type), (msg->nmeasurements), (msg->index), (msg->co2[0]));
@@ -119,8 +116,6 @@ void espnow_config_peer(uint8_t channel, bool encrypt, uint8_t *peer_mac)
     info.channel = channel;
     info.encrypt = encrypt;
 
-    char str[40];
-
     // TESTING ONLY
     ESP_LOGI(TAG, "peer mac: %x:%x:%x:%x:%x:%x\n", info.peer_addr[0], info.peer_addr[1], info.peer_addr[2], info.peer_addr[3], info.peer_addr[4], info.peer_addr[5]);
 
@@ -136,8 +131,6 @@ void espnow_config_peer(uint8_t channel, bool encrypt, uint8_t *peer_mac)
 // Desription:  Sends data to the peer (currently supports only one peer)
 uint8_t espnow_send(uint8_t *data, size_t size)
 {
-    char str[40];
-
     uint32_t attempt = 0;
     uint16_t cur_index = msg_index; 
 

@@ -1,7 +1,6 @@
 #include "../include/scd41.h"
 #include "../include/i2c.h"
 #include "../include/crc.h"
-#include "../include/usart.h"
 #include "../include/util.h"
 #include "../include/sleepmodes.h"
 #include "../include/Wifi.h"
@@ -36,8 +35,6 @@
 #else
     #define FLOAT_TYPE  float
 #endif // USE_FIXEDPOINT
-
-char str[SCD41_STR_SIZE];
 
 volatile uint16_t *buffer_co2;
 volatile FLOAT_TYPE *buffer_temp; // TODO: FIXED POINT?
