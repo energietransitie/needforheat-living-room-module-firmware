@@ -6,7 +6,7 @@
 
 #define ESPNOW_DATATYPE_CO2         2
 #define ESPNOW_NUMBER_OF_BUFFERS    3
-#define ESPNOW_MAX_SAMPLES          32
+#define ESPNOW_MAX_SAMPLES          240 / sizeof(uint16_t) / ESPNOW_NUMBER_OF_BUFFERS // 40
 
 typedef struct espnow_msg_t
 {
@@ -14,11 +14,10 @@ typedef struct espnow_msg_t
     uint8_t nmeasurements;
     uint16_t index;
     uint16_t interval;
-    uint16_t co2[ESPNOW_MAX_SAMPLES];       // 32 * 2 = 64 bytes
-    float temperature[ESPNOW_MAX_SAMPLES];  // 32 * 4 = 128 bytes
-    uint8_t rht[ESPNOW_MAX_SAMPLES];        // 32 * 1 = 32 bytes
-} espnow_msg_t;                             // ----------- +
-                                            // 224 bytes
+    uint16_t co2[ESPNOW_MAX_SAMPLES];
+    uint16_t temperature[ESPNOW_MAX_SAMPLES];
+    uint16_t rht[ESPNOW_MAX_SAMPLES];
+} espnow_msg_t;
 
 void espnow_init(void);
 void espnow_config_peer(uint8_t channel, bool encrypt, uint8_t *peer_mac);

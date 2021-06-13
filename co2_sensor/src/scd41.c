@@ -13,6 +13,7 @@
 #include <stdio.h>
 
 #define SCD41_INIT_DELAY        1000 // milliseconds
+#define SCD41_WAIT_MILLISECOND  2 // milliseconds (is 2 to ensure it will always wait at least one millisecond)
 
 #define SCD41_ADDR              0x62
 
@@ -44,7 +45,11 @@ uint8_t loc = 0;
 void scd41_init(void)
 {
     // the SCD41 takes 1 second to initialize itself, that's what this delay is for
-    delay(1000);
+    #ifdef USE_HTTP
+        delay(SCD41_INIT_DELAY);
+    #else
+        set_custom_lightsleep(SCD41_INIT_DELAY * 1000);
+    #endif
     
     buffer_co2 = malloc(SCD41_BUFFER_SIZE * sizeof(uint16_t));
     buffer_temp = malloc(SCD41_BUFFER_SIZE * sizeof(uint16_t));
@@ -69,7 +74,6 @@ void scd41_disable_asc(void)
     // TESTING ONLY
     ESP_LOGI("SCD41", "CRC: %x", cmd_buffer[4]);
     
-
     // write command and data
     i2c_write(SCD41_ADDR, &cmd_buffer[0], I2C_STOP, 5); 
     
@@ -78,12 +82,12 @@ void scd41_disable_asc(void)
     cmd_buffer[1] = (uint8_t) SCD41_CMD_GET_ASC_EN & 0xFF;
     cmd_buffer[2] = 0;
 
-    delay(2);
+    delay(SCD41_WAIT_MILLISECOND);
     
     uint16_t r = 0;
     // get current ASC ENABLED value
     i2c_write(SCD41_ADDR, &cmd_buffer[0], I2C_NO_STOP, 2);
-    delay(2);                               
+    delay(SCD41_WAIT_MILLISECOND);                               
     
     // I2C reads back previous command before giving us the
     // actual data we want, not supposed to happen
@@ -96,9 +100,7 @@ void scd41_disable_asc(void)
         r = (cmd_buffer[2] << 8) | cmd_buffer[3];
 
     if(r)
-    {
-        ESP_LOGI("SCD41", "Warning: ADC not disables(0x%x)", r);
-    }
+        ESP_LOGI("SCD41", "Warning: ADC not disabled (0x%x)", r);
 }
 
 // Function:    scd41_measure_co2_temp_rht()
@@ -116,14 +118,20 @@ void scd41_measure_co2_temp_rht(void)
     cmd_buffer[1] = (uint8_t) SCD41_CMD_SINGLESHOT & 0xFF;
     
     uint8_t err = i2c_write(SCD41_ADDR, (uint8_t *) &cmd_buffer[0], I2C_STOP, 2);
-    delay(SCD41_SINGLE_SHOT_DELAY);
+
+    // wait for the SCD41 to finish measuring
+    #ifdef USE_HTTP
+        delay(SCD41_SINGLE_SHOT_DELAY);
+    #else
+        set_custom_lightsleep(SCD41_SINGLE_SHOT_DELAY * 1000);
+    #endif
 
     // --- READ MEASUREMENT --- //
     cmd_buffer[0] = (uint8_t)(SCD41_CMD_READMEASURE >> 8);
     cmd_buffer[1] = (uint8_t) SCD41_CMD_READMEASURE & 0xFF;
     
     err = i2c_write(SCD41_ADDR, (uint8_t *) &cmd_buffer[0], I2C_NO_STOP, 2);
-    delay(1);
+    delay(SCD41_WAIT_MILLISECOND);
     err = i2c_read(SCD41_ADDR, (uint8_t *) &read_buffer[0], 9);
 
     scd41_store_measurements(&read_buffer[0]);
@@ -214,7 +222,7 @@ void scd41_print_serial_number(void)
 
     // get serial number
     uint8_t err = i2c_write(SCD41_ADDR, &cmd_buffer[0], I2C_NO_STOP, 2);
-    delay(1);
+    delay(SCD41_WAIT_MILLISECOND);
     err = i2c_read(SCD41_ADDR, (uint8_t *) &buffer[0], 9);
 
     // since its a big endian number it's already in the right order
