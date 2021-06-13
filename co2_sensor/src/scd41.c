@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define SCD41_INIT_DELAY        1000 // milliseconds
+
 #define SCD41_ADDR              0x62
 
 #define SCD41_CMD_SERIALNUM     0x3682
@@ -30,10 +32,10 @@
 
 #define SCD41_STR_SIZE          64
 
-volatile uint16_t *buffer_co2;
-volatile uint16_t *buffer_temp;
-volatile uint16_t *buffer_rht;
-volatile uint8_t loc = 0;
+uint16_t *buffer_co2;
+uint16_t *buffer_temp;
+uint16_t *buffer_rht;
+uint8_t loc = 0;
 
 // Function:    scd41_init()
 // Params:      N/A
@@ -48,7 +50,6 @@ void scd41_init(void)
     buffer_temp = malloc(SCD41_BUFFER_SIZE * sizeof(uint16_t));
     buffer_rht = malloc(SCD41_BUFFER_SIZE * sizeof(uint16_t));
 
-    // TODO: non-periodic measurement stuff
     scd41_disable_asc();
     scd41_print_serial_number();
 }
@@ -127,9 +128,6 @@ void scd41_measure_co2_temp_rht(void)
 
     scd41_store_measurements(&read_buffer[0]);
 
-    // send_HTTPS((uint16_t *) buffer_co2, (float *) buffer_temp, (uint8_t *) buffer_rht, 1);
-    // scd41_reset_buffers();
-
     if(loc++ >= SCD41_BUFFER_SIZE-1)
     {
         #ifdef USE_HTTP
@@ -198,9 +196,9 @@ void scd41_send_data_espnow(void)
 void scd41_reset_buffers(void)
 {
     loc = 0;
-    memset((uint16_t *) buffer_co2, 0, SCD41_BUFFER_SIZE);
-    memset((uint16_t *) buffer_temp, 0, SCD41_BUFFER_SIZE);
-    memset((uint16_t *) buffer_rht, 0, SCD41_BUFFER_SIZE);
+    memset((uint16_t *) buffer_co2, 0, SCD41_BUFFER_SIZE * sizeof(uint16_t));
+    memset((uint16_t *) buffer_temp, 0, SCD41_BUFFER_SIZE * sizeof(uint16_t));
+    memset((uint16_t *) buffer_rht, 0, SCD41_BUFFER_SIZE * sizeof(uint16_t));
 }
 
 // Function:    scd41_print_serial_number()

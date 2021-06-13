@@ -131,8 +131,6 @@ void append_uint16(uint16_t *b, size_t size, char *msg_ptr, const char *type)
     msgSize = variable_sprintf_size("\"%u\"] }", 1, b[size-1]);
     snprintf(temp, msgSize, "\"%u\"] }", b[size-1]);
     strcat(msg_ptr, temp);
-
-    free(b);
 }
 
 // TODO: REMOVE

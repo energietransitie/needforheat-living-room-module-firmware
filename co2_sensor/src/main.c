@@ -52,6 +52,7 @@ void main_esp_now(void)
 void main_https(void)
 {
     initialize_wifi();
+    enable_wifi();
 
     while(1) {
         set_light_sleep(); // creates the right timing and will measure after
