@@ -65,7 +65,7 @@ void espnow_recv_pair(void)
 {
     ESP_LOGI(TAG, "Sent peering information to CO2 measuring device");
     uint8_t data = 1;
-    
+
     ESP_ERROR_CHECK(esp_now_unregister_send_cb());
     ESP_ERROR_CHECK(esp_now_unregister_recv_cb());
 
@@ -119,6 +119,10 @@ void espnow_init(void)
     ESP_ERROR_CHECK(esp_wifi_get_mac(ESP_IF_WIFI_STA, mymac_addr));
 }
 
+// Function:    espnow_config()
+// Params:      N/A
+// Returns:     N/A
+// Desription:  Searches for pairing information and configures the peer
 void espnow_config(void)
 {
     #ifdef NO_GATEWAY_PAIRING
@@ -134,9 +138,13 @@ void espnow_config(void)
     #endif // NO_GATEWAY_PAIRING
 }
 
+// Function:    espnow_pair_gateway()
+// Params:      N/A
+// Returns:     N/A
+// Desription:  Pairs this device with the P1 gateway
 void espnow_pair_gateway(void)
 {
-    ESP_LOGI(TAG, "p1 pairing information not found, pairing...");
+    ESP_LOGI(TAG, "P1 pairing information not found, pairing...");
 
     uint8_t temp_addr[MAC_ADDR_SIZE + 1] = MAC_ADDR_BROADCAST_NUL_TERM;
     memcpy(pairing_macaddr, temp_addr, MAC_ADDR_SIZE);
@@ -191,17 +199,22 @@ uint8_t espnow_send(uint8_t *data, size_t size)
         // wait until ACK or timeout
         while(!msg_ack)
             delay(DELAY_INTERVAL);
-
-        msg_ack = 0;
-
+        
         // TESTING ONLY
         ESP_LOGI(TAG, "sent msg, index: %x, msg_ack: %x\n", msg_index, msg_ack);
+
+        if(msg_ack == ESPNOW_ACK)
+            {msg_ack = 0; break;}
         
         if(attempt++ > MAX_SEND_ATTEMPTS-1)
            {msg_ack = 0; return ERROR_CODE_FAIL;}
 
+        msg_ack = 0;
+
         // delay for retry by going back to light sleep
+        set_modem_sleep();
         set_custom_lightsleep(RETRY_DELAY);
+        wake_modem_sleep();
 
         delay(200); // I hate watchdogs        
     }
