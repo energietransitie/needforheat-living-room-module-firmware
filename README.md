@@ -48,18 +48,13 @@ NOTE: The first time might take a while because PlatformIO needs to install and 
 
 OPTIONAL: When it is done flashing, press `CTRL+T` and then `B`, then type `115200` so that it sets the right baud rate and you see text not gibberish.
 
-### Changes necessary to get ESP-NOW working
-In order for ESP-NOW to work on your device you need to change a few things in `src/espnow.c`. 
-
-Change the `MAC_ADDR_TEST_SENDER` and `MAC_ADDR_TEST_RECVR` to the MAC-address of your chosen sender and receiver, respectively. Make sure to leave the format the same (i.e. an array initialization using curly brackets `{ }`). You can find the MAC-address of your device by flashing this software to both devices. In the serial monitor, you should be able to see a line resembling something like this: `wifi:mode : sta (xx:xx:xx:xx:xx:xx)`. Use the number in between the normal brackets `( )` as the MAC-address for the device type in question (sender/receiver).
-
-Optionally, in `src/espnow.c`, change the `WIFI_CHANNEL` define to a different channel. 
-
-There is something else you need to change in order to get your device working with ESP-NOW.
-In Visual Studio Code, go to 'Explorer' (CTRL + SHIFT + E). Then, navigate to the folder 'co2_sensor'. In this folder, search for a .txt file called 'sdkconfig.espnow'. Copy everything from this file (CTRL + A), then go to the .txt file 'sdkconfig'. In this file, remove everything and then paste the text you just copied from 'sdkconfig.espnow'. Now, you can use the CO₂ measurement device with ESP-NOW.
-
 ### Toggling the ESP-NOW code between sender and receiver
 If you want to use a receiver to test this code, you can uncomment line 16 in `platformio.ini`: `#build_flags = -D ESP_NOW_RECEIVER`. Flash it to your chosen device and it will behave as a receiver.
+
+### Changes necessary to get ESP-NOW working
+To use the ESP-NOW code acting as the sender (i.e. the CO₂-measurement device), you only have to make sure Bluetooth is disabled in sdkconfig. It is possbile to use the contents of `co2_sensor/sdkconfig.espnow`.
+
+ESP-NOW is configured by powering on the measurement device. After the device is powered on for the very first time, it will wait for the receiver to send, via ESP-NOW, its MAC-address and Wi-Fi channel. This is called pairing.
 
 ### Changes necessary to get HTTPS working
 In order for HTTPS to work on your device you need to change something in the sdkconfig file.
