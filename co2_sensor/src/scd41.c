@@ -32,7 +32,7 @@
 #define SCD41_CMD_GET_TEMP_OFF  0x2318
 
 #ifdef USE_HTTP
-    #define SCD41_BUFFER_SIZE       32     // https
+    #define SCD41_BUFFER_SIZE       144     // https
 #else
     #define SCD41_BUFFER_SIZE       ESPNOW_MAX_SAMPLES
 #endif // USE_HTPP
@@ -64,7 +64,7 @@ void scd41_init(void)
     #ifndef USE_HTTP
         scd41_fetch_nvs();
     #endif // USE_HTTP
-    
+
     scd41_disable_asc();
     scd41_print_serial_number();
 }
@@ -152,7 +152,7 @@ void scd41_measure_co2_temp_rht(void)
     if(loc++ >= SCD41_BUFFER_SIZE-1)
     {
         #ifdef USE_HTTP
-            send_HTTPS((uint16_t *) buffer_co2, (uint16_t *) buffer_temp, (uint16_t *) buffer_rht, 32);
+            send_HTTPS((uint16_t *) buffer_co2, (uint16_t *) buffer_temp, (uint16_t *) buffer_rht, SCD41_BUFFER_SIZE);
         #else
             scd41_send_data_espnow();
         #endif // USE_HTTP
