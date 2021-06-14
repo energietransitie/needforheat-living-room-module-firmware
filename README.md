@@ -63,7 +63,7 @@ If you want to use a receiver to test this code, you can uncomment line 16 in `p
 *   Measure CO2, temperature and Relative Humidty (RH) using the SCD41
 *   Send data via ESP-NOW
 *   Supports modem- and lightsleep
-*   WiFi provisioning using SoftAP
+*   WiFi provisioning using BLE
 
 To-do:
 
