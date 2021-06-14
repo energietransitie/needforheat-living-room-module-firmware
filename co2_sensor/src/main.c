@@ -60,7 +60,7 @@ void main_https(void)
 
     while(1) {
         ESP_LOGI("Main", "Waiting 10 minutes...");
-        delay(SCD41_WAIT_TEN_MINUTES_MS / 1000); // watchdogs aren't welcome
+        delay(SCD41_WAIT_TEN_MINUTES_MS); // watchdogs aren't welcome
         scd41_measure_co2_temp_rht();
     }
 }

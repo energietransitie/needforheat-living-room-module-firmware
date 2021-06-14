@@ -7,8 +7,6 @@
 
 #include "../include/scd41.h"
 
-#define DEVICE_NAME "Generic-Test"
-
 #define HTTPS_STATUS_OK             200
 
 #define MESSAGE_BUFFER_SIZE         4096
@@ -146,30 +144,6 @@ void append_uint16(uint16_t *b, size_t size, char *msg_ptr, const char *type)
     // add last measurement and end of this object
     msgSize = variable_sprintf_size("\"%u\"] }", 1, b[size-1]);
     snprintf(temp, msgSize, "\"%u\"] }", b[size-1]);
-    strcat(msg_ptr, temp);
-}
-
-// TODO: REMOVE
-void append_floats(float *b, size_t size, char *msg_ptr, const char *type)
-{
-    time_t now = time(NULL);
-
-    // measurement type header
-    int msgSize = variable_sprintf_size(meas_str, 3, type, now, (SCD41_SAMPLE_INTERVAL * 1000));
-    snprintf(temp, msgSize, meas_str, type, now, (SCD41_SAMPLE_INTERVAL * 1000));
-    strcat(msg_ptr, temp);
-
-    // append measurements
-    for(uint32_t i = 0; i < size-1; i++)
-    {
-        msgSize = variable_sprintf_size("\"%f\",", 1, (double) b[i]);
-        snprintf(temp, msgSize, "\"%f\",", (double) b[i]);
-        strcat(msg_ptr, temp);
-    }
-    
-    // add last measurement and end of this object
-    msgSize = variable_sprintf_size("\"%f\"] }", 1, (double) b[size-1]);
-    snprintf(temp, msgSize, "\"%f\"] }", (double) b[size-1]);
     strcat(msg_ptr, temp);
 }
 
