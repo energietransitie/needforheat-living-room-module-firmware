@@ -2,6 +2,7 @@
 #include "../include/errorcode.h"
 #include "../include/util.h"
 #include "../include/sleepmodes.h"
+#include "../lib/sensor_pairing/twomes_sensor_pairing.h"
 
 #include <esp_log.h>
 #include <esp_now.h>
@@ -15,11 +16,12 @@
 #define ESPNOW_ACK          1
 #define ESPNOW_NACK         2
 
-#define MAC_ADDR_SIZE       6   // bytes
+//#define MAC_ADDR_SIZE       6   // bytes
 
-#define MAC_ADDR_TEST_SENDER    {0xc4, 0x4f, 0x33, 0x7f, 0xae, 0x95}    // LOLIN TFT/I2C SHIELD ESP
-#define MAC_ADDR_TEST_RECVR     {0xc4, 0x4f, 0x33, 0x7f, 0xa8, 0x81}    // SHIELD-LESS ESP
-#define WIFI_CHANNEL            1
+#define MAC_ADDR_BROADCAST_NUL_TERM {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00} // null terminated
+#define MAC_ADDR_TEST_SENDER        {0xff, 0xff, 0xff, 0xff, 0xff, 0xff}    // LOLIN TFT/I2C SHIELD ESP
+#define MAC_ADDR_TEST_RECVR         {0xc4, 0x4f, 0x33, 0x7f, 0xa8, 0x81}    // SHIELD-LESS ESP
+#define WIFI_CHANNEL                1
 
 #define MAX_SEND_ATTEMPTS       0xFF
 #define RETRY_DELAY             10 * 1000 * 1000 // microseconds (= 10 seconds)
@@ -32,6 +34,7 @@ volatile uint8_t msg_ack = 0;
 //              you can do this by setting the peermac_addr dynamically in espnow_init().
 //              At that point you may want to remove the mymac_addr array and the
 //              above defines.
+uint8_t peer_channel = 0;
 uint8_t mymac_addr[MAC_ADDR_SIZE],
         peermac_addr[MAC_ADDR_SIZE] = 
         
@@ -48,16 +51,29 @@ uint8_t mymac_addr[MAC_ADDR_SIZE],
 //      - (const uint32_t) size of data buffer
 // Returns:     N/A
 // Desription:  Used for testing - this function is the onDataReceive callback used to test if sending data works
+#ifdef ESP_NOW_RECEIVER
 void espnow_cb_ondatarecv(const uint8_t *mac, const uint8_t *data, const uint32_t len)
 {
-    ESP_LOGI(TAG, "received, eh... something\n");
+    ESP_LOGI(TAG, "received packet");
     
-
     espnow_msg_t *msg = (espnow_msg_t *) data;
 
-    // TESTING ONLY
-    ESP_LOGI(TAG, "type: %x, nmeasurements: %x, index: %x, co2: %i ppm", (msg->device_type), (msg->nmeasurements), (msg->index), (msg->co2[0]));
+    ESP_LOGI(TAG, "type: %x, nmeasurements: %x, index: %x, first co2 measurement: %i ppm", (msg->device_type), (msg->nmeasurements), (msg->index), (msg->co2[0]));
 }
+
+void espnow_recv_pair(void)
+{
+    ESP_LOGI(TAG, "Sent peering information to CO2 measuring device");
+    uint8_t data = 1;
+    
+    ESP_ERROR_CHECK(esp_now_unregister_send_cb());
+    ESP_ERROR_CHECK(esp_now_unregister_recv_cb());
+
+    esp_now_send(peermac_addr, &data, 1);
+
+    ESP_ERROR_CHECK(esp_now_register_recv_cb((esp_now_recv_cb_t) espnow_cb_ondatarecv));
+}
+#endif // ESP_NOW_RECEIVER
 
 // Function:    espnow_cb_ondatasend()
 // Params:      
@@ -87,19 +103,53 @@ void espnow_cb_ondatasend(const uint8_t *mac, esp_now_send_status_t stat)
 // Desription:  Initializes ESP-NOW
 void espnow_init(void)
 {
-    esp_wifi_set_channel(WIFI_CHANNEL, WIFI_SECOND_CHAN_NONE);
+    esp_wifi_set_channel(ESPNOW_PAIRING_CHANNEL, WIFI_SECOND_CHAN_NONE);
     ESP_ERROR_CHECK(esp_now_init());
-    
-    // future TODO: change you can pass the new dynamically
-    // received mac-address and wifi-channel to this function and
-    // the code will configure espnow properly
-    espnow_config_peer(WIFI_CHANNEL, false, &peermac_addr[0]);
 
     // register callbacks
-    ESP_ERROR_CHECK(esp_now_register_recv_cb((esp_now_recv_cb_t) espnow_cb_ondatarecv)); // testing only
+    #ifdef ESP_NOW_RECEIVER
+        ESP_ERROR_CHECK(esp_now_register_recv_cb((esp_now_recv_cb_t) espnow_cb_ondatarecv)); // testing only
+        espnow_config_peer(WIFI_CHANNEL, false, peermac_addr);
+    #else
+        espnow_config();
+    #endif // ESP_NOW_RECEIVER
+
     ESP_ERROR_CHECK(esp_now_register_send_cb((esp_now_send_cb_t) espnow_cb_ondatasend));
 
     ESP_ERROR_CHECK(esp_wifi_get_mac(ESP_IF_WIFI_STA, mymac_addr));
+}
+
+void espnow_config(void)
+{
+    #ifdef NO_GATEWAY_PAIRING
+        // config peer with defines
+        espnow_config_peer(WIFI_CHANNEL, false, &peermac_addr[0]);
+    #else   
+        ESP_LOGI(TAG, "checking NVS for P1 pairing information...");     
+        if(getGatewayData(&peermac_addr[0], MAC_ADDR_SIZE, &peer_channel) != ESP_OK)
+            espnow_pair_gateway();
+        
+        ESP_LOGI(TAG, "P1 pairing information found, configuring peer...");   
+        espnow_config_peer(peer_channel, false, &peermac_addr[0]);
+    #endif // NO_GATEWAY_PAIRING
+}
+
+void espnow_pair_gateway(void)
+{
+    ESP_LOGI(TAG, "p1 pairing information not found, pairing...");
+
+    uint8_t temp_addr[MAC_ADDR_SIZE + 1] = MAC_ADDR_BROADCAST_NUL_TERM;
+    memcpy(pairing_macaddr, temp_addr, MAC_ADDR_SIZE);
+
+    ESP_ERROR_CHECK(esp_now_register_recv_cb((esp_now_recv_cb_t) onDataReceive));
+
+    // wait until pairing is done by checking if the temporary address is equal
+    // to newly received address (is broadcast if nothing is received yet)
+    while(!strcmp((char *) pairing_macaddr, (char *) temp_addr))
+        delay(10);
+
+    // will never get here (esp will restart)
+    ESP_ERROR_CHECK(esp_now_unregister_recv_cb());
 }
 
 // Function:    espnow_config_peer()

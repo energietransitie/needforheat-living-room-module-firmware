@@ -33,6 +33,7 @@ void main_esp_now(void)
         // with any power saving on, ESP-NOW doesn't work well
         // (about every 9 out of 10 packets get lost)
         esp_wifi_set_ps(WIFI_PS_NONE);
+        espnow_recv_pair();
     #endif // ESP_NOW_RECEIVER
 
     #ifndef ESP_NOW_RECEIVER

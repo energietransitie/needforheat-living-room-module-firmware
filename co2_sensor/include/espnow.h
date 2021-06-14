@@ -20,7 +20,10 @@ typedef struct espnow_msg_t
 } espnow_msg_t;
 
 void espnow_init(void);
+void espnow_recv_pair(void);
 void espnow_config_peer(uint8_t channel, bool encrypt, uint8_t *peer_mac);
+void espnow_config(void);
+void espnow_pair_gateway(void);
 uint8_t espnow_send(uint8_t *data, size_t size);
 uint16_t espnow_get_message_index(void);
 
