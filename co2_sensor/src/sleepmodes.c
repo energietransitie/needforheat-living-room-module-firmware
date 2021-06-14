@@ -7,8 +7,6 @@
 #include <../lib/generic_esp_32/generic_esp_32.h>
 #include "../include/scd41.h"
 
-#define DEBUG_ENABLED
-
 #ifdef DEBUG_ENABLED
     #define TIME_IN_SLEEP      1200
 #else

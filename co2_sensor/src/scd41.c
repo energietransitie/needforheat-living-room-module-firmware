@@ -80,9 +80,6 @@ void scd41_disable_asc(void)
     // generate CRC for data buffer
     uint16_t data[2] = {0, 0};
     cmd_buffer[4] = generate_crc((const uint16_t *) &data, 2);
-
-    // TESTING ONLY
-    ESP_LOGI("SCD41", "CRC: %x", cmd_buffer[4]);
     
     // write command and data
     i2c_write(SCD41_ADDR, &cmd_buffer[0], I2C_STOP, 5); 
@@ -222,6 +219,10 @@ void scd41_reset_buffers(void)
     memset((uint16_t *) buffer_rht, 0, SCD41_BUFFER_SIZE * sizeof(uint16_t));
 }
 
+// Function:    scd41_store_in_nvs()
+// Params:      N/A
+// Returns:     N/A
+// Desription:  Stores current buffers in NVS
 void scd41_store_in_nvs(void)
 {
     nvs_handle nvs;
@@ -235,6 +236,10 @@ void scd41_store_in_nvs(void)
     nvs_close(nvs);
 }
 
+// Function:    scd41_fetch_nvs()
+// Params:      N/A
+// Returns:     N/A
+// Desription:  Fetches the SCD41 buffers stored in NVS
 void scd41_fetch_nvs(void)
 {
     nvs_handle nvs;
