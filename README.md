@@ -75,7 +75,7 @@ In Visual Studio Code, go to 'Explorer' (CTRL + SHIFT + E). Then, navigate to th
   * send measurements via ESP-NOW to the gateway;
   * supports modem- and lightsleep;
 * as a full-blown Twomes measurement device 
-  * Wi-Fi provisioning using SoftAP;
+  * Wi-Fi provisioning using BLE;
   * securet uploading of measurements to the API;
 
 To-do:
@@ -100,3 +100,4 @@ Product owners:
 We use and gratefully acknowlegde the efforts of the makers of the following source code and libraries:
 * [ESP-IDF](https://github.com/espressif/esp-idf), by Espressif Systems, licensed under [Apache License 2.0](https://github.com/espressif/esp-idf/blob/9d34a1cd42f6f63b3c699c3fe8ec7216dd56f36a/LICENSE)
 * [Twomes Generic ESP Firmware](https://github.com/energietransitie/twomes-generic-esp-firmware), by Research group Energy Transition, Windesheim University of Applied Sciences, licensed under [Apache License 2.0](https://github.com/energietransitie/twomes-generic-esp-firmware/blob/b17f346d78ac7dde6f2dff6b5e7639e98d55c348/LICENSE.md)
+* [Twomes Sensor Pairing](https://github.com/energietransitie/twomes-temp-monitor/blob/97c9b54c33c2031c82f80bd55b47af8e185d1a9a/src/twomes_sensor_pairing.h), by Copyright (C) 2021 Research group Energy Transition, Windesheim University of Applied Sciences, licensed under [Apache License 2.0](https://github.com/energietransitie/twomes-temp-monitor/blob/97c9b54c33c2031c82f80bd55b47af8e185d1a9a/LICENSE)
