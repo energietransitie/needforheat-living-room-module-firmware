@@ -59,8 +59,9 @@ void main_https(void)
     enable_wifi();
 
     while(1) {
-        set_light_sleep(); // creates the right timing and will measure after
-        delay(1000); // watchdogs aren't welcome
+        ESP_LOGI("Main", "Waiting 10 minutes...");
+        delay(SCD41_WAIT_TEN_MINUTES_MS); // watchdogs aren't welcome
+        scd41_measure_co2_temp_rht();
     }
 }
 #endif // USE_HTTP

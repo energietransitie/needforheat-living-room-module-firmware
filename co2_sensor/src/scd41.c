@@ -61,8 +61,10 @@ void scd41_init(void)
     buffer_temp = malloc(SCD41_BUFFER_SIZE * sizeof(uint16_t));
     buffer_rht = malloc(SCD41_BUFFER_SIZE * sizeof(uint16_t));
 
-    scd41_fetch_nvs();
-
+    #ifndef USE_HTTP
+        scd41_fetch_nvs();
+    #endif // USE_HTTP
+    
     scd41_disable_asc();
     scd41_print_serial_number();
 }

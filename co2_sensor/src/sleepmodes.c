@@ -7,14 +7,12 @@
 #include <../lib/generic_esp_32/generic_esp_32.h>
 #include "../include/scd41.h"
 
-//#define DEBUG_ENABLED
+#define DEBUG_ENABLED
 
 #ifdef DEBUG_ENABLED
     #define TIME_IN_SLEEP      1200
 #else
-    #define TIME_IN_SLEEP      (SCD41_SAMPLE_INTERVAL * 1000 * 1000) - \
-                                    (SCD41_SINGLE_SHOT_DELAY * 1000)    // microseconds --> 10 minutes - sensor measuremen delay 
-                                                                        // to avoid time shifting
+    #define TIME_IN_SLEEP      SCD41_WAIT_TEN_MINUTES_US    // 10 minutes - sensor measuremen delay to avoid time shifting
 #endif
 
 #define TIME_IN_SLEEP_TEST 60000000
