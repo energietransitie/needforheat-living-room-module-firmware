@@ -31,13 +31,14 @@ const char *variable_interval_upload_url = TWOMES_TEST_SERVER "/device/measureme
 char *bearer;
 const char *rootCA;
 
+uint8_t wifi_espnow_on = WIFI_ESPNOW_OFF;
+
 // Function:    wifi_init_espnow()
 // Params:      N/A
 // Returns:     N/A
 // Description: used to initialise Wi-Fi for ESP-NOW
 void wifi_init_espnow(void)
 {
-    initialize_nvs();
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
@@ -45,6 +46,19 @@ void wifi_init_espnow(void)
     ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
     ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
     ESP_ERROR_CHECK( esp_wifi_start());
+
+    wifi_espnow_on = WIFI_ESPNOW_ON;
+}
+
+// Function:    wifi_init_espnow()
+// Params:      N/A
+// Returns:
+//      - (uint8_t) Returns WIFI_ESPNOW_OFF if wifi for esp now is off, otherwise returns
+//                  WIFI_ESPNOW_ON
+// Description: You can use this function to know if wifi is enabled for esp now
+uint8_t wifi_espnow_enabled(void)
+{
+    return wifi_espnow_on;
 }
 
 // Function:    initialise_wifi()

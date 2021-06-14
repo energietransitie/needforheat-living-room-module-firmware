@@ -26,14 +26,14 @@
 #ifndef USE_HTTP
 void main_esp_now(void)
 {
-    wifi_init_espnow();
-    espnow_init();
-
     #ifdef ESP_NOW_RECEIVER
+        espnow_init();
         // with any power saving on, ESP-NOW doesn't work well
         // (about every 9 out of 10 packets get lost)
         esp_wifi_set_ps(WIFI_PS_NONE);
         espnow_recv_pair();
+    #else
+        espnow_init_on_first_boot();
     #endif // ESP_NOW_RECEIVER
 
     #ifndef ESP_NOW_RECEIVER
@@ -43,7 +43,10 @@ void main_esp_now(void)
     while(1)
     {
         #ifndef ESP_NOW_RECEIVER
-            set_light_sleep();
+            //set_light_sleep();
+            scd41_measure_co2_temp_rht();
+            scd41_store_in_nvs();
+            set_deep_sleep();
         #else
             delay(5000); // fix for watchdog issues
         #endif // ESP_NOW_RECEIVER
@@ -64,6 +67,8 @@ void main_https(void)
 
 void app_main() 
 {
+    initialize_nvs();
+
     #ifndef ESP_NOW_RECEIVER
         i2c_init();
         scd41_init();

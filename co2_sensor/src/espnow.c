@@ -2,6 +2,7 @@
 #include "../include/errorcode.h"
 #include "../include/util.h"
 #include "../include/sleepmodes.h"
+#include "../include/Wifi.h"
 #include "../lib/sensor_pairing/twomes_sensor_pairing.h"
 
 #include <esp_log.h>
@@ -15,8 +16,6 @@
 #define DELAY_INTERVAL      2   // milliseconds
 #define ESPNOW_ACK          1
 #define ESPNOW_NACK         2
-
-//#define MAC_ADDR_SIZE       6   // bytes
 
 #define MAC_ADDR_BROADCAST_NUL_TERM {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00} // null terminated
 #define MAC_ADDR_TEST_SENDER        {0xff, 0xff, 0xff, 0xff, 0xff, 0xff}    // LOLIN TFT/I2C SHIELD ESP
@@ -103,6 +102,7 @@ void espnow_cb_ondatasend(const uint8_t *mac, esp_now_send_status_t stat)
 // Desription:  Initializes ESP-NOW
 void espnow_init(void)
 {
+    wifi_init_espnow();
     esp_wifi_set_channel(ESPNOW_PAIRING_CHANNEL, WIFI_SECOND_CHAN_NONE);
     ESP_ERROR_CHECK(esp_now_init());
 
@@ -111,12 +111,22 @@ void espnow_init(void)
         ESP_ERROR_CHECK(esp_now_register_recv_cb((esp_now_recv_cb_t) espnow_cb_ondatarecv)); // testing only
         espnow_config_peer(WIFI_CHANNEL, false, peermac_addr);
     #else
-        espnow_config();
+        espnow_config_peer(peer_channel, false, peermac_addr);
+        ESP_ERROR_CHECK(esp_now_register_send_cb((esp_now_send_cb_t) espnow_cb_ondatasend));
     #endif // ESP_NOW_RECEIVER
+}
 
-    ESP_ERROR_CHECK(esp_now_register_send_cb((esp_now_send_cb_t) espnow_cb_ondatasend));
-
-    ESP_ERROR_CHECK(esp_wifi_get_mac(ESP_IF_WIFI_STA, mymac_addr));
+// Function:    espnow_init_on_first_boot()
+// Params:      N/A
+// Returns:     N/A
+// Desription:  Initializes ESP-NOW only if it is not initialized yet (aka nothing stored in NVS)
+//              to avoid always enabling Wi-Fi on a DEEPSLEEP_RESET
+void espnow_init_on_first_boot(void)
+{
+    ESP_LOGI(TAG, "checking NVS for P1 pairing information..."); 
+    
+    if(getGatewayData(&peermac_addr[0], MAC_ADDR_SIZE, &peer_channel) != ESP_OK)
+        espnow_config();
 }
 
 // Function:    espnow_config()
@@ -125,16 +135,15 @@ void espnow_init(void)
 // Desription:  Searches for pairing information and configures the peer
 void espnow_config(void)
 {
+    wifi_init_espnow();
+    esp_wifi_set_channel(ESPNOW_PAIRING_CHANNEL, WIFI_SECOND_CHAN_NONE);
+    ESP_ERROR_CHECK(esp_now_init());
+
     #ifdef NO_GATEWAY_PAIRING
         // config peer with defines
         espnow_config_peer(WIFI_CHANNEL, false, &peermac_addr[0]);
-    #else   
-        ESP_LOGI(TAG, "checking NVS for P1 pairing information...");     
-        if(getGatewayData(&peermac_addr[0], MAC_ADDR_SIZE, &peer_channel) != ESP_OK)
-            espnow_pair_gateway();
-        
-        ESP_LOGI(TAG, "P1 pairing information found, configuring peer...");   
-        espnow_config_peer(peer_channel, false, &peermac_addr[0]);
+    #else       
+        espnow_pair_gateway();
     #endif // NO_GATEWAY_PAIRING
 }
 
@@ -191,6 +200,9 @@ uint8_t espnow_send(uint8_t *data, size_t size)
 {
     uint32_t attempt = 0;
     uint16_t cur_index = msg_index; 
+
+    if(!wifi_espnow_enabled())
+        espnow_init();
 
     while((cur_index == msg_index) && (msg_ack != ESPNOW_ACK))
     {

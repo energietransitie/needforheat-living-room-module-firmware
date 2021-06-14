@@ -8,9 +8,15 @@
 #include "../include/espnow.h"
 #include "esp_log.h"
 
+#include <nvs.h>
+#include <nvs_flash.h>
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#define SCD41_LOG_TAG           "scd41"
+#define SCD41_NVS_NAME          SCD41_LOG_TAG
 
 #define SCD41_INIT_DELAY        1000 // milliseconds
 #define SCD41_WAIT_MILLISECOND  2 // milliseconds (is 2 to ensure it will always wait at least one millisecond)
@@ -54,6 +60,8 @@ void scd41_init(void)
     buffer_co2 = malloc(SCD41_BUFFER_SIZE * sizeof(uint16_t));
     buffer_temp = malloc(SCD41_BUFFER_SIZE * sizeof(uint16_t));
     buffer_rht = malloc(SCD41_BUFFER_SIZE * sizeof(uint16_t));
+
+    scd41_fetch_nvs();
 
     scd41_disable_asc();
     scd41_print_serial_number();
@@ -112,6 +120,9 @@ void scd41_measure_co2_temp_rht(void)
 {
     uint8_t read_buffer[9];
     uint8_t cmd_buffer[2];
+
+    // for testing NVS
+    ESP_LOGI(SCD41_LOG_TAG, "first measurement: %i", buffer_co2[0]);
     
     // --- START SINGLE SHOT MEASUREMENT --- //
     cmd_buffer[0] = (uint8_t) (SCD41_CMD_SINGLESHOT >> 8) & 0xFF;
@@ -207,6 +218,37 @@ void scd41_reset_buffers(void)
     memset((uint16_t *) buffer_co2, 0, SCD41_BUFFER_SIZE * sizeof(uint16_t));
     memset((uint16_t *) buffer_temp, 0, SCD41_BUFFER_SIZE * sizeof(uint16_t));
     memset((uint16_t *) buffer_rht, 0, SCD41_BUFFER_SIZE * sizeof(uint16_t));
+}
+
+void scd41_store_in_nvs(void)
+{
+    nvs_handle nvs;
+    
+    ESP_ERROR_CHECK(nvs_open(SCD41_NVS_NAME, NVS_READWRITE, &nvs));
+    nvs_set_blob(nvs, "buffer_co2", (uint8_t *) buffer_co2, SCD41_BUFFER_SIZE * sizeof(uint16_t));
+    nvs_set_blob(nvs, "buffer_rht", (uint8_t *) buffer_rht, SCD41_BUFFER_SIZE * sizeof(uint16_t));
+    nvs_set_blob(nvs, "buffer_temp",(uint8_t *) buffer_temp, SCD41_BUFFER_SIZE * sizeof(uint16_t));
+    nvs_set_u8(nvs, "loc", loc);
+
+    nvs_close(nvs);
+}
+
+void scd41_fetch_nvs(void)
+{
+    nvs_handle nvs;
+
+    if(nvs_open(SCD41_NVS_NAME, NVS_READONLY, &nvs) != ESP_OK)
+       return;
+    
+    size_t size = SCD41_BUFFER_SIZE * sizeof(uint16_t);
+
+    // get all data used by scd41
+    ESP_ERROR_CHECK(nvs_get_blob(nvs, "buffer_co2", buffer_co2, &size));
+    ESP_ERROR_CHECK(nvs_get_blob(nvs, "buffer_temp", buffer_temp, &size));
+    ESP_ERROR_CHECK(nvs_get_blob(nvs, "buffer_rht", buffer_rht, &size));
+    ESP_ERROR_CHECK(nvs_get_u8(nvs, "loc", &loc));
+
+    nvs_close(nvs);
 }
 
 // Function:    scd41_print_serial_number()

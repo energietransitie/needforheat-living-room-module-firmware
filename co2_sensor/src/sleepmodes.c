@@ -7,17 +7,17 @@
 #include <../lib/generic_esp_32/generic_esp_32.h>
 #include "../include/scd41.h"
 
-#define DEBUG_ENABLED
+//#define DEBUG_ENABLED
 
 #ifdef DEBUG_ENABLED
-    #define TIME_IN_LIGHTSLEEP      1200
+    #define TIME_IN_SLEEP      1200
 #else
-    #define TIME_IN_LIGHTSLEEP      (SCD41_SAMPLE_INTERVAL * 1000 * 1000) - \
+    #define TIME_IN_SLEEP      (SCD41_SAMPLE_INTERVAL * 1000 * 1000) - \
                                     (SCD41_SINGLE_SHOT_DELAY * 1000)    // microseconds --> 10 minutes - sensor measuremen delay 
                                                                         // to avoid time shifting
 #endif
 
-#define TIME_IN_LIGHTSLEEP_TEST 60000000
+#define TIME_IN_SLEEP_TEST 60000000
 
 // Function:    light_sleep_start()
 // Params:      N/A
@@ -25,11 +25,20 @@
 // Desription:  Used to enter light sleep, then wake up automatically after 10 minutes
 void set_light_sleep()
 {
-    esp_sleep_enable_timer_wakeup(TIME_IN_LIGHTSLEEP);
+    esp_sleep_enable_timer_wakeup(TIME_IN_SLEEP);
     esp_light_sleep_start();
 
     // woke up when it gets here   
     scd41_measure_co2_temp_rht();
+}
+
+void set_deep_sleep(void)
+{
+    esp_sleep_enable_timer_wakeup(TIME_IN_SLEEP);
+    esp_deep_sleep_start();
+
+    // will restart when done
+    ESP_LOGE("SLEEP", "you shouldn't be here...");
 }
 
 // Function:    set_custom_lightsleep()
