@@ -65,9 +65,10 @@ If you want to use a receiver to test this code, you can uncomment line 16 in `p
 *   Supports modem- and lightsleep
 *   WiFi provisioning using SoftAP
 *   Sending CO2 measurements to the API using HTTPS
+*   ESP-NOW: getting a peer's MAC-address dynamically on power-up
 
 To-do:
-*   ESP-NOW: getting a peer's MAC-address dynamically on power-up
+*   Implement minor fixes for the CO2 measurement device
 
 ## Status
 Project is: _in progress_
