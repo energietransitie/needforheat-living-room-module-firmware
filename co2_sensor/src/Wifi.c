@@ -173,8 +173,12 @@ void upload(uint16_t *b_co2, uint16_t *b_temp, uint16_t *b_rh, size_t size)
 
     ESP_LOGI("test", "data: %s", msg );
 
-    while(post_https(variable_interval_upload_url, msg, rootCA, bearer, NULL, 0) != HTTPS_STATUS_OK)
+    if(post_https(variable_interval_upload_url, msg, rootCA, bearer, NULL, 0) != HTTPS_STATUS_OK)
+    {
+        ESP_LOGI("HTTPS", "Sending failed, attempting retry...");
         delay(10 * 1000); // wait ten seconds (does shift measurements by 10 seconds too)
+        upload(b_co2, b_temp, b_rh, size);
+    }
 
     vTaskDelay(500 / portTICK_PERIOD_MS);
 }
