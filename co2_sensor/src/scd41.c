@@ -32,7 +32,7 @@
 #define SCD41_CMD_GET_TEMP_OFF  0x2318
 
 #ifdef USE_HTTP
-    #define SCD41_BUFFER_SIZE       144     // https
+    #define SCD41_BUFFER_SIZE       6     // https
 #else
     #define SCD41_BUFFER_SIZE       ESPNOW_MAX_SAMPLES
 #endif // USE_HTPP

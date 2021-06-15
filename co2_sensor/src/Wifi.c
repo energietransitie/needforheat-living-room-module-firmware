@@ -16,6 +16,8 @@
 #define MEASUREMENT_TYPE_RH         "\"relativeHumidity\""
 #define MEASUREMENT_TYPE_ROOMTEMP   "\"roomTemp\""
 
+const char*device_type_name = "CO2-meter-SCD4x";
+
 char temp[64];
 char *msg_start = "{\"upload_time\": \"%d\",\"property_measurements\": [";
 char *meas_str  = "{\"property_name\": %s,"
@@ -25,7 +27,7 @@ char *meas_str  = "{\"property_name\": %s,"
                       "\"measurements\": [";
 char *msg_end   = "] }";
     
-static const char *TAG = "Twomes Heartbeat Test Application ESP32";
+static const char *TAG = "Twomes CO₂ meter ESP32";
 char strftime_buf[64]; // FIXME: weird things happen when you remove this one
 
 const char *device_activation_url = TWOMES_TEST_SERVER "/device/activate";
@@ -78,7 +80,7 @@ void initialize_wifi(){
 
     // make sure to have this here otherwise the device names won't match because
     // of config changes made by the above function call.
-    prepare_device();
+    prepare_device(device_type_name);
 
     // starts provisioning if not provisioned, otherwise skips provisioning.
     // if set to false it will not autoconnect after provisioning.
@@ -198,6 +200,6 @@ void send_HTTPS(uint16_t *co2, uint16_t *temp, uint16_t *rh, size_t size)
     enable_wifi();
     vTaskDelay(2000 / portTICK_PERIOD_MS);  // wait to make sure Wi-Fi is enabled.
     upload(co2, temp, rh, size);              
-    vTaskDelay(500 / portTICK_PERIOD_MS);   // wait to make sure uploading is finished.
+    vTaskDelay(1000 / portTICK_PERIOD_MS);   // wait to make sure uploading is finished.
     disable_wifi();
 }

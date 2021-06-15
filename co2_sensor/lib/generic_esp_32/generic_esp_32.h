@@ -1,5 +1,5 @@
-#ifndef _GENERIC_ESP_32_H
-#define _GENERIC_ESP_32_H
+#ifndef GENERIC_ESP_32_H
+#define GENERIC_ESP_32_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,7 +23,7 @@
 #include <driver/gpio.h>
 
 #include <wifi_provisioning/manager.h>
-#define VERSION "V1.7.0"
+#define VERSION "V1.7.3"
 #define WIFI_RESET_BUTTON   GPIO_NUM_0
 #define LED_ERROR   GPIO_NUM_19
 #define MAX_RESPONSE_LENGTH 100
@@ -64,7 +64,7 @@ char* get_types(char* stringf, int count);
 int variable_sprintf_size(char* string, int count, ...);
 void initialize();
 void create_dat();
-void prepare_device();
+void prepare_device(const char *device_type_name);
 void time_sync_notification_cb(struct timeval *tv);
 void prov_event_handler(void *arg, esp_event_base_t event_base,int32_t event_id, void *event_data);
 esp_err_t http_event_handler(esp_http_client_event_t *evt);
