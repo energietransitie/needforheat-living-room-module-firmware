@@ -131,8 +131,8 @@ void append_uint16(uint16_t *b, size_t size, char *msg_ptr, const char *type)
     time_t now = time(NULL);
 
     // measurement type header
-    int msgSize = variable_sprintf_size(meas_str, 3, type, now, (SCD41_SAMPLE_INTERVAL * 1000));
-    snprintf(temp, msgSize, meas_str, type, now, (SCD41_SAMPLE_INTERVAL * 1000));
+    int msgSize = variable_sprintf_size(meas_str, 3, type, now, (SCD41_SAMPLE_INTERVAL));
+    snprintf(temp, msgSize, meas_str, type, now, (SCD41_SAMPLE_INTERVAL));
     strcat(msg_ptr, temp);
 
     // append measurements
