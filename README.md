@@ -23,10 +23,9 @@ In addition to the [prerequisites described in the generic firmware for Twomes m
 *   An [SCD41](https://www.sensirion.com/en/environmental-sensors/carbon-dioxide-sensors/carbon-dioxide-sensor-scd4x/) CO₂ sensor, connected via I²C to a device based on an ESP SoC;
 
 ### Deployment procedure
-Deployment depends on the variant:
-* To deploy the firmware to a full-blown measurement device, please download a [release from this repisotory](https://github.com/energietransitie/twomes-co_2-sensor/releases) and proceed as indicated in the [deploying section of the generic firmware for Twomes measurement devices](https://github.com/energietransitie/twomes-generic-esp-firmware#deploying);
-* To deploy firmware to a satellite measurement device, please see the [developing](#developing) section below, as are no binary releases for this variant, since you need to configure the MAC-addresses for ESP-NOW manually.
+To deploy the any of the two firmware variants, please download a [release from this repisotory](https://github.com/energietransitie/twomes-co_2-sensor/releases) and proceed as indicated in the [deploying section of the generic firmware for Twomes measurement devices](https://github.com/energietransitie/twomes-generic-esp-firmware#deploying). However, at step 5 of the deploying process, please use the following command to flash the firmware to the device instead of the command given in the deploying section of the generic firmware:
 
+`esptool.py --chip esp32 --baud 460800 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 40m --flash_size detect 0x1000 bootloader.bin 0x8000 partitions.bin 0xe000 ota_data_initial.bin 0x10000 firmware.bin`
 
 ## Developing
 
@@ -52,12 +51,14 @@ OPTIONAL: When it is done flashing, press `CTRL+T` and then `B`, then type `1152
 If you want to use a receiver to test this code, you can uncomment line 16 in `platformio.ini`: `#build_flags = -D ESP_NOW_RECEIVER`. Flash it to your chosen device and it will behave as a receiver.
 
 ### Changes necessary to get ESP-NOW working
-To use the ESP-NOW code acting as the sender (i.e. the CO₂-measurement device), you only have to make sure Bluetooth is disabled in sdkconfig. It is possbile to use the contents of `co2_sensor/sdkconfig.espnow`.
+To use the ESP-NOW code acting as the sender (i.e. the CO₂-measurement device), please make sure Bluetooth is disabled in `co2_sensor/sdkconfig` (`CONFIG_BT_ENABLED=n`). It is possbile to use the contents of `co2_sensor/sdkconfig.espnow`. 
 
-ESP-NOW is configured by powering on the measurement device. After the device is powered on for the very first time, it will wait for the receiver to send, via ESP-NOW, its MAC-address and Wi-Fi channel. This is called pairing.
+ESP-NOW is configured by powering on the measurement device. After the device is powered on for the very first time, it will wait for the receiver to send, via ESP-NOW, its MAC-address and Wi-Fi channel. 
 
 ### Changes necessary to get HTTPS working
-In order for HTTPS to work on your device you need to change something in the sdkconfig file.
+In order for HTTPS to work on your device please make sure to enable Bluetooth in `co2_sensor/sdkconfig` (`CONFIG_BT_ENABLED=y`). It is possible to use the contents of `co2_sensor/sdkconfig.https` and copy these to `co2_sensor/sdkconfig`.
+
+you need to change something in the sdkconfig file.
 In Visual Studio Code, go to 'Explorer' (CTRL + SHIFT + E). Then, navigate to the folder 'co2_sensor'. In this folder, search for a .txt file called 'sdkconfig.https'. Copy everything from this file (CTRL + A), then go to the .txt file 'sdkconfig'. In this file, remove everything and then paste the text you just copied from 'sdkconfig.https'. Now, you can use the CO₂ measurement device with HTTPS.
 
 ## Features
@@ -68,10 +69,10 @@ In Visual Studio Code, go to 'Explorer' (CTRL + SHIFT + E). Then, navigate to th
 * as a satellite measurement device:
   * getting the MAC-address of the gateway dynamically on power-up;
   * send measurements via ESP-NOW to the gateway;
-  * supports modem- and lightsleep;
+  * supports modem-, light- and deepsleep;
 * as a full-blown Twomes measurement device 
   * Wi-Fi provisioning using BLE;
-  * securet uploading of measurements to the API;
+  * secure uploading of measurements to the API;
 
 To-do:
 * minor fixes for the CO₂ measurement device

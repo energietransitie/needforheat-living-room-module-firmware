@@ -7,6 +7,8 @@
 
 #include "../include/scd41.h"
 
+#define RETRY_DELAY                 10 * 1000 // milliseconds
+
 #define HTTPS_STATUS_OK             200
 
 #define MESSAGE_BUFFER_SIZE         4096
@@ -176,7 +178,7 @@ void upload(uint16_t *b_co2, uint16_t *b_temp, uint16_t *b_rh, size_t size)
     if(post_https(variable_interval_upload_url, msg, rootCA, bearer, NULL, 0) != HTTPS_STATUS_OK)
     {
         ESP_LOGI("HTTPS", "Sending failed, attempting retry...");
-        delay(10 * 1000); // wait ten seconds (does shift measurements by 10 seconds too)
+        delay(RETRY_DELAY); // wait ten seconds (does shift measurements by 10 seconds too)
         upload(b_co2, b_temp, b_rh, size);
     }
 
