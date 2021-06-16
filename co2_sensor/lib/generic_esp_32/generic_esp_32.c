@@ -619,6 +619,7 @@ void heartbeat_loop(void *data)
             ESP_LOGE(TAG, "Something went wrong whilst reading the bearer!");
         }
      
+        enable_wifi();
         //Wait to make sure Wi-Fi is enabled.
         vTaskDelay(HTTPS_PRE_WAIT_MS / portTICK_PERIOD_MS);
         //Upload heartbeat
