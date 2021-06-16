@@ -7,7 +7,7 @@
 
 #include "../include/scd41.h"
 
-#define RETRY_DELAY                 10 * 1000 // milliseconds
+#define RETRY_DELAY                 10 * 1000 // milliseconds (10 s * 1000 ms/s)
 
 #define HTTPS_STATUS_OK             200
 
@@ -34,6 +34,7 @@ const char *device_activation_url = TWOMES_TEST_SERVER "/device/activate";
 const char *variable_interval_upload_url = TWOMES_TEST_SERVER "/device/measurements/fixed-interval";
 char *bearer;
 const char *rootCA;
+char *device_name;
 
 uint8_t wifi_espnow_on = WIFI_ESPNOW_OFF;
 
@@ -95,11 +96,12 @@ void initialize_wifi(){
     uint32_t now = time(NULL);
     ESP_LOGI(TAG, "Time is: %d", now);
 
-    // get bearer token
-    bearer = get_bearer();
-    char *device_name;
+    // get device name
     device_name = malloc(DEVICE_NAME_SIZE);
     get_device_service_name(device_name, DEVICE_NAME_SIZE);
+
+    // get bearer token and rootCA
+    bearer = get_bearer();
     rootCA = get_root_ca();
 
     if (strlen(bearer) > 1)
@@ -133,8 +135,8 @@ void append_uint16(uint16_t *b, size_t size, char *msg_ptr, const char *type)
     time_t now = time(NULL);
 
     // measurement type header
-    int msgSize = variable_sprintf_size(meas_str, 3, type, now, (SCD41_SAMPLE_INTERVAL));
-    snprintf(temp, msgSize, meas_str, type, now, (SCD41_SAMPLE_INTERVAL));
+    int msgSize = variable_sprintf_size(meas_str, 3, type, now, (SCD41_SAMPLE_INTERVAL_S));
+    snprintf(temp, msgSize, meas_str, type, now, (SCD41_SAMPLE_INTERVAL_S));
     strcat(msg_ptr, temp);
 
     // append measurements
@@ -198,8 +200,11 @@ void upload(uint16_t *b_co2, uint16_t *b_temp, uint16_t *b_rh, size_t size)
 void send_HTTPS(uint16_t *co2, uint16_t *temp, uint16_t *rh, size_t size)
 {
     enable_wifi();
-    vTaskDelay(2000 / portTICK_PERIOD_MS);  // wait to make sure Wi-Fi is enabled.
+    //Wait to make sure Wi-Fi is enabled.
+    vTaskDelay(HTTPS_PRE_WAIT_MS / portTICK_PERIOD_MS);
+    //Upload SCD41 measurements
     upload(co2, temp, rh, size);              
-    vTaskDelay(1000 / portTICK_PERIOD_MS);   // wait to make sure uploading is finished.
+    //Wait to make sure uploading is finished.
+    vTaskDelay(HTTPS_POST_WAIT_MS / portTICK_PERIOD_MS);
     disable_wifi();
 }

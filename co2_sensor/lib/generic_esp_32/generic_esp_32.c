@@ -1,6 +1,7 @@
 #include "generic_esp_32.h"
 
 static const char *TAG = "Twomes Generic Firmware Library ESP32";
+const char *heartbeat_upload_url = TWOMES_TEST_SERVER "/device/measurements/variable-interval";
 bool activation = false;
 
 static EventGroupHandle_t wifi_event_group;
@@ -454,13 +455,13 @@ void prepare_device(const char *device_type_name)
     char *device_name = malloc(DEVICE_NAME_SIZE);
     get_device_service_name(device_name, DEVICE_NAME_SIZE);
 #ifdef CONFIG_TWOMES_PROV_TRANSPORT_BLE
-    char *qr_code_payload_template = "\n\n{\"ver\":\"v1\",\"name\":\"%s\",\"pop\":\"%u\",\"transport\":\"ble\"}\n\n";
+    char *qr_code_payload_template = "\n\n{\n\"ver\":\"v1\",\n\"name\":\"%s\",\n\"pop\":\"%u\",\n\"transport\":\"ble\"\n}\n\n";
     int qr_code_payload_size = variable_sprintf_size(qr_code_payload_template, 2, device_name, dat);
     char *qr_code_payload = malloc(qr_code_payload_size);
     snprintf(qr_code_payload, qr_code_payload_size, qr_code_payload_template, device_name, dat);
 #endif
 #ifdef CONFIG_TWOMES_PROV_TRANSPORT_SOFTAP
-    char *qr_code_payload_template = "\n\n{\"ver\":\"v1\",\"name\":\"%s\",\"pop\":\"%u\",\"transport\":\"ble\",\"security\":\"1\",\"password\":\"%s\"}\n\n";
+    char *qr_code_payload_template = "\n\n{\n\"ver\":\"v1\",\n\"name\":\"%s\",\n\"pop\":\"%u\",\n\"transport\":\"ble\",\n\"security\":\"1\",\n\"password\":\"%s\"\n}\n\n";
     int qr_code_payload_size = variable_sprintf_size(qr_code_payload_template, 2, device_name, dat, dat);
     char *qr_code_payload = malloc(qr_code_payload_size);
     snprintf(qr_code_payload, qr_code_payload_size, qr_code_payload_template, device_name, dat, dat);
@@ -470,7 +471,7 @@ void prepare_device(const char *device_type_name)
     ESP_LOGI(TAG, "%s", qr_code_payload);
     free(qr_code_payload);
 
-    char *post_device_payload_template = "\n\n{\"name\":\"%s\",\"device_type\":\"%s\",\"activation_token\":\"%u\"}\n\n";
+    char *post_device_payload_template = "\n\n{\n\"name\":\"%s\",\n\"device_type\":\"%s\",\n\"activation_token\":\"%u\"\n}\n\n";
     int post_device_payload_size = variable_sprintf_size(post_device_payload_template, 3, device_name, device_type_name, dat);
     char *post_device_payload = malloc(post_device_payload_size);
     snprintf(post_device_payload, post_device_payload_size, post_device_payload_template, device_name, device_type_name, dat);
@@ -594,6 +595,41 @@ void upload_heartbeat(const char *variable_interval_upload_url, const char *root
     //Posting data over HTTPS, using url, msg and bearer token.
     ESP_LOGI(TAG, "Data: %s", msg);
     post_https(variable_interval_upload_url, msg, root_cert, bearer, NULL, 0);
+}
+
+void heartbeat_loop(void *data)
+{
+    char *bearer;
+    bearer = get_bearer();
+
+    if (strlen(bearer) > 1)
+    {
+        ESP_LOGI(TAG, "Bearer read: %s", bearer);
+    }
+
+    else if (strcmp(bearer, "") == 0)
+    {
+        ESP_LOGI(TAG, "Bearer not found, activate device first!");
+    }
+
+    else if (!bearer)
+    {
+        ESP_LOGE(TAG, "Something went wrong whilst reading the bearer!");
+    }
+     
+    while (1)
+    {
+        //Wait to make sure Wi-Fi is enabled.
+        vTaskDelay(HTTPS_PRE_WAIT_MS / portTICK_PERIOD_MS);
+        //Upload heartbeat
+        upload_heartbeat(heartbeat_upload_url, isrgrootx1, bearer);
+        //Wait to make sure uploading is finished.
+        vTaskDelay(HTTPS_POST_WAIT_MS / portTICK_PERIOD_MS);
+        //Disconnect WiFi
+        //Wait for next measurement
+        ESP_LOGI("Main", HEARTBEAT_MEASUREMENT_INTERVAL_TXT);
+        vTaskDelay((HEARTBEAT_MEASUREMENT_INTERVAL_MS - HTTPS_PRE_WAIT_MS - HTTPS_POST_WAIT_MS)  / portTICK_PERIOD_MS);
+    }
 }
 
 esp_err_t store_bearer(char *bearer)

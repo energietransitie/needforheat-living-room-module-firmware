@@ -10,7 +10,7 @@
 #ifdef DEBUG_ENABLED
     #define TIME_IN_SLEEP      1200
 #else
-    #define TIME_IN_SLEEP      SCD41_WAIT_TEN_MINUTES_US    // 10 minutes - sensor measuremen delay to avoid time shifting
+    #define TIME_IN_SLEEP      SCD41_MEASUREMENT_INTERVAL_US    // 10 minutes - sensor measuremen delay to avoid time shifting
 #endif
 
 #define TIME_IN_SLEEP_TEST 60000000

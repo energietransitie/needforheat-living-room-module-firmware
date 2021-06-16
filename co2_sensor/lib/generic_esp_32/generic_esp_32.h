@@ -34,7 +34,13 @@
 #define MAX_HTTP_OUTPUT_BUFFER 2048
 #define MAX_HTTP_RECV_BUFFER 512
 
-#define LONG_BUTTON_PRESS_DURATION 10
+#define LONG_BUTTON_PRESS_DURATION 10 // seconds
+
+#define HEARTBEAT_UPLOAD_INTERVAL_MS 1 * 60 * 1000 // milliseconds ( 1 min * 60 s/min * 1000 ms/s)   
+#define HEARTBEAT_MEASUREMENT_INTERVAL_MS HEARTBEAT_UPLOAD_INTERVAL_MS
+#define HTTPS_PRE_WAIT_MS 1 * 1000  //   milliseconds ( 1 s * 1000 ms/s)
+#define HTTPS_POST_WAIT_MS 1 * 1000 //   milliseconds ( 1 s * 1000 ms/s)
+#define HEARTBEAT_MEASUREMENT_INTERVAL_TXT "Wating 1 minute for next heartbeat"
 
 #define TWOMES_TEST_SERVER_HOSTNAME "api.tst.energietransitiewindesheim.nl"
 #define TWOMES_TEST_SERVER "https://api.tst.energietransitiewindesheim.nl"
@@ -77,6 +83,7 @@ void obtain_time(void);
 void initialize_time(char* timezone);
 int post_https(const char *url, char *data, const char *cert, char *authenticationToken, char* response_buf, uint8_t resp_buf_size);
 void upload_heartbeat(const char* variable_interval_upload_url, const char* root_cert, char* bearer);
+void heartbeat_loop(void *data);
 char* get_bearer();
 const char* get_root_ca();
 void activate_device(const char *url, char *name,const char *cert);

@@ -3,12 +3,18 @@
 
 #include <stdint.h>
 
-#define SCD41_SAMPLE_INTERVAL       600 // seconds (= 10 minutes)
-#define SCD41_SINGLE_SHOT_DELAY     1350 // ms
+#define SCD41_SAMPLE_INTERVAL_S       (5 * 60) // seconds (5 min * 60 s/min)
+#define SCD41_SINGLE_SHOT_DELAY_MS     1350 // ms
 
-#define SCD41_WAIT_TEN_MINUTES_MS      (SCD41_SAMPLE_INTERVAL * 1000) - SCD41_SINGLE_SHOT_DELAY // milliseconds
-#define SCD41_WAIT_TEN_MINUTES_US       (SCD41_SAMPLE_INTERVAL * 1000 * 1000) - (SCD41_SINGLE_SHOT_DELAY * 1000) // microseconds
+#define SCD41_MEASUREMENT_INTERVAL_MS  ((SCD41_SAMPLE_INTERVAL_S * 1000) - SCD41_SINGLE_SHOT_DELAY_MS) // milliseconds
+#define SCD41_MEASUREMENT_INTERVAL_US  ((SCD41_SAMPLE_INTERVAL_S * 1000 * 1000) - (SCD41_SINGLE_SHOT_DELAY_MS * 1000)) // microseconds
+#define SCD41_MEASUREMENT_INTERVAL_TXT "Waiting 5 minutes for next SCD41 measurement..."
 
+#ifdef USE_HTTP
+    #define SCD41_BUFFER_SIZE       3 // uploads (15 min / 5 min/upload)
+#else
+    #define SCD41_BUFFER_SIZE       ESPNOW_MAX_SAMPLES
+#endif // USE_HTPP
 void scd41_init(void);
 void scd41_disable_asc(void);
 void scd41_measure_co2_temp_rht(void);
