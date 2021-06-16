@@ -9,6 +9,8 @@ static EventGroupHandle_t wifi_event_group;
 /* Signal Wi-Fi events on this event-group */
 const int WIFI_CONNECTED_EVENT = BIT0;
 
+char *bearer;
+
 const char *isrgrootx1 = "-----BEGIN CERTIFICATE-----\n"
                          "MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw\n"
                          "TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh\n"
@@ -552,6 +554,49 @@ void obtain_time(void)
     localtime_r(&now, &timeinfo);
 }
 
+void timesync_task(void *data)
+{
+    ESP_LOGI("Main", "Timesync task started");
+    while (1)
+    {
+        //Wait for next measurement
+        ESP_LOGI("Main", TIMESYNC_INTERVAL_TXT);
+        vTaskDelay((TIMESYNC_INTERVAL_MS - HTTPS_PRE_WAIT_MS - HTTPS_POST_WAIT_MS)  / portTICK_PERIOD_MS);
+
+        time_t now;
+        struct tm timeinfo;
+        time(&now);
+        localtime_r(&now, &timeinfo);
+        if (timeinfo.tm_year < (2016 - 1900))
+        {
+            ESP_LOGI(TAG, "Connecting to Wi-Fi and getting time over NTP.");
+            //TODO: use thread safe counter (https://www.freertos.org/CreateCounting.html) to count #threads using wifi; only call enable_wifi() if counter is increased from 0 to 1 here.
+            enable_wifi();
+
+            //Wait to make sure Wi-Fi is enabled.
+            vTaskDelay(HTTPS_PRE_WAIT_MS / portTICK_PERIOD_MS);
+
+            //obtain time via NTP
+            obtain_time();
+
+            // update 'now' variable with current time
+            time(&now);
+
+            //Wait to make sure everyting is finished.
+            vTaskDelay(HTTPS_POST_WAIT_MS / portTICK_PERIOD_MS);
+
+            //Disconnect WiFi
+            //TODO: use thread safe counter (https://www.freertos.org/CreateCounting.html) to count #threads using wifi; only call enable_wifi() if counter is increased from 0 to 1 here.
+            disable_wifi();
+        }
+        char strftime_buf[64];
+        localtime_r(&now, &timeinfo);
+        strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+        ESP_LOGI(TAG, "The current UTC/date/time is: %s", strftime_buf);
+
+    }
+}
+
 void initialize_time(char *timezone)
 {
     time_t now;
@@ -561,9 +606,24 @@ void initialize_time(char *timezone)
     if (timeinfo.tm_year < (2016 - 1900))
     {
         ESP_LOGI(TAG, "Time is not set yet. Connecting to Wi-Fi and getting time over NTP.");
+        //TODO: use thread safe counter (https://www.freertos.org/CreateCounting.html) to count #threads using wifi; only call enable_wifi() if counter is increased from 0 to 1 here.
+        enable_wifi();
+
+        //Wait to make sure Wi-Fi is enabled.
+        vTaskDelay(HTTPS_PRE_WAIT_MS / portTICK_PERIOD_MS);
+
+        //obtain time via NTP
         obtain_time();
+
         // update 'now' variable with current time
         time(&now);
+
+        //Wait to make sure everyting is finished.
+        vTaskDelay(HTTPS_POST_WAIT_MS / portTICK_PERIOD_MS);
+
+        //Disconnect WiFi
+        //TODO: use thread safe counter (https://www.freertos.org/CreateCounting.html) to count #threads using wifi; only call enable_wifi() if counter is increased from 0 to 1 here.
+        disable_wifi();
     }
     char strftime_buf[64];
     // Set timezone
@@ -595,15 +655,15 @@ void upload_heartbeat(const char *variable_interval_upload_url, const char *root
     //Posting data over HTTPS, using url, msg and bearer token.
     ESP_LOGI(TAG, "Data: %s", msg);
     post_https(variable_interval_upload_url, msg, root_cert, bearer, NULL, 0);
+    //TODO: should we call free(msg);
 }
 
-void heartbeat_loop(void *data)
+void heartbeat_task(void *data)
 {
-
+    ESP_LOGI("Main", "Heartbeat task started");
     while (1)
     {
-        char *bearer;
-        bearer = get_bearer();
+    bearer = get_bearer();
         if (strlen(bearer) > 1)
         {
             ESP_LOGI(TAG, "Bearer read: %s", bearer);
@@ -619,6 +679,8 @@ void heartbeat_loop(void *data)
             ESP_LOGE(TAG, "Something went wrong whilst reading the bearer!");
         }
      
+        
+        //TODO: use thread safe counter (https://www.freertos.org/CreateCounting.html) to count #threads using wifi; only call enable_wifi() if counter is increased from 0 to 1 here.
         enable_wifi();
         //Wait to make sure Wi-Fi is enabled.
         vTaskDelay(HTTPS_PRE_WAIT_MS / portTICK_PERIOD_MS);
@@ -627,6 +689,7 @@ void heartbeat_loop(void *data)
         //Wait to make sure uploading is finished.
         vTaskDelay(HTTPS_POST_WAIT_MS / portTICK_PERIOD_MS);
         //Disconnect WiFi
+        //TODO: use thread safe counter (https://www.freertos.org/CreateCounting.html) to count #threads using wifi; only call enable_wifi() if counter is increased from 0 to 1 here.
         disable_wifi();
         //Wait for next measurement
         ESP_LOGI("Main", HEARTBEAT_MEASUREMENT_INTERVAL_TXT);

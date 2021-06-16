@@ -96,10 +96,6 @@ void initialize_wifi(){
     uint32_t now = time(NULL);
     ESP_LOGI(TAG, "Time is: %d", now);
 
-    // get device name
-    device_name = malloc(DEVICE_NAME_SIZE);
-    get_device_service_name(device_name, DEVICE_NAME_SIZE);
-
     // get bearer token and rootCA
     bearer = get_bearer();
     rootCA = get_root_ca();
@@ -112,8 +108,12 @@ void initialize_wifi(){
     else if (strcmp(bearer, "") == 0)
     {
         ESP_LOGI(TAG, "Bearer not found, activating device!");
+    // get device name
+        device_name = malloc(DEVICE_NAME_SIZE);
+        get_device_service_name(device_name, DEVICE_NAME_SIZE);
         activate_device(device_activation_url, device_name, rootCA);
         bearer = get_bearer();
+        free(device_name);
     }
 
     else if (!bearer)
@@ -185,8 +185,7 @@ void upload(uint16_t *b_co2, uint16_t *b_temp, uint16_t *b_rh, size_t size)
         delay(RETRY_DELAY); // wait ten seconds (does shift measurements by 10 seconds too)
         upload(b_co2, b_temp, b_rh, size);
     }
-
-    vTaskDelay(500 / portTICK_PERIOD_MS);
+    //TODO: should we free(msg);
 }
 
 // Function:        send_HTTPS()
@@ -199,6 +198,7 @@ void upload(uint16_t *b_co2, uint16_t *b_temp, uint16_t *b_rh, size_t size)
 // Description:     sends measurements to the API
 void send_HTTPS(uint16_t *co2, uint16_t *temp, uint16_t *rh, size_t size)
 {
+    //TODO: use thread safe counter (https://www.freertos.org/CreateCounting.html) to count #threads using wifi; only call enable_wifi() if counter is increased from 0 to 1 here.
     enable_wifi();
     //Wait to make sure Wi-Fi is enabled.
     vTaskDelay(HTTPS_PRE_WAIT_MS / portTICK_PERIOD_MS);
@@ -206,5 +206,7 @@ void send_HTTPS(uint16_t *co2, uint16_t *temp, uint16_t *rh, size_t size)
     upload(co2, temp, rh, size);              
     //Wait to make sure uploading is finished.
     vTaskDelay(HTTPS_POST_WAIT_MS / portTICK_PERIOD_MS);
+    //Disconnect WiFi
+    //TODO: use thread safe counter (https://www.freertos.org/CreateCounting.html) to count #threads using wifi; only call enable_wifi() if counter is increased from 0 to 1 here.
     disable_wifi();
 }

@@ -139,7 +139,7 @@ void scd41_measure_co2_temp_rht(void)
     err = i2c_read(SCD41_ADDR, (uint8_t *) &read_buffer[0], 9);
 
     scd41_store_measurements(&read_buffer[0]);
-
+    
     if(loc++ >= SCD41_BUFFER_SIZE-1)
     {
         #ifdef USE_HTTP
@@ -149,7 +149,10 @@ void scd41_measure_co2_temp_rht(void)
         #endif // USE_HTTP
         
         scd41_reset_buffers();
-    }
+    };
+
+    //TODO: should we call free(read_buffer);
+
 }
 
 // Function:    scd41_store_measurements()

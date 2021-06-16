@@ -36,11 +36,15 @@
 
 #define LONG_BUTTON_PRESS_DURATION 10 // seconds
 
-#define HEARTBEAT_UPLOAD_INTERVAL_MS 1 * 60 * 1000 // milliseconds ( 1 min * 60 s/min * 1000 ms/s)   
+#define HTTPS_PRE_WAIT_MS (1.5 * 1000)  //   milliseconds ( 1 s * 1000 ms/s)
+#define HTTPS_POST_WAIT_MS (1 * 1000) //   milliseconds ( 1 s * 1000 ms/s)
+
+#define HEARTBEAT_UPLOAD_INTERVAL_MS (1 * 60 * 1000) // milliseconds ( 1 min * 60 s/min * 1000 ms/s)   
 #define HEARTBEAT_MEASUREMENT_INTERVAL_MS HEARTBEAT_UPLOAD_INTERVAL_MS
-#define HTTPS_PRE_WAIT_MS 1 * 1000  //   milliseconds ( 1 s * 1000 ms/s)
-#define HTTPS_POST_WAIT_MS 1 * 1000 //   milliseconds ( 1 s * 1000 ms/s)
 #define HEARTBEAT_MEASUREMENT_INTERVAL_TXT "Wating 1 minute for next heartbeat"
+
+#define TIMESYNC_INTERVAL_MS (1 * 60 * 60 * 1000) // milliseconds ( 1 hr * 60 min/hr * 60 s/min * 1000 ms/s)   
+#define TIMESYNC_INTERVAL_TXT "Wating 1 hour before next NTP timesync"
 
 #define TWOMES_TEST_SERVER_HOSTNAME "api.tst.energietransitiewindesheim.nl"
 #define TWOMES_TEST_SERVER "https://api.tst.energietransitiewindesheim.nl"
@@ -80,10 +84,11 @@ esp_err_t custom_prov_data_handler(uint32_t session_id, const uint8_t *inbuf, ss
                                    uint8_t **outbuf, ssize_t *outlen, void *priv_data);
 void initialize_sntp(void);
 void obtain_time(void);
+void timesync_task(void *data);
 void initialize_time(char* timezone);
 int post_https(const char *url, char *data, const char *cert, char *authenticationToken, char* response_buf, uint8_t resp_buf_size);
 void upload_heartbeat(const char* variable_interval_upload_url, const char* root_cert, char* bearer);
-void heartbeat_loop(void *data);
+void heartbeat_task(void *data);
 char* get_bearer();
 const char* get_root_ca();
 void activate_device(const char *url, char *name,const char *cert);

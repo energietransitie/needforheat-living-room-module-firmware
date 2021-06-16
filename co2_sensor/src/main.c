@@ -49,9 +49,9 @@ void main_esp_now(void)
 void main_https(void)
 {
     initialize_wifi();
-    enable_wifi();
 
-    xTaskCreatePinnedToCore(&heartbeat_loop, "heartbeat_loop", 4096, NULL, 1, NULL, 1);
+    xTaskCreatePinnedToCore(&heartbeat_task, "heartbeat_task", 4096, NULL, 1, NULL, 1);
+    xTaskCreatePinnedToCore(&timesync_task, "timesync_task", 4096, NULL, 1, NULL, 1);
 
     while(1) {
         ESP_LOGI("Main", "Taking SCD41 measurements");
