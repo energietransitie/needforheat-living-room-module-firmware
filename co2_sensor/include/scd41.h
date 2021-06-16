@@ -2,6 +2,7 @@
 #define __SCD41_H__
 
 #include <stdint.h>
+#include "../include/espnow.h"
 
 #define SCD41_SAMPLE_INTERVAL_S       (5 * 60) // seconds (5 min * 60 s/min)
 #define SCD41_SINGLE_SHOT_DELAY_MS     1350 // ms
