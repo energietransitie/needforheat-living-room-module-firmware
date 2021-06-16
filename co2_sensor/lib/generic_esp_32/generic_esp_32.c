@@ -599,26 +599,26 @@ void upload_heartbeat(const char *variable_interval_upload_url, const char *root
 
 void heartbeat_loop(void *data)
 {
-    char *bearer;
-    bearer = get_bearer();
 
-    if (strlen(bearer) > 1)
-    {
-        ESP_LOGI(TAG, "Bearer read: %s", bearer);
-    }
-
-    else if (strcmp(bearer, "") == 0)
-    {
-        ESP_LOGI(TAG, "Bearer not found, activate device first!");
-    }
-
-    else if (!bearer)
-    {
-        ESP_LOGE(TAG, "Something went wrong whilst reading the bearer!");
-    }
-     
     while (1)
     {
+        char *bearer;
+        bearer = get_bearer();
+        if (strlen(bearer) > 1)
+        {
+            ESP_LOGI(TAG, "Bearer read: %s", bearer);
+        }
+
+        else if (strcmp(bearer, "") == 0)
+        {
+            ESP_LOGI(TAG, "Bearer not found, activate device first!");
+        }
+
+        else if (!bearer)
+        {
+            ESP_LOGE(TAG, "Something went wrong whilst reading the bearer!");
+        }
+     
         //Wait to make sure Wi-Fi is enabled.
         vTaskDelay(HTTPS_PRE_WAIT_MS / portTICK_PERIOD_MS);
         //Upload heartbeat
