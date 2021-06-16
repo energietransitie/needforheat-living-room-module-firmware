@@ -626,6 +626,7 @@ void heartbeat_loop(void *data)
         //Wait to make sure uploading is finished.
         vTaskDelay(HTTPS_POST_WAIT_MS / portTICK_PERIOD_MS);
         //Disconnect WiFi
+        disable_wifi();
         //Wait for next measurement
         ESP_LOGI("Main", HEARTBEAT_MEASUREMENT_INTERVAL_TXT);
         vTaskDelay((HEARTBEAT_MEASUREMENT_INTERVAL_MS - HTTPS_PRE_WAIT_MS - HTTPS_POST_WAIT_MS)  / portTICK_PERIOD_MS);
