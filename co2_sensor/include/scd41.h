@@ -12,7 +12,7 @@
 #define SCD41_MEASUREMENT_INTERVAL_TXT "Waiting 5 minutes for next SCD41 measurement..."
 
 #ifdef USE_HTTP
-    #define SCD41_BUFFER_SIZE       2 // uploads (10 min / 5 min/upload)
+    #define SCD41_BUFFER_SIZE       (1 * 60 / 5) // uploads (1 hr * 60 min/hr  / 5 min/upload)
 #else
     #define SCD41_BUFFER_SIZE       ESPNOW_MAX_SAMPLES
 #endif // USE_HTPP
