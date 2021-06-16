@@ -50,7 +50,7 @@ NOTE: The first time might take a while because PlatformIO needs to install and 
 OPTIONAL: When it is done flashing, press `CTRL+T` and then `B`, then type `115200` so that it sets the right baud rate and you see text not gibberish.
 
 ### Toggling the ESP-NOW code between sender and receiver
-If you want to use a receiver to test this code, you can uncomment line 16 in `platformio.ini`: `#build_flags = -D ESP_NOW_RECEIVER`. Flash it to your chosen device and it will behave as a receiver.
+If you want to use a receiver to test this code, you can uncomment line 19 in `platformio.ini`: `#build_flags = -D ESP_NOW_RECEIVER`. Flash it to your chosen device and it will behave as a receiver.
 
 ### Changes necessary to get ESP-NOW working
 To use the ESP-NOW code acting as the sender (i.e. the CO₂-measurement device), please make sure Bluetooth is disabled in `co2_sensor/sdkconfig` (`CONFIG_BT_ENABLED=n`). It is possbile to use the contents of `co2_sensor/sdkconfig.espnow`. 
@@ -60,8 +60,7 @@ ESP-NOW is configured by powering on the measurement device. After the device is
 ### Changes necessary to get HTTPS working
 In order for HTTPS to work on your device please make sure to enable Bluetooth in `co2_sensor/sdkconfig` (`CONFIG_BT_ENABLED=y`). It is possible to use the contents of `co2_sensor/sdkconfig.https` and copy these to `co2_sensor/sdkconfig`.
 
-you need to change something in the sdkconfig file.
-In Visual Studio Code, go to 'Explorer' (CTRL + SHIFT + E). Then, navigate to the folder 'co2_sensor'. In this folder, search for a .txt file called 'sdkconfig.https'. Copy everything from this file (CTRL + A), then go to the .txt file 'sdkconfig'. In this file, remove everything and then paste the text you just copied from 'sdkconfig.https'. Now, you can use the CO₂ measurement device with HTTPS.
+In `co2_sensor/platformio.ini`, uncomment line 20: `#build_flags = -D USE_HTTP`.
 
 ## Features
 * Measure the following properties in a space using the [Sensirion SCD41 sensor](https://www.sensirion.com/en/environmental-sensors/carbon-dioxide-sensors/carbon-dioxide-sensor-scd4x/): 
