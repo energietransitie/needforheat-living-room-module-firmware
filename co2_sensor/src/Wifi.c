@@ -16,8 +16,6 @@
 #define MEASUREMENT_TYPE_RH         "\"relativeHumidity\""
 #define MEASUREMENT_TYPE_ROOMTEMP   "\"roomTemp\""
 
-const char*device_type_name = "CO2-meter-SCD4x";
-
 char temp[64];
 char *msg_start = "{\"upload_time\": \"%d\",\"property_measurements\": [";
 char *meas_str  = "{\"property_name\": %s,"
@@ -27,14 +25,12 @@ char *meas_str  = "{\"property_name\": %s,"
                       "\"measurements\": [";
 char *msg_end   = "] }";
     
-static const char *TAG = "Twomes CO₂ meter ESP32";
 char strftime_buf[64]; // FIXME: weird things happen when you remove this one
 
-const char *device_activation_url = TWOMES_TEST_SERVER "/device/activate";
 const char *variable_interval_upload_url = TWOMES_TEST_SERVER "/device/measurements/fixed-interval";
 char *bearer;
 const char *rootCA;
-char *device_name;
+
 
 uint8_t wifi_espnow_on = WIFI_ESPNOW_OFF;
 
@@ -64,62 +60,6 @@ void wifi_init_espnow(void)
 uint8_t wifi_espnow_enabled(void)
 {
     return wifi_espnow_on;
-}
-
-// Function:    initialise_wifi()
-// Params:      N/A
-// Returns:     N/A
-// Description: used to intialize Wi-Fi for HTTPS
-void initialize_wifi(){
- 
-    initialize_nvs();
-    initialize();
-    /* initialize TCP/IP */
-    ESP_ERROR_CHECK(esp_netif_init());
-
-    wifi_prov_mgr_config_t config = initialize_provisioning();
-
-    // make sure to have this here otherwise the device names won't match because
-    // of config changes made by the above function call.
-    prepare_device(device_type_name);
-
-    // starts provisioning if not provisioned, otherwise skips provisioning.
-    // if set to false it will not autoconnect after provisioning.
-    // if set to true it will autonnect.
-    start_provisioning(config, true);
-
-    // initialize time with timezone UTC; building timezone is stored in central database
-    initialize_time("UTC");
-
-    // gets time as epoch time.
-    ESP_LOGI(TAG, "Getting time!");
-    uint32_t now = time(NULL);
-    ESP_LOGI(TAG, "Time is: %d", now);
-
-    // get bearer token and rootCA
-    bearer = get_bearer();
-    rootCA = get_root_ca();
-
-    if (strlen(bearer) > 1)
-    {
-        ESP_LOGI(TAG, "Bearer read: %s", bearer);
-    }
-
-    else if (strcmp(bearer, "") == 0)
-    {
-        ESP_LOGI(TAG, "Bearer not found, activating device!");
-    // get device name
-        device_name = malloc(DEVICE_NAME_SIZE);
-        get_device_service_name(device_name, DEVICE_NAME_SIZE);
-        activate_device(device_activation_url, device_name, rootCA);
-        bearer = get_bearer();
-        free(device_name);
-    }
-
-    else if (!bearer)
-    {
-        ESP_LOGE(TAG, "Something went wrong whilst reading the bearer!");
-    }
 }
 
 // Function:        append_uint16()

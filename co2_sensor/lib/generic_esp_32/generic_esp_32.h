@@ -43,8 +43,8 @@
 #define HEARTBEAT_MEASUREMENT_INTERVAL_MS HEARTBEAT_UPLOAD_INTERVAL_MS
 #define HEARTBEAT_MEASUREMENT_INTERVAL_TXT "Wating 1 minute for next heartbeat"
 
-#define TIMESYNC_INTERVAL_MS (1 * 60 * 60 * 1000) // milliseconds ( 1 hr * 60 min/hr * 60 s/min * 1000 ms/s)   
-#define TIMESYNC_INTERVAL_TXT "Wating 1 hour before next NTP timesync"
+#define TIMESYNC_INTERVAL_MS (20 * 60 * 1000) // milliseconds ( 20 min * 60 s/min * 1000 ms/s)   
+#define TIMESYNC_INTERVAL_TXT "Wating 20 minutes before next NTP timesync"
 
 #define TWOMES_TEST_SERVER_HOSTNAME "api.tst.energietransitiewindesheim.nl"
 #define TWOMES_TEST_SERVER "https://api.tst.energietransitiewindesheim.nl"
@@ -85,7 +85,8 @@ esp_err_t custom_prov_data_handler(uint32_t session_id, const uint8_t *inbuf, ss
 void initialize_sntp(void);
 void obtain_time(void);
 void timesync_task(void *data);
-void initialize_time(char* timezone);
+void timesync();
+void initialize_timezone(char* timezone);
 int post_https(const char *url, char *data, const char *cert, char *authenticationToken, char* response_buf, uint8_t resp_buf_size);
 void upload_heartbeat(const char* variable_interval_upload_url, const char* root_cert, char* bearer);
 void heartbeat_task(void *data);
@@ -98,6 +99,7 @@ void initialize_nvs();
 
 wifi_prov_mgr_config_t initialize_provisioning();
 void start_provisioning(wifi_prov_mgr_config_t config, bool connect);
+void twomes_device_provisioning(const char *device_type_name);
 void disable_wifi();
 void enable_wifi();
 void disconnect_wifi();

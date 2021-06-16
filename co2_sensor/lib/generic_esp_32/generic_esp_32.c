@@ -2,6 +2,7 @@
 
 static const char *TAG = "Twomes Generic Firmware Library ESP32";
 const char *heartbeat_upload_url = TWOMES_TEST_SERVER "/device/measurements/variable-interval";
+const char *device_activation_url = TWOMES_TEST_SERVER "/device/activate";
 bool activation = false;
 
 static EventGroupHandle_t wifi_event_group;
@@ -562,76 +563,52 @@ void timesync_task(void *data)
         //Wait for next measurement
         ESP_LOGI("Main", TIMESYNC_INTERVAL_TXT);
         vTaskDelay((TIMESYNC_INTERVAL_MS - HTTPS_PRE_WAIT_MS - HTTPS_POST_WAIT_MS)  / portTICK_PERIOD_MS);
-
-        time_t now;
-        struct tm timeinfo;
-        time(&now);
-        localtime_r(&now, &timeinfo);
-        if (timeinfo.tm_year < (2016 - 1900))
-        {
-            ESP_LOGI(TAG, "Connecting to Wi-Fi and getting time over NTP.");
-            //TODO: use thread safe counter (https://www.freertos.org/CreateCounting.html) to count #threads using wifi; only call enable_wifi() if counter is increased from 0 to 1 here.
-            enable_wifi();
-
-            //Wait to make sure Wi-Fi is enabled.
-            vTaskDelay(HTTPS_PRE_WAIT_MS / portTICK_PERIOD_MS);
-
-            //obtain time via NTP
-            obtain_time();
-
-            // update 'now' variable with current time
-            time(&now);
-
-            //Wait to make sure everyting is finished.
-            vTaskDelay(HTTPS_POST_WAIT_MS / portTICK_PERIOD_MS);
-
-            //Disconnect WiFi
-            //TODO: use thread safe counter (https://www.freertos.org/CreateCounting.html) to count #threads using wifi; only call enable_wifi() if counter is increased from 0 to 1 here.
-            disable_wifi();
-        }
-        char strftime_buf[64];
-        localtime_r(&now, &timeinfo);
-        strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-        ESP_LOGI(TAG, "The current UTC/date/time is: %s", strftime_buf);
-
+        timesync();
     }
 }
 
-void initialize_time(char *timezone)
+void initialize_timezone(char* timezone)
+{
+    // Set timezone
+    setenv("TZ", timezone, 0);
+    tzset();
+}
+
+void timesync()
 {
     time_t now;
     struct tm timeinfo;
     time(&now);
     localtime_r(&now, &timeinfo);
-    if (timeinfo.tm_year < (2016 - 1900))
-    {
-        ESP_LOGI(TAG, "Time is not set yet. Connecting to Wi-Fi and getting time over NTP.");
-        //TODO: use thread safe counter (https://www.freertos.org/CreateCounting.html) to count #threads using wifi; only call enable_wifi() if counter is increased from 0 to 1 here.
-        enable_wifi();
+    ESP_LOGI(TAG, "Time sync: connecting to Wi-Fi and getting time over NTP.");
+    //TODO: use thread safe counter (https://www.freertos.org/CreateCounting.html) to count #threads using wifi; only call enable_wifi() if counter is increased from 0 to 1 here.
+    enable_wifi();
 
-        //Wait to make sure Wi-Fi is enabled.
-        vTaskDelay(HTTPS_PRE_WAIT_MS / portTICK_PERIOD_MS);
+    //Wait to make sure Wi-Fi is enabled.
+    vTaskDelay(HTTPS_PRE_WAIT_MS / portTICK_PERIOD_MS);
 
-        //obtain time via NTP
-        obtain_time();
+    //obtain time via NTP
+    obtain_time();
 
-        // update 'now' variable with current time
-        time(&now);
+    // update 'now' variable with current time
+    time(&now);
 
-        //Wait to make sure everyting is finished.
-        vTaskDelay(HTTPS_POST_WAIT_MS / portTICK_PERIOD_MS);
+    //Wait to make sure everyting is finished.
+    vTaskDelay(HTTPS_POST_WAIT_MS / portTICK_PERIOD_MS);
 
-        //Disconnect WiFi
-        //TODO: use thread safe counter (https://www.freertos.org/CreateCounting.html) to count #threads using wifi; only call enable_wifi() if counter is increased from 0 to 1 here.
-        disable_wifi();
-    }
+    //Disconnect WiFi
+    //TODO: use thread safe counter (https://www.freertos.org/CreateCounting.html) to count #threads using wifi; only call enable_wifi() if counter is increased from 0 to 1 here.
+    disable_wifi();
+
+    // log time as Unix time.
+    uint32_t unix_time = time(NULL);
+    ESP_LOGI(TAG, "Unix Time is: %d", unix_time);
+
+    // log time as UTC time.
     char strftime_buf[64];
-    // Set timezone
-    setenv("TZ", timezone, 0);
-    tzset();
     localtime_r(&now, &timeinfo);
     strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-    ESP_LOGI(TAG, "The current UTC/date/time is: %s", strftime_buf);
+    ESP_LOGI(TAG, "UTC/date/time is: %s", strftime_buf);
 }
 
 void upload_heartbeat(const char *variable_interval_upload_url, const char *root_cert, char *bearer)
@@ -784,9 +761,26 @@ void activate_device(const char *url, char *name, const char *cert)
 
     ESP_LOGI(TAG, "%s", device_activation_data);
     char *bearer = malloc(sizeof(char) * MAX_RESPONSE_LENGTH);
-    ESP_LOGI(TAG, "GOT HERE!");
+    ESP_LOGI(TAG, "Posting on device activation endpoint");
+
+    //TODO: use thread safe counter (https://www.freertos.org/CreateCounting.html) to count #threads using wifi; only call enable_wifi() if counter is increased from 0 to 1 here.
+    enable_wifi();
+
+    //Wait to make sure Wi-Fi is enabled.
+    vTaskDelay(HTTPS_PRE_WAIT_MS / portTICK_PERIOD_MS);
+
     post_https(url, device_activation_data, cert, NULL, bearer, MAX_RESPONSE_LENGTH);
-    ESP_LOGI(TAG, "Got Here!");
+
+    //Wait to make sure everyting is finished.
+    vTaskDelay(HTTPS_POST_WAIT_MS / portTICK_PERIOD_MS);
+
+    //Disconnect WiFi
+    //TODO: use thread safe counter (https://www.freertos.org/CreateCounting.html) to count #threads using wifi; only call enable_wifi() if counter is increased from 0 to 1 here.
+    disable_wifi();
+
+
+
+    ESP_LOGI(TAG, "Return from devicae activation endpoint!");
     if (!bearer)
     {
         ESP_LOGE(TAG, "Failed to activate device!");
@@ -1119,5 +1113,57 @@ void initialize_nvs()
 
         /* Retry nvs_flash_init */
         ESP_ERROR_CHECK(nvs_flash_init());
+    }
+}
+
+// Function:    initialise_wifi()
+// Params:      N/A
+// Returns:     N/A
+// Description: used to intialize Wi-Fi for HTTPS
+void twomes_device_provisioning(const char *device_type_name)
+{
+    initialize_nvs();
+    initialize();
+    /* initialize TCP/IP */
+    ESP_ERROR_CHECK(esp_netif_init());
+
+    wifi_prov_mgr_config_t config = initialize_provisioning();
+
+    // make sure to have this here otherwise the device names won't match because
+    // of config changes made by the above function call.
+    prepare_device(device_type_name);
+
+    // starts provisioning if not provisioned, otherwise skips provisioning.
+    // if set to false it will not autoconnect after provisioning.
+    // if set to true it will autonnect.
+    start_provisioning(config, true);
+
+    // initialize time with timezone UTC; building timezone is stored in central database
+    initialize_timezone("UTC");
+    timesync();
+
+    // get bearer token and rootCA
+    bearer = get_bearer();
+
+    if (strlen(bearer) > 1)
+    {
+        ESP_LOGI(TAG, "Bearer read: %s", bearer);
+    }
+
+    else if (strcmp(bearer, "") == 0)
+    {
+        ESP_LOGI(TAG, "Bearer not found, activating device!");
+        // get device name
+        char *device_name;
+        device_name = malloc(DEVICE_NAME_SIZE);
+        get_device_service_name(device_name, DEVICE_NAME_SIZE);
+        activate_device(device_activation_url, device_name, isrgrootx1);
+        bearer = get_bearer();
+        free(device_name);
+    }
+
+    else if (!bearer)
+    {
+        ESP_LOGE(TAG, "Something went wrong while reading the bearer!");
     }
 }

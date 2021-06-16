@@ -1,3 +1,6 @@
+const char *device_type_name = "CO2-meter-SCD4x";
+static const char *TAG = "Twomes CO₂ meter ESP32";
+
 #include "../include/i2c.h"
 #include "../include/sleepmodes.h"
 #include "../include/wifi.h"
@@ -48,15 +51,15 @@ void main_esp_now(void)
 #else
 void main_https(void)
 {
-    initialize_wifi();
+    twomes_device_provisioning(device_type_name);
 
     xTaskCreatePinnedToCore(&heartbeat_task, "heartbeat_task", 4096, NULL, 1, NULL, 1);
     xTaskCreatePinnedToCore(&timesync_task, "timesync_task", 4096, NULL, 1, NULL, 1);
 
     while(1) {
-        ESP_LOGI("Main", "Taking SCD41 measurements");
+        ESP_LOGI(TAG, "Taking SCD41 measurements");
         scd41_measure_co2_temp_rht();
-        ESP_LOGI("Main", SCD41_MEASUREMENT_INTERVAL_TXT);
+        ESP_LOGI(TAG, SCD41_MEASUREMENT_INTERVAL_TXT);
         delay(SCD41_MEASUREMENT_INTERVAL_MS - HTTPS_PRE_WAIT_MS - HTTPS_POST_WAIT_MS);
     }
 }
