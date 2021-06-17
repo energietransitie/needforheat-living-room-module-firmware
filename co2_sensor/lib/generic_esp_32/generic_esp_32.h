@@ -23,7 +23,12 @@
 #include <driver/gpio.h>
 
 #include <wifi_provisioning/manager.h>
-#define VERSION "V1.7.3"
+
+#ifdef CONFIG_TWOMES_PRESENCE_DETECTION
+#include "presence_detection.h"
+#endif
+
+#define VERSION "V2.0.0"
 #define WIFI_RESET_BUTTON   GPIO_NUM_0
 #define LED_ERROR   GPIO_NUM_19
 #define MAX_RESPONSE_LENGTH 100
@@ -49,6 +54,9 @@
 #define TWOMES_TEST_SERVER_HOSTNAME "api.tst.energietransitiewindesheim.nl"
 #define TWOMES_TEST_SERVER "https://api.tst.energietransitiewindesheim.nl"
 
+#define VARIABLE_INTERVAL_UPLOAD_URL "https://api.tst.energietransitiewindesheim.nl/device/measurements/variable-interval"
+#define DEVICE_ACTIVATION_URL "https://api.tst.energietransitiewindesheim.nl/device/activate"
+
 #ifdef CONFIG_TWOMES_PROV_TRANSPORT_BLE
 #include <wifi_provisioning/scheme_ble.h>
 #endif /* CONFIG_EXAMPLE_PROV_TRANSPORT_BLE */
@@ -72,7 +80,7 @@ void buttonPressDuration(void *args);
 void blink(void *args);
 char* get_types(char* stringf, int count);
 int variable_sprintf_size(char* string, int count, ...);
-void initialize();
+void initialize_generic_firmware();
 void create_dat();
 void prepare_device(const char *device_type_name);
 void time_sync_notification_cb(struct timeval *tv);
@@ -88,12 +96,15 @@ void timesync_task(void *data);
 void timesync();
 void initialize_timezone(char* timezone);
 int post_https(const char *url, char *data, const char *cert, char *authenticationToken, char* response_buf, uint8_t resp_buf_size);
-void upload_heartbeat(const char* variable_interval_upload_url, const char* root_cert, char* bearer);
+void upload_heartbeat(const char* root_cert, char* bearer);
 void heartbeat_task(void *data);
 char* get_bearer();
 const char* get_root_ca();
 void activate_device(const char *url, char *name,const char *cert);
 void get_http(const char* url);
+#ifdef CONFIG_TWOMES_PRESENCE_DETECTION
+void start_presence_detection();
+#endif
 
 void initialize_nvs();
 

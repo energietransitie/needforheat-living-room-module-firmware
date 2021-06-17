@@ -27,7 +27,6 @@ char *msg_end   = "] }";
     
 char strftime_buf[64]; // FIXME: weird things happen when you remove this one
 
-const char *variable_interval_upload_url = TWOMES_TEST_SERVER "/device/measurements/fixed-interval";
 char *bearer;
 const char *rootCA;
 
@@ -119,7 +118,7 @@ void upload(uint16_t *b_co2, uint16_t *b_temp, uint16_t *b_rh, size_t size)
 
     ESP_LOGI("test", "data: %s", msg );
 
-    if(post_https(variable_interval_upload_url, msg, rootCA, bearer, NULL, 0) != HTTPS_STATUS_OK)
+    if(post_https(VARIABLE_INTERVAL_UPLOAD_URL, msg, rootCA, bearer, NULL, 0) != HTTPS_STATUS_OK)
     {
         ESP_LOGI("HTTPS", "Sending failed, attempting retry...");
         delay(RETRY_DELAY); // wait ten seconds (does shift measurements by 10 seconds too)

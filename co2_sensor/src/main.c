@@ -1,22 +1,21 @@
 const char *device_type_name = "CO2-meter-SCD4x";
-static const char *TAG = "Twomes CO₂ meter ESP32";
-
-#include "../include/i2c.h"
-#include "../include/sleepmodes.h"
-#include "../include/wifi.h"
-#include "../include/crc.h"
-#include "../lib/generic_esp_32/generic_esp_32.h"
-#include "../include/timer.h"
-#include "../include/util.h"
-#include "../include/espnow.h"
-
-#include "../include/scd41.h"
+static const char *TAG = "Twomes CO_2 meter ESP32";
 
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../lib/generic_esp_32/generic_esp_32.h"
+#include <generic_esp_32.h>
+
+#include "../include/i2c.h"
+#include "../include/sleepmodes.h"
+#include "../include/wifi.h"
+#include "../include/crc.h"
+#include "../include/timer.h"
+#include "../include/util.h"
+#include "../include/espnow.h"
+#include "../include/scd41.h"
+
 const char *root_cert;
 
 #ifndef USE_HTTP
@@ -55,7 +54,11 @@ void main_https(void)
 
     xTaskCreatePinnedToCore(&heartbeat_task, "heartbeat_task", 4096, NULL, 1, NULL, 1);
     xTaskCreatePinnedToCore(&timesync_task, "timesync_task", 4096, NULL, 1, NULL, 1);
-
+    //TODO: improve upon temporary solution below to avoid multiple threads filling with wifi status at the same time
+    vTaskDelay(20 * 1000 / portTICK_PERIOD_MS);
+    start_presence_detection();
+    vTaskDelay(20 * 1000 / portTICK_PERIOD_MS);
+    ESP_LOGI(TAG, "Starting SCD41 measurement series");
     while(1) {
         ESP_LOGI(TAG, "Taking SCD41 measurements");
         scd41_measure_co2_temp_rht();

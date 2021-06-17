@@ -13,7 +13,7 @@
 
 #define ESPNOW_PAIRING_CHANNEL  1
 
-const char *TAG = "ESPNOW_PAIRING";
+#define TAG "ESPNOW_PAIRING"
 uint8_t pairing_macaddr[MAC_ADDR_SIZE + 1];
 
 /**

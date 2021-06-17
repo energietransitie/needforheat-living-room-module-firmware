@@ -1,8 +1,7 @@
 #include "generic_esp_32.h"
 
 static const char *TAG = "Twomes Generic Firmware Library ESP32";
-const char *heartbeat_upload_url = TWOMES_TEST_SERVER "/device/measurements/variable-interval";
-const char *device_activation_url = TWOMES_TEST_SERVER "/device/activate";
+
 bool activation = false;
 
 static EventGroupHandle_t wifi_event_group;
@@ -144,7 +143,7 @@ void blink(void *args)
     vTaskDelete(NULL);
 } //void blink;
 
-void initialize()
+void initialize_generic_firmware()
 {
     ESP_LOGI(TAG, "Generic Firmware Version: %s", VERSION);
 
@@ -208,6 +207,9 @@ int variable_sprintf_size(char *string, int count, ...)
             break;
         case 's':
             extraSize += snprintf(snBuf, 0, "%s", va_arg(list, char *));
+            break;
+        case 'f':
+            extraSize += snprintf(snBuf, 0, "%f", va_arg(list, double));
             break;
         }
     }
@@ -562,12 +564,12 @@ void timesync_task(void *data)
     {
         //Wait for next measurement
         ESP_LOGI("Main", TIMESYNC_INTERVAL_TXT);
-        vTaskDelay((TIMESYNC_INTERVAL_MS - HTTPS_PRE_WAIT_MS - HTTPS_POST_WAIT_MS)  / portTICK_PERIOD_MS);
+        vTaskDelay((TIMESYNC_INTERVAL_MS - HTTPS_PRE_WAIT_MS - HTTPS_POST_WAIT_MS) / portTICK_PERIOD_MS);
         timesync();
     }
 }
 
-void initialize_timezone(char* timezone)
+void initialize_timezone(char *timezone)
 {
     // Set timezone
     setenv("TZ", timezone, 0);
@@ -611,7 +613,13 @@ void timesync()
     ESP_LOGI(TAG, "UTC/date/time is: %s", strftime_buf);
 }
 
-void upload_heartbeat(const char *variable_interval_upload_url, const char *root_cert, char *bearer)
+#ifdef CONFIG_TWOMES_PRESENCE_DETECTION
+void start_presence_detection(){
+    xTaskCreatePinnedToCore(&presence_detection_loop, "presence_detection_task", 4096, NULL, 1, NULL, 1);
+}
+#endif
+
+void upload_heartbeat(const char *root_cert, char *bearer)
 {
     char *measurementType = "\"heartbeat\"";
     //Updates Epoch Time
@@ -631,7 +639,7 @@ void upload_heartbeat(const char *variable_interval_upload_url, const char *root
     snprintf(msg, msgSize, msg_plain, now, measurementType, now);
     //Posting data over HTTPS, using url, msg and bearer token.
     ESP_LOGI(TAG, "Data: %s", msg);
-    post_https(variable_interval_upload_url, msg, root_cert, bearer, NULL, 0);
+    post_https(VARIABLE_INTERVAL_UPLOAD_URL, msg, root_cert, bearer, NULL, 0);
     //TODO: should we call free(msg);
 }
 
@@ -640,7 +648,7 @@ void heartbeat_task(void *data)
     ESP_LOGI("Main", "Heartbeat task started");
     while (1)
     {
-    bearer = get_bearer();
+        bearer = get_bearer();
         if (strlen(bearer) > 1)
         {
             ESP_LOGI(TAG, "Bearer read: %s", bearer);
@@ -655,14 +663,13 @@ void heartbeat_task(void *data)
         {
             ESP_LOGE(TAG, "Something went wrong whilst reading the bearer!");
         }
-     
-        
+
         //TODO: use thread safe counter (https://www.freertos.org/CreateCounting.html) to count #threads using wifi; only call enable_wifi() if counter is increased from 0 to 1 here.
         enable_wifi();
         //Wait to make sure Wi-Fi is enabled.
         vTaskDelay(HTTPS_PRE_WAIT_MS / portTICK_PERIOD_MS);
         //Upload heartbeat
-        upload_heartbeat(heartbeat_upload_url, isrgrootx1, bearer);
+        upload_heartbeat(isrgrootx1, bearer);
         //Wait to make sure uploading is finished.
         vTaskDelay(HTTPS_POST_WAIT_MS / portTICK_PERIOD_MS);
         //Disconnect WiFi
@@ -670,7 +677,7 @@ void heartbeat_task(void *data)
         disable_wifi();
         //Wait for next measurement
         ESP_LOGI("Main", HEARTBEAT_MEASUREMENT_INTERVAL_TXT);
-        vTaskDelay((HEARTBEAT_MEASUREMENT_INTERVAL_MS - HTTPS_PRE_WAIT_MS - HTTPS_POST_WAIT_MS)  / portTICK_PERIOD_MS);
+        vTaskDelay((HEARTBEAT_MEASUREMENT_INTERVAL_MS - HTTPS_PRE_WAIT_MS - HTTPS_POST_WAIT_MS) / portTICK_PERIOD_MS);
     }
 }
 
@@ -777,8 +784,6 @@ void activate_device(const char *url, char *name, const char *cert)
     //Disconnect WiFi
     //TODO: use thread safe counter (https://www.freertos.org/CreateCounting.html) to count #threads using wifi; only call enable_wifi() if counter is increased from 0 to 1 here.
     disable_wifi();
-
-
 
     ESP_LOGI(TAG, "Return from devicae activation endpoint!");
     if (!bearer)
@@ -915,7 +920,7 @@ wifi_prov_mgr_config_t initialize_provisioning()
          * to take care of this automatically. This can be set to
          * WIFI_PROV_EVENT_HANDLER_NONE when using wifi_prov_scheme_softap*/
 #ifdef CONFIG_TWOMES_PROV_TRANSPORT_BLE
-        .scheme_event_handler = WIFI_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BTDM
+        .scheme_event_handler = WIFI_PROV_EVENT_HANDLER_NONE
 #endif /* CONFIG_TWOMES_PROV_TRANSPORT_BLE */
 #ifdef CONFIG_TWOMES_PROV_TRANSPORT_SOFTAP
                                     .scheme_event_handler = WIFI_PROV_EVENT_HANDLER_NONE
@@ -1123,7 +1128,7 @@ void initialize_nvs()
 void twomes_device_provisioning(const char *device_type_name)
 {
     initialize_nvs();
-    initialize();
+    initialize_generic_firmware();
     /* initialize TCP/IP */
     ESP_ERROR_CHECK(esp_netif_init());
 
@@ -1157,7 +1162,7 @@ void twomes_device_provisioning(const char *device_type_name)
         char *device_name;
         device_name = malloc(DEVICE_NAME_SIZE);
         get_device_service_name(device_name, DEVICE_NAME_SIZE);
-        activate_device(device_activation_url, device_name, isrgrootx1);
+        activate_device(DEVICE_ACTIVATION_URL, device_name, isrgrootx1);
         bearer = get_bearer();
         free(device_name);
     }
