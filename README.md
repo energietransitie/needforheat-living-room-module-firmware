@@ -23,11 +23,7 @@ In addition to the [prerequisites described in the generic firmware for Twomes m
 *   An [SCD41](https://www.sensirion.com/en/environmental-sensors/carbon-dioxide-sensors/carbon-dioxide-sensor-scd4x/) CO₂ sensor, connected via I²C to a device based on an ESP SoC;
 
 ### Deployment procedure
-To deploy the any of the two firmware variants, please download a [release from this repository](https://github.com/energietransitie/twomes-co_2-sensor/releases) and proceed as indicated in the [deploying section of the generic firmware for Twomes measurement devices](https://github.com/energietransitie/twomes-generic-esp-firmware#deploying). However, at step 5 of the deploying process, please use the following command to flash the firmware to the device instead of the command given in the deploying section of the generic firmware:
-
-```shell
-esptool.py --chip esp32 --baud 460800 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 40m --flash_size detect 0x1000 bootloader.bin 0x8000 partitions.bin 0xe000 ota_data_initial.bin 0x10000 firmware.bin
-```
+To deploy the any of the two firmware variants, please download a [release from this repository](https://github.com/energietransitie/twomes-co_2-sensor/releases) and proceed as indicated in the [deploying section of the generic firmware for Twomes measurement devices](https://github.com/energietransitie/twomes-generic-esp-firmware#deploying).
 
 ## Developing
 
@@ -72,11 +68,11 @@ In `co2_sensor/platformio.ini`, uncomment line 20: `#build_flags = -D USE_HTTP`.
   * send measurements via ESP-NOW to the gateway;
   * supports modem-, light- and deepsleep;
 * as a full-blown Twomes measurement device 
-  * Wi-Fi provisioning using BLE;
   * secure uploading of measurements to the API;
+  * and all other features of a [full-blown Twomes measurement device](https://github.com/energietransitie/twomes-generic-esp-firmware/blob/main/README.md).
 
 To-do:
-* minor fixes for the CO₂ measurement device
+* report measurement values for temperature and relative humidity as proper float values.
 
 ## Status
 Project is: _in progress_
