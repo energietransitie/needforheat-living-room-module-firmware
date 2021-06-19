@@ -22,6 +22,10 @@ The data gathered will be sent, either directly or via a gateway, via a [Twomes 
 In addition to the [prerequisites described in the generic firmware for Twomes measurement devices](https://github.com/energietransitie/twomes-generic-esp-firmware#prerequisites), you need:
 *   An [SCD41](https://www.sensirion.com/en/environmental-sensors/carbon-dioxide-sensors/carbon-dioxide-sensor-scd4x/) CO₂ sensor, connected via I²C to a device based on an ESP SoC;
 
+When using the [Wemos TFT and I2C Connector Shield for D1 Mini connector shield](https://www.tinytronics.nl/shop/en/platforms/wemos-lolin/shields/wemos-tft-and-i2c-connector-shield-for-d1-mini), please follow to the connection diagram below. Connectiing battery and TFT e-Ink display is optional.
+
+![connect the SCD42 development board connector to the leftmost I²C socket](./SCD41_shield_connect.png)
+
 ### Deployment procedure
 To deploy the any of the two firmware variants, please download a [release from this repository](https://github.com/energietransitie/twomes-co_2-sensor/releases) and proceed as indicated in the [deploying section of the generic firmware for Twomes measurement devices](https://github.com/energietransitie/twomes-generic-esp-firmware#deploying).
 
