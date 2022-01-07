@@ -1,7 +1,10 @@
-# Twomes CO₂ meter
-This repository contains the firmware and binary releases for two variants of CO₂ meters for the Twomes project, which differ only in the way they their send their data via the [Twomes API](https://github.com/energietransitie/twomes-backoffice-api) to a [Twomes server](https://github.com/energietransitie/twomes-backoffice-server), either directly or indirectly:
+# Twomes CO₂ Monitor firmware
+This repository contains the firmware and pointers to binary releases for the CO₂ Monitor. 
+
+This repository contains the firmware and binary releases for two variants of CO₂ monitors for the Twomes project, which differ only in the way they their send their data via the [Twomes API](https://github.com/energietransitie/twomes-backoffice-api) to a [Twomes server](https://github.com/energietransitie/twomes-backoffice-server), either directly or indirectly:
 * a full-blown Twomes CO₂ measurement device that sends measurement data directly;
-* a satellite Twomes CO₂ measurement device that sends its data indirectly, via a [Twomes P1-gateway](https://github.com/energietransitie/twomes-p1-port-logger-gateway);
+* ~~a satellite Twomes CO₂ measurement device that sends its data indirectly, via a [Twomes P1-gateway](https://github.com/energietransitie/twomes-p1-port-logger-gateway);~~ (deprecated; see [Twomes Room Monitor Module firmware](https://github.com/energietransitie/twomes-room-monitor-firmware))
+ 
 
 ## Table of contents
 * [General info](#general-info)
@@ -13,70 +16,61 @@ This repository contains the firmware and binary releases for two variants of CO
 * [Credits](#credits)
 
 ## General info
-This firmware is responsible for managing the CO₂ measurement device. It will gather measurement data on CO₂ concentration, temperature and humidty. 
-The data gathered will be sent, either directly or via a gateway, via a [Twomes API](https://github.com/energietransitie/twomes-backoffice-api) to a [Twomes server](https://github.com/energietransitie/twomes-backoffice-server) and analyzed by a [Twomes analysis pipeline](https://github.com/energietransitie/twomes-analysis-pipeline) to determine changes in the ventilation ratio of a room. This enables research into the accuracy of learning the thermal characteristics of residential buildings via a dynamic heat balance model.
+The Twomes CO₂ Monitor sends the following properties via the [Twomes API](https://github.com/energietransitie/twomes-backoffice-api) to a Twomes server:
+
+| Sensor | Property           | Unit | [Printf format](https://en.wikipedia.org/wiki/Printf_format_string) | Measurement interval \[h:mm:ss\] | Description                            |
+|--------|--------------------|------|--------|-------------------|----------------------------------------|
+| SCD41  | `CO2concentration` | ppm  | %d     | 0:05:00           | CO₂ concentration                      |
+| SCD41  | `%RH`              | %RH  | %d     | 0:05:00           | relative humidity                      |
+| SCD41  | `roomTemp`         | °C   |        | 0:05:00           | air temperature                        |
+
+This data can be analyzed to determine changes in the ventilation ratio of a room, which enables research into the accuracy of learning the thermal characteristics of residential buildings via a dynamic heat balance model.
 
 ## Deploying
-
+This section describes how you can deploy binary releases of the firmware, i.e. without changing the source code, without a development environment and without needing to compile the source code.
 ### Prerequisites
 In addition to the [prerequisites described in the generic firmware for Twomes measurement devices](https://github.com/energietransitie/twomes-generic-esp-firmware#prerequisites), you need:
-*   An [SCD41](https://www.sensirion.com/en/environmental-sensors/carbon-dioxide-sensors/carbon-dioxide-sensor-scd4x/) CO₂ sensor, connected via I²C to a device based on an ESP SoC;
-
-When using the [Wemos TFT and I2C Connector Shield for D1 Mini connector shield](https://www.tinytronics.nl/shop/en/platforms/wemos-lolin/shields/wemos-tft-and-i2c-connector-shield-for-d1-mini), please follow to the connection diagram below. Connectiing battery and TFT e-Ink display is optional.
+* a WeMos D1 Mini board with ESP32, such as the [LilyGO TTGO T7 Mini32 V1.3 ESP32](https://github.com/LilyGO/ESP32-MINI-32-V1.3)
+* powered by either:
+  * a 5V power adapter via the micro-USB connector;
+  * a LiPo battery;
+* a WeMos D1 Mini Shield; either:
+  * a [Twomes CO₂ Monitor Shield](https://github.com/energietransitie/twomes-co2-monitor-hardware), or
+  * a [Wemos TFT and I2C Connector Shield for D1 Mini connector shield](https://www.tinytronics.nl/shop/en/platforms/wemos-lolin/shields/wemos-tft-and-i2c-connector-shield-for-d1-mini) connected to an [SEK-SCD41](https://www.sensirion.com/en/environmental-sensors/evaluation-kit-sek-environmental-sensing/evaluation-kit-sek-scd41/) evaluation kit, wired up according to to the connection diagram below (connecting battery and TFT e-Ink display is optional).
 
 ![connect the SCD42 development board connector to the leftmost I²C socket](./SCD41_shield_connect.png)
 
-### Deployment procedure
-To deploy the any of the two firmware variants, please download a [release from this repository](https://github.com/energietransitie/twomes-co_2-sensor/releases) and proceed as indicated in the [deploying section of the generic firmware for Twomes measurement devices](https://github.com/energietransitie/twomes-generic-esp-firmware#deploying).
+### Erasing all persistenly stored data
+See [Deploying section of the generic firmware for Twomes measurement devices](https://github.com/energietransitie/twomes-generic-esp-firmware#deploying).
+
+### Device preparation
+See [Deploying section of the generic firmware for Twomes measurement devices](https://github.com/energietransitie/twomes-generic-esp-firmware#deploying).
+The firmware needed can be found as a [release from this repository](https://github.com/energietransitie/twomes-co_2-sensor/releases).
+
+### Erasing only Wi-Fi provisioning data
+See [Deploying section of the generic firmware for Twomes measurement devices](https://github.com/energietransitie/twomes-generic-esp-firmware#deploying).
+
 
 ## Developing
+This section describes how you can change the source code using a development environment and compile the source code into a binary release of the firmware that can be depoyed, either via the development environment, or via the method described in the section Deploying.
 
-### Prerequisites
-Prerequisites for [deploying](#deploying), plus:
-*	[Visual Studio Code](https://code.visualstudio.com/download) installed
-*	[PlatformIO for Visual Studio Code](https://platformio.org/install/ide?install=vscode) installed
-*	this GitHub repository cloned
-
-### Building and flashing the project
-Open the project in PlatformIO:
-  1. In the top-left corner, select File -> Open Folder.
-  2. Select the `co2_sensor` folder where you cloned or extracted the repository.
-  3. Change any code as you see fit.
-  4. Click the PlatformIO Icon (the little alien in the left of the screen).
-  5. Unfold `ttgo-t7-v13-mini32`.
-  6. Click `upload and monitor`. 
-NOTE: The first time might take a while because PlatformIO needs to install and build the ESP-IDF before flashing.
-
-OPTIONAL: When it is done flashing, press `CTRL+T` and then `B`, then type `115200` so that it sets the right baud rate and you see text not gibberish.
-
-### Toggling the ESP-NOW code between sender and receiver
-If you want to use a receiver to test this code, you can uncomment line 19 in `platformio.ini`: `#build_flags = -D ESP_NOW_RECEIVER`. Flash it to your chosen device and it will behave as a receiver.
-
-### Changes necessary to get ESP-NOW working
-To use the ESP-NOW code acting as the sender (i.e. the CO₂-measurement device), please make sure Bluetooth is disabled in `co2_sensor/sdkconfig` (`CONFIG_BT_ENABLED=n`). It is possbile to use the contents of `co2_sensor/sdkconfig.espnow`. 
-
-ESP-NOW is configured by powering on the measurement device. After the device is powered on for the very first time, it will wait for the receiver to send, via ESP-NOW, its MAC-address and Wi-Fi channel. 
-
-### Changes necessary to get HTTPS working
-In order for HTTPS to work on your device please make sure to enable Bluetooth in `co2_sensor/sdkconfig` (`CONFIG_BT_ENABLED=y`). It is possible to use the contents of `co2_sensor/sdkconfig.https` and copy these to `co2_sensor/sdkconfig`.
-
-In `co2_sensor/platformio.ini`, uncomment line 20: `#build_flags = -D USE_HTTP`.
+Please see the [developing section of the generic Twomes firmware](https://github.com/energietransitie/twomes-generic-esp-firmware#developing).
 
 ## Features
-* Measure the following properties in a space using the [Sensirion SCD41 sensor](https://www.sensirion.com/en/environmental-sensors/carbon-dioxide-sensors/carbon-dioxide-sensor-scd4x/): 
-  * CO₂ concentration (property name: `CO2concentration`);
-  * temperature (property name: `roomTemp`) ;
-  * relative rumidty (property name: `%RH`);
-* as a satellite measurement device:
-  * getting the MAC-address of the gateway dynamically on power-up;
-  * send measurements via ESP-NOW to the gateway;
-  * supports modem-, light- and deepsleep;
-* as a full-blown Twomes measurement device 
-  * secure uploading of measurements to the API;
-  * and all other features of a [full-blown Twomes measurement device](https://github.com/energietransitie/twomes-generic-esp-firmware/blob/main/README.md).
+List of features ready and TODOs for future development (other than the [features of the generic Twomes firmware](https://github.com/energietransitie/twomes-generic-esp-firmware#features)). 
+
+Ready:
+* Measure properties according to the measurement table above. 
+* Send the data collected to a Twomes server.
 
 To-do:
-* report measurement values for temperature and relative humidity as proper float values.
+* Use the most recent version of the [Twomes Generic firmware](https://github.com/energietransitie/twomes-generic-esp-firmware) and parts of the [Twomes Room Monitor Module firmware](https://github.com/energietransitie/twomes-room-monitor-firmware).
+* Remove ESP-NOW code (deprecated; this function moved to [Twomes Room Monitor Module firmware](https://github.com/energietransitie/twomes-room-monitor-firmware).
+* Add support for reading temperature value from a Si7051 as property `roomTemp` and rename the SCD41 temperature measurement `roomTempCO2`.
+* Report measurement values for temperature and relative humidity as proper float values.
+* Reset Wi-Fi provisioning by a long press (>10s) on a button. 
+* Align indication of status and error via LEDs with other measurement devices.
+* Update installation manual and device photo.
 
 ## Status
 Project is: _in progress_
@@ -97,4 +91,3 @@ Product owners:
 We use and gratefully acknowlegde the efforts of the makers of the following source code and libraries:
 * [ESP-IDF](https://github.com/espressif/esp-idf), by Espressif Systems, licensed under [Apache License 2.0](https://github.com/espressif/esp-idf/blob/9d34a1cd42f6f63b3c699c3fe8ec7216dd56f36a/LICENSE)
 * [Twomes Generic ESP Firmware](https://github.com/energietransitie/twomes-generic-esp-firmware), by Research group Energy Transition, Windesheim University of Applied Sciences, licensed under [Apache License 2.0](https://github.com/energietransitie/twomes-generic-esp-firmware/blob/b17f346d78ac7dde6f2dff6b5e7639e98d55c348/LICENSE.md)
-* [Twomes Sensor Pairing](https://github.com/energietransitie/twomes-temp-monitor/blob/97c9b54c33c2031c82f80bd55b47af8e185d1a9a/src/twomes_sensor_pairing.h), by Copyright (C) 2021 Research group Energy Transition, Windesheim University of Applied Sciences, licensed under [Apache License 2.0](https://github.com/energietransitie/twomes-temp-monitor/blob/97c9b54c33c2031c82f80bd55b47af8e185d1a9a/LICENSE)
