@@ -1,4 +1,4 @@
-# Twutility/Tomes CO₂ and Bluetooth occupancy monitoring firmware
+# Twutility/Twomes CO₂ and Bluetooth occupancy monitoring firmware
 This repository contains the firmware and pointers to binary releases for the CO₂ monitor. 
 
 It was started under the Twomes project for use in residential buildings. Currently, it is being extended to use as an CO₂ monitor and Bluetooth occupancy detection system for utility buildings.
