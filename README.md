@@ -1,5 +1,7 @@
-# Twomes CO₂ Monitor firmware
-This repository contains the firmware and pointers to binary releases for the CO₂ Monitor. 
+# Twutility/Tomes CO₂ and Bluetooth occupancy monitoring firmware
+This repository contains the firmware and pointers to binary releases for the CO₂ monitor. 
+
+It was started under the Twomes project for use in residential buildings. Currently, it is being extended to use as an CO₂ monitor and Bluetooth occupancy detection system for utility buildings.
 
 This repository contains the firmware and binary releases for two variants of CO₂ monitors for the Twomes project, which differ only in the way they their send their data via the [Twomes API](https://github.com/energietransitie/twomes-backoffice-api) to a [Twomes server](https://github.com/energietransitie/twomes-backoffice-server), either directly or indirectly:
 * a full-blown Twomes CO₂ measurement device that sends measurement data directly;
