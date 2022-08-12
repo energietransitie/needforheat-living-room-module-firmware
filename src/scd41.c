@@ -1,281 +1,172 @@
-#include "../include/scd41.h"
-#include "../include/i2c.h"
-#include "../include/crc.h"
-#include "../include/util.h"
-#include "../include/sleepmodes.h"
-#include "../include/Wifi.h"
+#include <scd41.h>
 
-#include "../include/espnow.h"
-#include "esp_log.h"
+#include <esp_log.h>
 
-#include <nvs.h>
-#include <nvs_flash.h>
+#define SCD41_CMD_SERIALNUM 0x36, 0x82		   // 0x3682
+#define SCD41_CMD_SET_ASC_EN 0x24, 0x16		   // 0x2416
+#define SCD41_CMD_GET_ASC_EN 0x23, 0x13		   // 0x2313
+#define SCD41_CMD_READMEASURE 0xec, 0x05	   // 0xec05
+#define SCD41_CMD_SINGLESHOT 0x21, 0x9d		   // 0x219d
+#define SCD41_CMD_LOWPOWER_PERIODIC 0x21, 0xac // 0x21b1
+#define SCD41_SELFTEST 0x36, 0x39			   // 0x3639
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
+#define SCD41_CMD_GET_TEMP_OFF 0x23, 0x18 // 0x2318
 
-#define SCD41_LOG_TAG           "scd41"
-#define SCD41_NVS_NAME          SCD41_LOG_TAG
+// CRC defines
+#define CRC8_POLYNOMIAL 0x31
+#define CRC8_INIT 0xFF
 
-#define SCD41_INIT_DELAY        1000 // milliseconds
-#define SCD41_WAIT_MILLISECOND  2 // milliseconds (is 2 to ensure it will always wait at least one millisecond)
-
-#define SCD41_ADDR              0x62
-
-#define SCD41_CMD_SERIALNUM     0x3682
-#define SCD41_CMD_SET_ASC_EN    0x2416
-#define SCD41_CMD_GET_ASC_EN    0x2313
-#define SCD41_CMD_READMEASURE   0xec05
-#define SCD41_CMD_SINGLESHOT    0x219d
-
-#define SCD41_CMD_GET_TEMP_OFF  0x2318
-
-#ifdef USE_HTTP
-    #define SCD41_BUFFER_SIZE       144     // https
-#else
-    #define SCD41_BUFFER_SIZE       ESPNOW_MAX_SAMPLES
-#endif // USE_HTPP
-
-#define SCD41_STR_SIZE          64
-
-uint16_t *buffer_co2;
-uint16_t *buffer_temp;
-uint16_t *buffer_rht;
-uint8_t loc = 0;
-
-// Function:    scd41_init()
-// Params:      N/A
-// Returns:     N/A
-// Desription:  Initializes this module and the SCD41
-void scd41_init(void)
+void co2_init(uint8_t address)
 {
-    // the SCD41 takes 1 second to initialize itself, that's what this delay is for
-    #ifdef USE_HTTP
-        delay(SCD41_INIT_DELAY);
-    #else
-        set_custom_lightsleep(SCD41_INIT_DELAY * 1000);
-    #endif
-    
-    buffer_co2 = malloc(SCD41_BUFFER_SIZE * sizeof(uint16_t));
-    buffer_temp = malloc(SCD41_BUFFER_SIZE * sizeof(uint16_t));
-    buffer_rht = malloc(SCD41_BUFFER_SIZE * sizeof(uint16_t));
-
-    #ifndef USE_HTTP
-        scd41_fetch_nvs();
-    #endif // USE_HTTP
-
-    scd41_disable_asc();
-    scd41_print_serial_number();
+	if (co2_disable_asc(address))
+		ESP_LOGD("CO2_INIT", "ASC enabled");
+	else
+		ESP_LOGD("CO2_INIT", "ASC disabled");
 }
 
-// Function:    scd41_disable_asc()
-// Params:      N/A
-// Returns:     N/A
-// Desription:  Disables ASC (Automatic Self-Calibration)
-void scd41_disable_asc(void)
+/**
+ * CRC8 code taken from Sensirion SCD41 Datasheet: https://nl.mouser.com/datasheet/2/682/Sensirion_CO2_Sensors_SCD4x_Datasheet-2321195.pdf
+ * @brief calculate the CRC for an SCD41 I2C message
+ *
+ * @param data pointer to the received i2c data
+ * @param count size of the buffer
+ *
+ * @return calculated CRC8
+ */
+uint8_t scd41_crc8(const uint8_t *data, uint16_t count)
 {
-    uint8_t cmd_buffer[5] = {(uint8_t)(SCD41_CMD_SET_ASC_EN >> 8), (uint8_t) SCD41_CMD_SET_ASC_EN & 0xFF, (uint8_t) 0, (uint8_t) 0, (uint8_t) 0};
 
-    // generate CRC for data buffer
-    uint16_t data[2] = {0, 0};
-    cmd_buffer[4] = generate_crc((const uint16_t *) &data, 2);
-    
-    // write command and data
-    i2c_write(SCD41_ADDR, &cmd_buffer[0], I2C_STOP, 5); 
-    
-    // check if ASC is disabled or not
-    cmd_buffer[0] = (uint8_t) (SCD41_CMD_GET_ASC_EN >> 8) & 0xFF;
-    cmd_buffer[1] = (uint8_t) SCD41_CMD_GET_ASC_EN & 0xFF;
-    cmd_buffer[2] = 0;
+	uint16_t current_byte;
+	uint8_t crc = CRC8_INIT;
+	uint8_t crc_bit;
 
-    delay(SCD41_WAIT_MILLISECOND);
-    
-    uint16_t r = 0;
-    // get current ASC ENABLED value
-    i2c_write(SCD41_ADDR, &cmd_buffer[0], I2C_NO_STOP, 2);
-    delay(SCD41_WAIT_MILLISECOND);                               
-    
-    // I2C reads back previous command before giving us the
-    // actual data we want, not supposed to happen
-    // but it does so anyway
-    i2c_read(SCD41_ADDR, (uint8_t *) &cmd_buffer[0], 5);
+	for (current_byte = 0; current_byte < count; ++current_byte)
+	{
+		crc ^= (data[current_byte]);
+		for (crc_bit = 8; crc_bit > 0; --crc_bit)
+		{
+			if (crc & 0x80)
+				crc = (crc << 1) ^ CRC8_POLYNOMIAL;
+			else
+				crc = (crc << 1);
+		}
+	}
 
-    // fix for above
-    r = (cmd_buffer[0] << 8) | cmd_buffer[1];
-    if(r == SCD41_CMD_GET_ASC_EN)
-        r = (cmd_buffer[2] << 8) | cmd_buffer[3];
-
-    if(r)
-        ESP_LOGI("SCD41", "Warning: ADC not disabled (0x%x)", r);
+	return crc;
 }
 
-// Function:    scd41_measure_co2_temp_rht()
-// Params:      N/A
-// Returns:     N/A
-// Desription:  Measures RHT, temperature and CO2 ppm in single shot mode
-//              and stores this in a buffer
-void scd41_measure_co2_temp_rht(void)
+/**
+ * @brief read the serial number of the CO2 sensor
+ *
+ * @param address i2c address of the device
+ *
+ * @return the serial number
+ */
+uint64_t co2_get_serial(uint8_t address)
 {
-    uint8_t read_buffer[9];
-    uint8_t cmd_buffer[2];
+	uint8_t cmd[2] = {SCD41_CMD_SERIALNUM};
+	// Write the get-serial command, do not stop the i2c communication:
+	twomes_i2c_write(address, &cmd[0], sizeof(cmd), I2C_SEND_NO_STOP);
 
-    // for testing NVS
-    ESP_LOGI(SCD41_LOG_TAG, "first measurement: %i", buffer_co2[0]);
-    
-    // --- START SINGLE SHOT MEASUREMENT --- //
-    cmd_buffer[0] = (uint8_t) (SCD41_CMD_SINGLESHOT >> 8) & 0xFF;
-    cmd_buffer[1] = (uint8_t) SCD41_CMD_SINGLESHOT & 0xFF;
-    
-    uint8_t err = i2c_write(SCD41_ADDR, (uint8_t *) &cmd_buffer[0], I2C_STOP, 2);
+	// Wait for 1ms, SCD41 processing time
+	vTaskDelay(SCD41_WAIT_MS / portTICK_PERIOD_MS);
 
-    // wait for the SCD41 to finish measuring
-    #ifdef USE_HTTP
-        delay(SCD41_SINGLE_SHOT_DELAY);
-    #else
-        set_custom_lightsleep(SCD41_SINGLE_SHOT_DELAY * 1000);
-    #endif
+	// Issue a read command:
+	uint8_t serialNumber[9]; // 3 16 bit numbers and 3 8-bit CRCs
+	twomes_i2c_read(address, &serialNumber[0], sizeof(serialNumber));
 
-    // --- READ MEASUREMENT --- //
-    cmd_buffer[0] = (uint8_t)(SCD41_CMD_READMEASURE >> 8);
-    cmd_buffer[1] = (uint8_t) SCD41_CMD_READMEASURE & 0xFF;
-    
-    err = i2c_write(SCD41_ADDR, (uint8_t *) &cmd_buffer[0], I2C_NO_STOP, 2);
-    delay(SCD41_WAIT_MILLISECOND);
-    err = i2c_read(SCD41_ADDR, (uint8_t *) &read_buffer[0], 9);
+	// For debug: log the serial numbers, the received checksums and the calculated checksums:
+	uint8_t crc1, crc2, crc3; // SCD41 sends a crc after every word (16 bits)
+	crc1 = scd41_crc8(&serialNumber[0], 2);
+	crc2 = scd41_crc8(&serialNumber[3], 2);
+	crc3 = scd41_crc8(&serialNumber[6], 2);
 
-    scd41_store_measurements(&read_buffer[0]);
+	ESP_LOGD("SERIAL_CRC", "\n\n Received Serial number %4X %4X %4X \n With CRC received:calculated \n %2x : %2x \n %2x : %2x \n %2x : %2x \n", serialNumber[0], serialNumber[3], serialNumber[6], serialNumber[2], crc1, serialNumber[5], crc2, serialNumber[8], crc3);
+	return 0;
+}
+/**
+ * @brief disable the SCD41 ASC (Automatic Self Calibration)
+ * Device performs a read immeadiately after to check for disable success
+ * @param address i2c address of the device
+ *
+ * @return value of ASC after write (0 == success)
+ */
+uint8_t co2_disable_asc(uint8_t address)
+{
+	// generate command buffer:
+	uint8_t x[2] = {0, 0};
+	uint8_t disable_asc_cmd[5] = {SCD41_CMD_SET_ASC_EN, 0, 0, scd41_crc8(x, 2)}; // Command buffer with generated CRC, write 0x0000 to SET_ASC address
+	// Write to I2C:
+	twomes_i2c_write(address, disable_asc_cmd, sizeof disable_asc_cmd, I2C_SEND_STOP);
 
-    if(loc++ >= SCD41_BUFFER_SIZE-1)
-    {
-        #ifdef USE_HTTP
-            send_HTTPS((uint16_t *) buffer_co2, (uint16_t *) buffer_temp, (uint16_t *) buffer_rht, SCD41_BUFFER_SIZE);
-        #else
-            scd41_send_data_espnow();
-        #endif // USE_HTTP
-        
-        scd41_reset_buffers();
-    }
+	vTaskDelay(SCD41_WAIT_MS / portTICK_PERIOD_MS); // Give SCD41 time for processing
+	// Perform read to check if disabling succeeded:
+	uint8_t check_asc_cmd[2] = {SCD41_CMD_GET_ASC_EN};
+	twomes_i2c_write(address, check_asc_cmd, sizeof check_asc_cmd, I2C_SEND_NO_STOP);
+	vTaskDelay(SCD41_WAIT_MS / portTICK_PERIOD_MS); // Give SCD41 time for processing
+	// Read the result:
+	uint8_t response_buffer[2];
+	twomes_i2c_read(address, response_buffer, sizeof response_buffer);
+
+	// Debug print:
+	ESP_LOGD("ASC", "Received Response: %2X, %2X", response_buffer[0], response_buffer[1]);
+
+	return response_buffer[1];
 }
 
-// Function:    scd41_store_measurements()
-// Params:      
-//        - (uint8_t *) buffer as read by i2c_write()
-// Returns:     N/A
-// Desription:  Stores the measurements given by the sensor into the right buffer
-void scd41_store_measurements(uint8_t *read_buffer)
+void co2_read(uint8_t address, uint16_t *buffer)
 {
-    uint16_t d = ((read_buffer[0] << 8) | read_buffer[1]);
-    buffer_co2[loc] = d;
+	// Send singleshot command:
+	uint8_t singleshot_cmd[2] = {SCD41_CMD_SINGLESHOT};
+	twomes_i2c_write(address, singleshot_cmd, sizeof singleshot_cmd, I2C_SEND_STOP);
 
-    d = ((read_buffer[3] << 8) | read_buffer[4]);
-    // float temp = -45 + 175 * (float)b / 65536; // TODO: fixed point?
-    buffer_temp[loc] = d;
+	// wait
+	ESP_LOGD("CO2", "wait %d ms", SCD41_SINGLE_SHOT_DELAY_MS);
+	vTaskDelay(pdMS_TO_TICKS(SCD41_SINGLE_SHOT_DELAY_MS));
 
-    d = ((read_buffer[6] << 8) | read_buffer[7]);
-    // uint8_t rht = (uint8_t) (100 * c / 65536);
-    buffer_rht[loc] = d;
+	// Read the measurement:
+	uint8_t read_measurement_cmd[2] = {SCD41_CMD_READMEASURE};
+	twomes_i2c_write(address, read_measurement_cmd, sizeof read_measurement_cmd, I2C_SEND_NO_STOP);
+	vTaskDelay(SCD41_WAIT_MS / portTICK_PERIOD_MS);
+	uint8_t read_buffer[9]; // Read 3 words (16 bits) and 3 CRCs (8 bits)
+	twomes_i2c_read(address, read_buffer, sizeof read_buffer);
 
-    // FOR TESTING ONLY
-    ESP_LOGI("CO2", "%dppm, temp: %d, rht: %d", buffer_co2[loc] , buffer_temp[loc], buffer_rht[loc]);
+	// Perform CRC for each measurement:
+	uint8_t crc1, crc2, crc3;
+	crc1 = scd41_crc8(&read_buffer[0], 2);
+	crc2 = scd41_crc8(&read_buffer[3], 2);
+	crc3 = scd41_crc8(&read_buffer[6], 2);
+
+	// If CRC matches, store value in buffer: TODO implement re-read when a crc fails
+	if (crc1 == read_buffer[2])
+	{
+		buffer[0] = (read_buffer[0] << 8) | read_buffer[1]; // CO2
+	}
+	else
+		buffer[0] = 0;
+	if (crc2 == read_buffer[5])
+	{
+		buffer[1] = (read_buffer[3] << 8) | read_buffer[4]; // Temp
+	}
+	else
+		buffer[1] = 0;
+	if (crc3 == read_buffer[8])
+	{
+		buffer[2] = (read_buffer[6] << 8) | read_buffer[7]; // Humidity
+	}
+	else
+		buffer[2] = 0;
+
+	ESP_LOGD("CO2", "Measurement complete: CO2: 0x%02X%02X with CRC 0x%02X, T: 0x%02X%02X with CRC 0x%02X, RH 0x%02X%02X with CRC 0x%2X", read_buffer[0], read_buffer[1], read_buffer[2], read_buffer[3], read_buffer[4], read_buffer[5], read_buffer[6], read_buffer[7], read_buffer[8]);
+	ESP_LOGD("CRC", "Calculated CRC1: 0x%02X, CRC2: 0x%02X, CRC3: 0x%02X", crc1, crc2, crc3);
+	return;
 }
 
-#ifndef USE_HTTP
-// Function:    scd41_send_data_espnow()
-// Params:      N/A
-// Returns:     N/A
-// Desription:  Prepares an ESP-NOW message and sends it
-void scd41_send_data_espnow(void)
+float scd41_temp_raw_to_celsius(uint16_t raw)
 {
-    uint16_t index = espnow_get_message_index();
-    
-    espnow_msg_t msg = 
-    {
-        .device_type = ESPNOW_DATATYPE_CO2,
-        .nmeasurements = ESPNOW_MAX_SAMPLES,
-        .index = index,
-        .interval = SCD41_SAMPLE_INTERVAL,
-    };
-
-    memcpy(&(msg.co2[0]), (uint16_t *) buffer_co2, SCD41_BUFFER_SIZE * sizeof(uint16_t));
-    memcpy(&(msg.temperature[0]), (uint16_t *) buffer_temp, SCD41_BUFFER_SIZE * sizeof(uint16_t));
-    memcpy(&(msg.rht[0]), (uint16_t *) buffer_rht, SCD41_BUFFER_SIZE * sizeof(uint16_t));
-    
-    wake_modem_sleep();
-    espnow_send((uint8_t *) &msg, sizeof(espnow_msg_t));
-    set_modem_sleep();
+	return ((float)-45 + (float)175 * (float)raw / 65536);
 }
-#endif
-
-// Function:    scd41_reset_buffers()
-// Params:      N/A
-// Returns:     N/A
-// Desription:  Resets all buffers
-void scd41_reset_buffers(void)
+float scd41_rh_raw_to_percent(uint16_t raw)
 {
-    loc = 0;
-    memset((uint16_t *) buffer_co2, 0, SCD41_BUFFER_SIZE * sizeof(uint16_t));
-    memset((uint16_t *) buffer_temp, 0, SCD41_BUFFER_SIZE * sizeof(uint16_t));
-    memset((uint16_t *) buffer_rht, 0, SCD41_BUFFER_SIZE * sizeof(uint16_t));
-}
-
-// Function:    scd41_store_in_nvs()
-// Params:      N/A
-// Returns:     N/A
-// Desription:  Stores current buffers in NVS
-void scd41_store_in_nvs(void)
-{
-    nvs_handle nvs;
-    
-    ESP_ERROR_CHECK(nvs_open(SCD41_NVS_NAME, NVS_READWRITE, &nvs));
-    nvs_set_blob(nvs, "buffer_co2", (uint8_t *) buffer_co2, SCD41_BUFFER_SIZE * sizeof(uint16_t));
-    nvs_set_blob(nvs, "buffer_rht", (uint8_t *) buffer_rht, SCD41_BUFFER_SIZE * sizeof(uint16_t));
-    nvs_set_blob(nvs, "buffer_temp",(uint8_t *) buffer_temp, SCD41_BUFFER_SIZE * sizeof(uint16_t));
-    nvs_set_u8(nvs, "loc", loc);
-
-    nvs_close(nvs);
-}
-
-// Function:    scd41_fetch_nvs()
-// Params:      N/A
-// Returns:     N/A
-// Desription:  Fetches the SCD41 buffers stored in NVS
-void scd41_fetch_nvs(void)
-{
-    nvs_handle nvs;
-
-    if(nvs_open(SCD41_NVS_NAME, NVS_READONLY, &nvs) != ESP_OK)
-       return;
-    
-    size_t size = SCD41_BUFFER_SIZE * sizeof(uint16_t);
-
-    // get all data used by scd41
-    ESP_ERROR_CHECK(nvs_get_blob(nvs, "buffer_co2", buffer_co2, &size));
-    ESP_ERROR_CHECK(nvs_get_blob(nvs, "buffer_temp", buffer_temp, &size));
-    ESP_ERROR_CHECK(nvs_get_blob(nvs, "buffer_rht", buffer_rht, &size));
-    ESP_ERROR_CHECK(nvs_get_u8(nvs, "loc", &loc));
-
-    nvs_close(nvs);
-}
-
-// Function:    scd41_print_serial_number()
-// Params:      N/A
-// Returns:     N/A
-// Desription:  Prints the serial number of the SCD41 to the
-//              serial monitor via USART
-void scd41_print_serial_number(void)
-{
-    uint8_t buffer[9];
-
-    uint8_t cmd_buffer[2] = { (uint8_t)(SCD41_CMD_SERIALNUM >> 8), (uint8_t) SCD41_CMD_SERIALNUM & 0xFF};
-
-    // get serial number
-    uint8_t err = i2c_write(SCD41_ADDR, &cmd_buffer[0], I2C_NO_STOP, 2);
-    delay(SCD41_WAIT_MILLISECOND);
-    err = i2c_read(SCD41_ADDR, (uint8_t *) &buffer[0], 9);
-
-    // since its a big endian number it's already in the right order
-    uint64_t sn = ((uint64_t) buffer[0] << 40) | ((uint64_t) buffer[1] << 32) | ((uint64_t) buffer[3] << 24) | ((uint64_t) buffer[4] << 16) | ((uint64_t) buffer[6] << 8) | (uint64_t) buffer[7];
-
-    ESP_LOGI("SCD41", "Serial number: %lld\n", sn);
+	return ((float)100 * (float)raw / 65536);
 }
