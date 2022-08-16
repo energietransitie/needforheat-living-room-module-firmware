@@ -1,6 +1,7 @@
 #include <scd41.h>
 
 #include <esp_log.h>
+#include <esp_err.h>
 
 #define SCD41_CMD_SERIALNUM 0x36, 0x82		   // 0x3682
 #define SCD41_CMD_SET_ASC_EN 0x24, 0x16		   // 0x2416
@@ -114,7 +115,7 @@ uint8_t co2_disable_asc(uint8_t address)
 	return response_buffer[1];
 }
 
-void co2_read(uint8_t address, uint16_t *buffer)
+esp_err_t co2_read(uint8_t address, uint16_t *buffer)
 {
 	// Send singleshot command:
 	uint8_t singleshot_cmd[2] = {SCD41_CMD_SINGLESHOT};
@@ -143,23 +144,25 @@ void co2_read(uint8_t address, uint16_t *buffer)
 		buffer[0] = (read_buffer[0] << 8) | read_buffer[1]; // CO2
 	}
 	else
-		buffer[0] = 0;
+		return ESP_ERR_INVALID_CRC;
+
 	if (crc2 == read_buffer[5])
 	{
 		buffer[1] = (read_buffer[3] << 8) | read_buffer[4]; // Temp
 	}
 	else
-		buffer[1] = 0;
+		return ESP_ERR_INVALID_CRC;
+
 	if (crc3 == read_buffer[8])
 	{
 		buffer[2] = (read_buffer[6] << 8) | read_buffer[7]; // Humidity
 	}
 	else
-		buffer[2] = 0;
+		return ESP_ERR_INVALID_CRC;
 
 	ESP_LOGD("CO2", "Measurement complete: CO2: 0x%02X%02X with CRC 0x%02X, T: 0x%02X%02X with CRC 0x%02X, RH 0x%02X%02X with CRC 0x%2X", read_buffer[0], read_buffer[1], read_buffer[2], read_buffer[3], read_buffer[4], read_buffer[5], read_buffer[6], read_buffer[7], read_buffer[8]);
 	ESP_LOGD("CRC", "Calculated CRC1: 0x%02X, CRC2: 0x%02X, CRC3: 0x%02X", crc1, crc2, crc3);
-	return;
+	return ESP_OK;
 }
 
 float scd41_temp_raw_to_celsius(uint16_t raw)

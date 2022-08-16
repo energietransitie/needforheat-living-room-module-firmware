@@ -62,8 +62,10 @@ uint8_t co2_disable_asc(uint8_t address);
  *
  * @param address i2c address
  * @param buffer buffer to hold the read data in (uint16_t[3])
+ * 
+ * @returns ESP error.
  */
-void co2_read(uint8_t address, uint16_t *buffer);
+esp_err_t co2_read(uint8_t address, uint16_t *buffer);
 
 /**
  * @brief convert raw temp value to degrees Celsius
