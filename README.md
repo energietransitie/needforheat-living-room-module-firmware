@@ -63,12 +63,12 @@ List of features ready and TODOs for future development (other than the [feature
 Ready:
 * Measure properties according to the measurement table above. 
 * Send the data collected to a Twomes server.
+* Use [Twomes generic ESP32 firmware library](https://github.com/energietransitie/twomes-generic-esp-firmware).
+* Report measurement values for temperature and relative humidity as proper float values.
 
 To-do:
-* Use the most recent version of the [Twomes Generic firmware](https://github.com/energietransitie/twomes-generic-esp-firmware) and parts of the [Twomes Room Monitor Module firmware](https://github.com/energietransitie/twomes-room-monitor-firmware).
-* Remove ESP-NOW code (deprecated; this function moved to [Twomes Room Monitor Module firmware](https://github.com/energietransitie/twomes-room-monitor-firmware).
+* Use parts of the [Twomes Room Monitor Module firmware](https://github.com/energietransitie/twomes-room-monitor-firmware).
 * Add support for reading temperature value from a Si7051 as property `roomTemp` and rename the SCD41 temperature measurement `roomTempCO2`.
-* Report measurement values for temperature and relative humidity as proper float values.
 * Align indication of status and error via LEDs with other measurement devices.
 * Update installation manual and device photo.
 
