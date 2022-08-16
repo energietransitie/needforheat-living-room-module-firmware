@@ -83,6 +83,7 @@ This software is a collaborative effort of:
 * Maarten Vermeulen · [@m44rtn](https://github.com/m44rtn)
 * Tristan Jongedijk · [@tristanjongedijk](https://github.com/tristanjongedijk)
 * Laurens de Boer · [@Laurenz02](https://github.com/Laurenz02)
+* Nick van Ravenzwaaij · [@n-vr](https://github.com/n-vr)
 
 Product owners:
 * Marco Winkelman · [@MarcoW71](https://github.com/MarcoW71)
