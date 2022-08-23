@@ -13,9 +13,6 @@ extern "C" void app_main(void)
 	GenericTasks::AddTasksToScheduler();
 
 #ifdef M5STACK_COREINK
-	// This is a fake MAC-address.
-	PresenceDetection::AddMacAddress("ab:ff:0c:fc:ba:5c");
-
 	// Add the SCD41 task to the scheduler.
 	Scheduler::AddTask(SCD41Task, "SCD41 task", 4096, nullptr, 1, Scheduler::Interval::MINUTES_10);
 #endif // M5STACK_COREINK
