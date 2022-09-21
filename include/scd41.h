@@ -15,7 +15,7 @@ extern "C"
 
 #include "driver/i2c.h"
 #include "driver/gpio.h"
-#include <i2c_hal.h>
+#include <i2c_hal_port_1.h>
 
 #define SCD41_INIT_DELAY_MS 1000        // milliseconds
 #define SCD41_WAIT_MS 2                 // milliseconds
