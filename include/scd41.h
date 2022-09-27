@@ -57,6 +57,17 @@ uint64_t co2_get_serial(uint8_t address);
 uint8_t co2_disable_asc(uint8_t address);
 
 /**
+ * @brief Recalibrate the CO2 sensor.
+ * Device performs a read immeadiately after to check for recalibration success
+ * @param address i2c address of the device
+ *
+ * @return
+ *  ESP_OK: success
+ *  ESP_ERR_INVALID_RESPONSE: failed
+ */
+esp_err_t co2_force_recalibration(uint8_t address, int16_t* offset);
+
+/**
  * send singleshot command, sleep for the conversion time and read the output \n
  * SLEEPS FOR 5 SECONDS IN LIGHT SLEEP MODE \n
  *

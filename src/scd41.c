@@ -3,19 +3,22 @@
 #include <esp_log.h>
 #include <esp_err.h>
 
-#define SCD41_CMD_SERIALNUM 0x36, 0x82		   // 0x3682
-#define SCD41_CMD_SET_ASC_EN 0x24, 0x16		   // 0x2416
-#define SCD41_CMD_GET_ASC_EN 0x23, 0x13		   // 0x2313
-#define SCD41_CMD_READMEASURE 0xec, 0x05	   // 0xec05
-#define SCD41_CMD_SINGLESHOT 0x21, 0x9d		   // 0x219d
-#define SCD41_CMD_LOWPOWER_PERIODIC 0x21, 0xac // 0x21b1
-#define SCD41_SELFTEST 0x36, 0x39			   // 0x3639
+#define SCD41_CMD_SERIALNUM 0x36, 0x82			 // 0x3682
+#define SCD41_CMD_SET_ASC_EN 0x24, 0x16			 // 0x2416
+#define SCD41_CMD_GET_ASC_EN 0x23, 0x13			 // 0x2313
+#define SCD41_CMD_READMEASURE 0xec, 0x05		 // 0xec05
+#define SCD41_CMD_SINGLESHOT 0x21, 0x9d			 // 0x219d
+#define SCD41_CMD_LOWPOWER_PERIODIC 0x21, 0xac	 // 0x21b1
+#define SCD41_SELFTEST 0x36, 0x39				 // 0x3639
+#define SCD41_CMD_FORCE_RECALIBRATION 0x36, 0x2f // 0x362f
 
 #define SCD41_CMD_GET_TEMP_OFF 0x23, 0x18 // 0x2318
 
 // CRC defines
 #define CRC8_POLYNOMIAL 0x31
 #define CRC8_INIT 0xFF
+
+#define SCD41_CO2_RECALIBRATION_VAL 0x01, 0x9F
 
 void co2_init(uint8_t address)
 {
@@ -115,6 +118,56 @@ uint8_t co2_disable_asc(uint8_t address)
 	ESP_LOGD("ASC", "Received Response: %2X, %2X", response_buffer[0], response_buffer[1]);
 
 	return response_buffer[1];
+}
+
+/**
+ * @brief Recalibrate the CO2 sensor.
+ * Device performs a read immeadiately after to check for recalibration success
+ * @param address i2c address of the device
+ *
+ * @return
+ * 	ESP_OK: success
+ * 	ESP_ERR_INVALID_RESPONSE: failed
+ */
+esp_err_t co2_force_recalibration(uint8_t address, int16_t* offset)
+{
+	// First gather measurements for more than 3 minutes. This is needed before calibration.
+	// 3 minutes is 3 * 60 = 180 seconds.
+	// Every co2_read takes 5 seconds, so we need to do 180 / 5 = 36 co2_reads.
+	for (int i = 0; i < 36; i++)
+	{
+		uint16_t values[3];
+		co2_read(address, values);
+	}
+
+	// Generate command buffer:
+	uint8_t x[2] = {SCD41_CO2_RECALIBRATION_VAL};
+	uint8_t force_recalibrate_cmd[5] = {SCD41_CMD_FORCE_RECALIBRATION,
+										SCD41_CO2_RECALIBRATION_VAL,
+										scd41_crc8(x, 2)}; // Command buffer with generated CRC, write 0x019F to FORCE_RECALIBRATION address.
+	// Write to I2C:
+	twomes_i2c_write_port_1(address, force_recalibrate_cmd, sizeof force_recalibrate_cmd, I2C_SEND_STOP);
+
+	vTaskDelay(500 / portTICK_PERIOD_MS); // Give SCD41 time for processing. 400ms according to the datasheet, + margin.
+	// Read the result:
+	uint8_t response_buffer[3];
+	twomes_i2c_read_port_1(address, response_buffer, sizeof response_buffer);
+
+	uint8_t crc = scd41_crc8(response_buffer, 2);
+	if (crc != response_buffer[2])
+		return ESP_ERR_INVALID_CRC;
+
+	// Debug print:
+	ESP_LOGD("Force recalibrate SCD41", "Received Response: %2X, %2X", response_buffer[0], response_buffer[1]);
+
+	uint16_t response = ((int16_t)response_buffer[0] << 8) | response_buffer[1];
+	if (response == 0xffff)
+		return ESP_ERR_INVALID_RESPONSE;
+
+	response -= 0x8000; // We need to substract 0x8000 according to the datasheet.
+
+	*offset = (int16_t)(response);
+	return ESP_OK;
 }
 
 esp_err_t co2_read(uint8_t address, uint16_t *buffer)
