@@ -18,6 +18,13 @@
 #define CRC8_POLYNOMIAL 0x31
 #define CRC8_INIT 0xFF
 
+/**
+ * recalibrate to 415 ppm = 0x019F; 
+ * sources:
+ * recent data on https://scrippsco2.ucsd.edu/
+ * recent data via https://atmosphere.copernicus.eu/charts/cams/carbon-dioxide-forecasts
+ * viz. https://atmosphere.copernicus.eu/charts/cams/carbon-dioxide-forecasts?facets=undefined&time=2022092600,60,2022092812&projection=classical_central_europe&layer_name=composition_co2_totalcolumn
+ */
 #define SCD41_CO2_RECALIBRATION_VAL 0x01, 0x9F
 
 void co2_init(uint8_t address)
