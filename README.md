@@ -32,15 +32,14 @@ This data can be analyzed to determine changes in the ventilation ratio of a roo
 This section describes how you can deploy binary releases of the firmware, i.e. without changing the source code, without a development environment and without needing to compile the source code.
 ### Prerequisites
 In addition to the [prerequisites described in the generic firmware for Twomes measurement devices](https://github.com/energietransitie/twomes-generic-esp-firmware#prerequisites), you need:
-* a WeMos D1 Mini board with ESP32, such as the [LilyGO TTGO T7 Mini32 V1.3 ESP32](https://github.com/LilyGO/ESP32-MINI-32-V1.3)
-* powered by either:
-  * a 5V power adapter via the micro-USB connector;
-  * a LiPo battery;
-* a WeMos D1 Mini Shield; either:
+* an [M5Stack CoreInk](https://docs.m5stack.com/en/core/coreink).
+* an SCD41 sensor connected, either[^prerequisites]:
   * a [Twomes CO₂ Monitor Shield](https://github.com/energietransitie/twomes-co2-monitor-hardware), or
   * a [Wemos TFT and I2C Connector Shield for D1 Mini connector shield](https://www.tinytronics.nl/shop/en/platforms/wemos-lolin/shields/wemos-tft-and-i2c-connector-shield-for-d1-mini) connected to an [SEK-SCD41](https://www.sensirion.com/en/environmental-sensors/evaluation-kit-sek-environmental-sensing/evaluation-kit-sek-scd41/) evaluation kit, wired up according to to the connection diagram below (connecting battery and TFT e-Ink display is optional).
 
 ![connect the SCD42 development board connector to the leftmost I²C socket](./SCD41_shield_connect.png)
+
+[^prerequisites]: This is subject to change.
 
 ### Erasing all persistenly stored data
 See [Deploying section of the generic firmware for Twomes measurement devices](https://github.com/energietransitie/twomes-generic-esp-firmware#deploying).
@@ -64,13 +63,12 @@ List of features ready and TODOs for future development (other than the [feature
 Ready:
 * Measure properties according to the measurement table above. 
 * Send the data collected to a Twomes server.
+* Use [Twomes generic ESP32 firmware library](https://github.com/energietransitie/twomes-generic-esp-firmware).
+* Report measurement values for temperature and relative humidity as proper float values.
 
 To-do:
-* Use the most recent version of the [Twomes Generic firmware](https://github.com/energietransitie/twomes-generic-esp-firmware) and parts of the [Twomes Room Monitor Module firmware](https://github.com/energietransitie/twomes-room-monitor-firmware).
-* Remove ESP-NOW code (deprecated; this function moved to [Twomes Room Monitor Module firmware](https://github.com/energietransitie/twomes-room-monitor-firmware).
+* Use parts of the [Twomes Room Monitor Module firmware](https://github.com/energietransitie/twomes-room-monitor-firmware).
 * Add support for reading temperature value from a Si7051 as property `roomTemp` and rename the SCD41 temperature measurement `roomTempCO2`.
-* Report measurement values for temperature and relative humidity as proper float values.
-* Reset Wi-Fi provisioning by a long press (>10s) on a button. 
 * Align indication of status and error via LEDs with other measurement devices.
 * Update installation manual and device photo.
 
@@ -85,6 +83,7 @@ This software is a collaborative effort of:
 * Maarten Vermeulen · [@m44rtn](https://github.com/m44rtn)
 * Tristan Jongedijk · [@tristanjongedijk](https://github.com/tristanjongedijk)
 * Laurens de Boer · [@Laurenz02](https://github.com/Laurenz02)
+* Nick van Ravenzwaaij · [@n-vr](https://github.com/n-vr)
 
 Product owners:
 * Marco Winkelman · [@MarcoW71](https://github.com/MarcoW71)
