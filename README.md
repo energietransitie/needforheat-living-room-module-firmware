@@ -1,12 +1,9 @@
 # Twutility/Twomes CO₂ and Bluetooth occupancy monitoring firmware
-This repository contains the firmware and pointers to binary releases for the CO₂ monitor. 
+This repository contains the firmware source code and binary releases for the CO₂ and Bluetooth occupancy monitor.
 
-It was started under the Twomes project for use in residential buildings. Currently, it is being extended to use as an CO₂ monitor and Bluetooth occupancy detection system for utility buildings.
+This started under the Twomes project for use in residential buildings. It uses the [twomes-generic-esp-firmware](https://github.com/energietransitie/twomes-generic-esp-firmware) library to do Bluetooth presence detection and send measurements to a [Twomes server](https://github.com/energietransitie/twomes-backoffice-api). The current setup can be used in either residential or utility buildings.
 
-This repository contains the firmware and binary releases for two variants of CO₂ monitors for the Twomes project, which differ only in the way they their send their data via the [Twomes API](https://github.com/energietransitie/twomes-backoffice-api) to a [Twomes server](https://github.com/energietransitie/twomes-backoffice-server), either directly or indirectly:
-* a full-blown Twomes CO₂ measurement device that sends measurement data directly;
-* ~~a satellite Twomes CO₂ measurement device that sends its data indirectly, via a [Twomes P1-gateway](https://github.com/energietransitie/twomes-p1-port-logger-gateway);~~ (deprecated; see [Twomes Room Monitor Module firmware](https://github.com/energietransitie/twomes-room-monitor-firmware))
- 
+![CO₂ and bluetooth occupancy monitor hardware](/twutility_m5coreink_scd41.jpg)
 
 ## Table of contents
 * [General info](#general-info)
@@ -18,42 +15,36 @@ This repository contains the firmware and binary releases for two variants of CO
 * [Credits](#credits)
 
 ## General info
-The Twomes CO₂ Monitor sends the following properties via the [Twomes API](https://github.com/energietransitie/twomes-backoffice-api) to a Twomes server:
+The Twomes CO₂ and Bluetooth occupancy monitor sends the following properties via the [Twomes API](https://github.com/energietransitie/twomes-backoffice-api) to a Twomes server:
 
 | Sensor | Property           | Unit | [Printf format](https://en.wikipedia.org/wiki/Printf_format_string) | Measurement interval \[h:mm:ss\] | Description                            |
 |--------|--------------------|------|--------|-------------------|----------------------------------------|
-| SCD41  | `CO2concentration` | ppm  | %d     | 0:05:00           | CO₂ concentration                      |
-| SCD41  | `%RH`              | %RH  | %d     | 0:05:00           | relative humidity                      |
-| SCD41  | `roomTemp`         | °C   |        | 0:05:00           | air temperature                        |
+| SCD41  | `CO2concentration` | ppm  | %u     | 0:10:00           | CO₂ concentration                      |
+| SCD41  | `relativeHumidity` | %RH  | %.1f   | 0:10:00           | Relative humidity                      |
+| SCD41  | `roomTemp`         | °C   | %.1f   | 0:10:00           | Air temperature                        |
 
 This data can be analyzed to determine changes in the ventilation ratio of a room, which enables research into the accuracy of learning the thermal characteristics of residential buildings via a dynamic heat balance model.
 
 ## Deploying
 This section describes how you can deploy binary releases of the firmware, i.e. without changing the source code, without a development environment and without needing to compile the source code.
+
 ### Prerequisites
 In addition to the [prerequisites described in the generic firmware for Twomes measurement devices](https://github.com/energietransitie/twomes-generic-esp-firmware#prerequisites), you need:
 * an [M5Stack CoreInk](https://docs.m5stack.com/en/core/coreink).
-* an SCD41 sensor connected, either[^prerequisites]:
-  * a [Twomes CO₂ Monitor Shield](https://github.com/energietransitie/twomes-co2-monitor-hardware), or
-  * a [Wemos TFT and I2C Connector Shield for D1 Mini connector shield](https://www.tinytronics.nl/shop/en/platforms/wemos-lolin/shields/wemos-tft-and-i2c-connector-shield-for-d1-mini) connected to an [SEK-SCD41](https://www.sensirion.com/en/environmental-sensors/evaluation-kit-sek-environmental-sensing/evaluation-kit-sek-scd41/) evaluation kit, wired up according to to the connection diagram below (connecting battery and TFT e-Ink display is optional).
-
-![connect the SCD42 development board connector to the leftmost I²C socket](./SCD41_shield_connect.png)
-
-[^prerequisites]: This is subject to change.
-
-### Erasing all persistenly stored data
-See [Deploying section of the generic firmware for Twomes measurement devices](https://github.com/energietransitie/twomes-generic-esp-firmware#deploying).
+* an [SCD41 sensor](https://www.seeedstudio.com/Grove-CO2-Temperature-Humidity-Sensor-SCD41-p-5025.html) connected to the top of the M5Stack CoreInk (inside an [M5Stack Proto HAT](https://docs.m5stack.com/en/hat/hat-proto)):
+    | M5Stack CoreInk | SCD41 |
+    |-----------------|-------|
+    | GND             | GND   |
+    | 5V out          | VCC   |
+    | G25             | SDA   |
+    | G26             | SCL   |
 
 ### Device preparation
 See [Deploying section of the generic firmware for Twomes measurement devices](https://github.com/energietransitie/twomes-generic-esp-firmware#deploying).
 The firmware needed can be found as a [release from this repository](https://github.com/energietransitie/twomes-co_2-sensor/releases).
 
-### Erasing only Wi-Fi provisioning data
-See [Deploying section of the generic firmware for Twomes measurement devices](https://github.com/energietransitie/twomes-generic-esp-firmware#deploying).
-
-
 ## Developing
-This section describes how you can change the source code using a development environment and compile the source code into a binary release of the firmware that can be depoyed, either via the development environment, or via the method described in the section Deploying.
+This section describes how you can change the source code using a development environment and compile the source code into a binary release of the firmware that can be deployed, either via the development environment, or via the method described in the section [Deploying](#deploying).
 
 Please see the [developing section of the generic Twomes firmware](https://github.com/energietransitie/twomes-generic-esp-firmware#developing).
 
