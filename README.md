@@ -1,12 +1,9 @@
 # Twutility/Twomes CO₂ and Bluetooth occupancy monitoring firmware
-This repository contains the firmware and pointers to binary releases for the CO₂ monitor. 
+This repository contains the firmware source code and binary releases for the CO₂ and Bluetooth occupancy monitor.
 
-It was started under the Twomes project for use in residential buildings. Currently, it is being extended to use as an CO₂ monitor and Bluetooth occupancy detection system for utility buildings.
+This started under the Twomes project for use in residential buildings. It uses the [twomes-generic-esp-firmware](https://github.com/energietransitie/twomes-generic-esp-firmware) library to do Bluetooth presence detection and send measurements to a [Twomes server](https://github.com/energietransitie/twomes-backoffice-api). The current setup can be used in either residential or utility buildings.
 
-This repository contains the firmware and binary releases for two variants of CO₂ monitors for the Twomes project, which differ only in the way they their send their data via the [Twomes API](https://github.com/energietransitie/twomes-backoffice-api) to a [Twomes server](https://github.com/energietransitie/twomes-backoffice-server), either directly or indirectly:
-* a full-blown Twomes CO₂ measurement device that sends measurement data directly;
-* ~~a satellite Twomes CO₂ measurement device that sends its data indirectly, via a [Twomes P1-gateway](https://github.com/energietransitie/twomes-p1-port-logger-gateway);~~ (deprecated; see [Twomes Room Monitor Module firmware](https://github.com/energietransitie/twomes-room-monitor-firmware))
- 
+![CO₂ and bluetooth occupancy monitor hardware](/twutility_m5coreink_scd41.jpg)
 
 ## Table of contents
 * [General info](#general-info)
@@ -18,42 +15,38 @@ This repository contains the firmware and binary releases for two variants of CO
 * [Credits](#credits)
 
 ## General info
-The Twomes CO₂ Monitor sends the following properties via the [Twomes API](https://github.com/energietransitie/twomes-backoffice-api) to a Twomes server:
+The Twomes CO₂ and Bluetooth occupancy monitor, in addition to [generic data sent by any Twomes measurement device](https://github.com/energietransitie/twomes-generic-esp-firmware#readme), sends data about the following additional properties via the [Twomes API](https://github.com/energietransitie/twomes-backoffice-api) to a Twomes server:
 
-| Sensor | Property           | Unit | [Printf format](https://en.wikipedia.org/wiki/Printf_format_string) | Measurement interval \[h:mm:ss\] | Description                            |
+| Sensor | Property           | Unit | [Printf format](https://en.wikipedia.org/wiki/Printf_format_string) | Default measurement interval \[h:mm:ss\] | Description                            |
 |--------|--------------------|------|--------|-------------------|----------------------------------------|
-| SCD41  | `CO2concentration` | ppm  | %d     | 0:05:00           | CO₂ concentration                      |
-| SCD41  | `%RH`              | %RH  | %d     | 0:05:00           | relative humidity                      |
-| SCD41  | `roomTemp`         | °C   |        | 0:05:00           | air temperature                        |
+| [SCD41](https://sensirion.com/products/catalog/SCD41/)  | `CO2concentration` | ppm  | %u     | 0:10:00           | CO₂ concentration                      |
+| [SCD41](https://sensirion.com/products/catalog/SCD41/)  | `relativeHumidity` | %RH  | %.1f   | 0:10:00           | Relative humidity                      |
+| [SCD41](https://sensirion.com/products/catalog/SCD41/)  | `roomTemp`         | °C   | %.1f   | 0:10:00           | Air temperature                        |
+| Bluetooth  | `countPresence`         | [-]   | %u   | 0:10:00           | number of smartphones responding to Bluetooth name request                        |
 
 This data can be analyzed to determine changes in the ventilation ratio of a room, which enables research into the accuracy of learning the thermal characteristics of residential buildings via a dynamic heat balance model.
 
 ## Deploying
 This section describes how you can deploy binary releases of the firmware, i.e. without changing the source code, without a development environment and without needing to compile the source code.
+
 ### Prerequisites
 In addition to the [prerequisites described in the generic firmware for Twomes measurement devices](https://github.com/energietransitie/twomes-generic-esp-firmware#prerequisites), you need:
 * an [M5Stack CoreInk](https://docs.m5stack.com/en/core/coreink).
-* an SCD41 sensor connected, either[^prerequisites]:
-  * a [Twomes CO₂ Monitor Shield](https://github.com/energietransitie/twomes-co2-monitor-hardware), or
-  * a [Wemos TFT and I2C Connector Shield for D1 Mini connector shield](https://www.tinytronics.nl/shop/en/platforms/wemos-lolin/shields/wemos-tft-and-i2c-connector-shield-for-d1-mini) connected to an [SEK-SCD41](https://www.sensirion.com/en/environmental-sensors/evaluation-kit-sek-environmental-sensing/evaluation-kit-sek-scd41/) evaluation kit, wired up according to to the connection diagram below (connecting battery and TFT e-Ink display is optional).
-
-![connect the SCD42 development board connector to the leftmost I²C socket](./SCD41_shield_connect.png)
-
-[^prerequisites]: This is subject to change.
-
-### Erasing all persistenly stored data
-See [Deploying section of the generic firmware for Twomes measurement devices](https://github.com/energietransitie/twomes-generic-esp-firmware#deploying).
+* an [SCD41 sensor](https://sensirion.com/products/catalog/SCD41/) connected to the HAT connector of the M5Stack CoreInk. We used a [Seeed Grove SCD41 module](https://www.seeedstudio.com/Grove-CO2-Temperature-Humidity-Sensor-SCD41-p-5025.html) mounted inside a an [M5Stack Proto HAT](https://docs.m5stack.com/en/hat/hat-proto), connected as follows:
+    
+    | M5Stack CoreInk | SCD41 |
+    |-----------------|-------|
+    | GND             | GND   |
+    | 5V out          | VCC   |
+    | G25             | SDA   |
+    | G26             | SCL   |
 
 ### Device preparation
 See [Deploying section of the generic firmware for Twomes measurement devices](https://github.com/energietransitie/twomes-generic-esp-firmware#deploying).
 The firmware needed can be found as a [release from this repository](https://github.com/energietransitie/twomes-co_2-sensor/releases).
 
-### Erasing only Wi-Fi provisioning data
-See [Deploying section of the generic firmware for Twomes measurement devices](https://github.com/energietransitie/twomes-generic-esp-firmware#deploying).
-
-
 ## Developing
-This section describes how you can change the source code using a development environment and compile the source code into a binary release of the firmware that can be depoyed, either via the development environment, or via the method described in the section Deploying.
+This section describes how you can change the source code using a development environment and compile the source code into a binary release of the firmware that can be deployed, either via the development environment, or via the method described in the section [Deploying](#deploying).
 
 Please see the [developing section of the generic Twomes firmware](https://github.com/energietransitie/twomes-generic-esp-firmware#developing).
 
@@ -64,30 +57,30 @@ Ready:
 * Measure properties according to the measurement table above. 
 * Send the data collected to a Twomes server.
 * Use [Twomes generic ESP32 firmware library](https://github.com/energietransitie/twomes-generic-esp-firmware).
-* Report measurement values for temperature and relative humidity as proper float values.
 
 To-do:
-* Use parts of the [Twomes Room Monitor Module firmware](https://github.com/energietransitie/twomes-room-monitor-firmware).
+* Add support for the [M5Stack CO2 UNIT (SCD40)](https://docs.m5stack.com/en/unit/co2), or upcoming [M5Stack CO2L unit (SCD41)](https://twitter.com/M5Stack/status/1575074205900500993), connected via the CoreInk-HY2.0 4P Port.
 * Add support for reading temperature value from a Si7051 as property `roomTemp` and rename the SCD41 temperature measurement `roomTempCO2`.
-* Align indication of status and error via LEDs with other measurement devices.
-* Update installation manual and device photo.
 
 ## Status
 Project is: _in progress_
 
 ## License
-This software is available under the [Apache 2.0 license](./LICENSE), Copyright 2021 [Research group Energy Transition, Windesheim University of Applied Sciences](https://windesheim.nl/energietransitie) 
+This software is available under the [Apache 2.0 license](./LICENSE), Copyright 2022 [Research group Energy Transition, Windesheim University of Applied Sciences](https://windesheim.nl/energietransitie) 
 
 ## Credits
-This software is a collaborative effort of:
+This software was created by:
+* Nick van Ravenzwaaij · [@n-vr](https://github.com/n-vr)
+
+Thanks also go to:
+* Sjors Smit ·  [@Shorts1999](https://github.com/Shorts1999)
 * Maarten Vermeulen · [@m44rtn](https://github.com/m44rtn)
 * Tristan Jongedijk · [@tristanjongedijk](https://github.com/tristanjongedijk)
 * Laurens de Boer · [@Laurenz02](https://github.com/Laurenz02)
-* Nick van Ravenzwaaij · [@n-vr](https://github.com/n-vr)
 
 Product owners:
-* Marco Winkelman · [@MarcoW71](https://github.com/MarcoW71)
 * Henri ter Hofte · [@henriterhofte](https://github.com/henriterhofte) · Twitter [@HeNRGi](https://twitter.com/HeNRGi)
+* Marco Winkelman · [@MarcoW71](https://github.com/MarcoW71)
 
 We use and gratefully acknowlegde the efforts of the makers of the following source code and libraries:
 * [ESP-IDF](https://github.com/espressif/esp-idf), by Espressif Systems, licensed under [Apache License 2.0](https://github.com/espressif/esp-idf/blob/9d34a1cd42f6f63b3c699c3fe8ec7216dd56f36a/LICENSE)
