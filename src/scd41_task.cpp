@@ -25,21 +25,19 @@ void SCD41Task(void *taskInfo)
 	for (int i = 0; i < 3; i++)
 	{
 		err = co2_read(SCD41_ADDR, scd41Data);
+		if (err != ESP_OK)
+		{
+			ESP_LOGW(taskName, "CRC was incorrect or no sensor wat attached.");
+			return;
+		}
 	}
 
-	if (err == ESP_OK)
-	{
-		Measurements::Measurement co2Concentration("CO2concentration", scd41Data[0]);
-		secureUploadQueue.AddMeasurement(co2Concentration);
+	Measurements::Measurement co2Concentration("CO2concentration", scd41Data[0]);
+	secureUploadQueue.AddMeasurement(co2Concentration);
 
-		Measurements::Measurement roomTemp("roomTemp", scd41_temp_raw_to_celsius(scd41Data[1]));
-		secureUploadQueue.AddMeasurement(roomTemp);
+	Measurements::Measurement roomTemp("roomTemp", scd41_temp_raw_to_celsius(scd41Data[1]));
+	secureUploadQueue.AddMeasurement(roomTemp);
 
-		Measurements::Measurement relativeHumidity("relativeHumidity", scd41_rh_raw_to_percent(scd41Data[2]));
-		secureUploadQueue.AddMeasurement(relativeHumidity);
-	}
-	else
-	{
-		ESP_LOGW(taskName, "CRC was incorrect or no sensor wat attached.");
-	}
+	Measurements::Measurement relativeHumidity("relativeHumidity", scd41_rh_raw_to_percent(scd41Data[2]));
+	secureUploadQueue.AddMeasurement(relativeHumidity);
 }
