@@ -53,6 +53,7 @@ jobs:
       - name: Build PlatformIO project
         env:
           PLATFORMIO_ENV: ${{ matrix.platformio_env }}
+          PLATFORMIO_BUILD_FLAGS: -DCONFIG_TWOMES_TEST_SERVER
         run: pio run -e $PLATFORMIO_ENV
 
       # Perform the code analysis.
