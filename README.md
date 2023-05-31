@@ -1,5 +1,5 @@
-# Twomes SCD41 and presence firmware
-This repository contains source code and binary releases for firmware for a device that measures CO₂ concentration, temperature and relative humidity via an SCD41 sensor and occupancy (i.e. the number of smartphones of participating subjects) via Bluetooth name requests.
+# Twomes CO₂ and bluetooth occupancy firmware for the M5CoreInk and SCD41
+This repository contains source code and binary releases for firmware for an M5Stack CoreInk device that measures CO₂ concentration, temperature and relative humidity via a connected Sensirion SCD41 sensor and occupancy (i.e. the number of smartphones of participating subjects) via Bluetooth name requests.
 
 
 
