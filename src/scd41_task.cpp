@@ -13,9 +13,9 @@ void SCD41Task(void *taskInfo)
 	auto taskName = Scheduler::GetName(taskInfo).c_str();
 
 	// Add formatters for all the measurements.
-	Measurements::Measurement::AddFormatter("CO2concentration", "%u");
-	Measurements::Measurement::AddFormatter("roomTemp", "%.1f");
-	Measurements::Measurement::AddFormatter("relativeHumidity", "%.1f");
+	Measurements::Measurement::AddFormatter("co2__ppm", "%u");
+	Measurements::Measurement::AddFormatter("temp_in__degC", "%.1f");
+	Measurements::Measurement::AddFormatter("rel_humidity__0", "%.1f");
 
 	co2_init(SCD41_ADDR);
 
@@ -32,12 +32,12 @@ void SCD41Task(void *taskInfo)
 		}
 	}
 
-	Measurements::Measurement co2Concentration("CO2concentration", scd41Data[0]);
+	Measurements::Measurement co2Concentration("co2__ppm", scd41Data[0]);
 	secureUploadQueue.AddMeasurement(co2Concentration);
 
-	Measurements::Measurement roomTemp("roomTemp", scd41_temp_raw_to_celsius(scd41Data[1]));
+	Measurements::Measurement roomTemp("temp_in__degC", scd41_temp_raw_to_celsius(scd41Data[1]));
 	secureUploadQueue.AddMeasurement(roomTemp);
 
-	Measurements::Measurement relativeHumidity("relativeHumidity", scd41_rh_raw_to_percent(scd41Data[2]));
+	Measurements::Measurement relativeHumidity("rel_humidity__0", scd41_rh_raw_to_percent(scd41Data[2]));
 	secureUploadQueue.AddMeasurement(relativeHumidity);
 }
