@@ -7,7 +7,7 @@
 #include <util/buttons.hpp>
 #include <util/buzzer.hpp>
 
-constexpr const char *DEVICE_TYPE_NAME = "CO2-meter-SCD4x";
+constexpr const char *DEVICE_TYPE_NAME = "twomes-co2-occupancy-scd41-m5coreink-firmware";
 
 void CalibrateCO2()
 {
