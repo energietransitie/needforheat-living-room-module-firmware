@@ -5,14 +5,22 @@
 #define LOG_LOCAL_LEVEL ESP_LOG_NONE
 #include <esp_log.h>
 
+#if defined CONFIG_TWOMES_SCD41_PROTO_HAT
+#define SCD41_GPIO_SDA GPIO_NUM_25
+#define SCD41_GPIO_SCL GPIO_NUM_26
+#elif defined CONFIG_TWOMES_SCD41_CO2L
+#define SCD41_GPIO_SDA GPIO_NUM_32
+#define SCD41_GPIO_SCL GPIO_NUM_33
+#endif
+
 void i2c_hal_init_port_1() {
     // config
     i2c_config_t config =
     {
         .mode = I2C_MODE_MASTER,
-        .sda_io_num = GPIO_NUM_25,
+        .sda_io_num = SCD41_GPIO_SDA,
         .sda_pullup_en = GPIO_PULLUP_ENABLE,
-        .scl_io_num = GPIO_NUM_26,
+        .scl_io_num = SCD41_GPIO_SCL,
         .scl_pullup_en = GPIO_PULLUP_ENABLE,
         .master.clk_speed = 40000L
     };
