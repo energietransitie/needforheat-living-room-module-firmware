@@ -144,7 +144,12 @@ esp_err_t co2_force_recalibration(uint8_t address, int16_t* offset)
 	for (int i = 0; i < 36; i++)
 	{
 		uint16_t values[3];
-		co2_read(address, values);
+		esp_err_t err = co2_read(address, values);
+		if (err != ESP_OK)
+		{
+			ESP_LOGW("CO2", "CRC was incorrect or no sensor wat attached.");
+			return ESP_ERR_INVALID_RESPONSE;
+		}
 	}
 
 	// Generate command buffer:
