@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="{{.Language}}">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        * {
+            margin: 0;
+            line-height: calc(1em + 0.5rem);
+        }
+
+        body {
+            -webkit-font-smoothing: antialiased;
+            font-family: Roboto, sans-serif;
+        }
+
+        img,
+        picture,
+        video,
+        canvas,
+        svg {
+            display: block;
+            max-width: min(100%, 800px);
+        }
+
+        input,
+        button,
+        textarea,
+        select {
+            font: inherit;
+        }
+
+        p,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            overflow-wrap: break-word;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 1rem 0 .3rem 0;
+            color: #58595b;
+        }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 1rem 0 .3rem 0;
+        }
+
+        h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin: .5rem 0 .3rem 0;
+        }
+
+        h4 {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        h5 {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        h6 {
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        p {
+            font-size: 16px;
+            margin: .3rem 0 1rem 0;
+        }
+
+        .container {
+            padding: 0 1rem;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="container">
+        {{.Body}}
+    </div>
+</body>
+
+</html>
