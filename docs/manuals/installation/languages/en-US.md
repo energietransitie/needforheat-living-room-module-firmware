@@ -15,7 +15,8 @@ In the box you received, the CO2L sensor is not yet attached to the main module.
 
 ## 2. Place at a suitable spot in the living room module
 
-Find a suitable spot in the main living room:
+Find a suitable spot in the living room:
+
 - out of the sun;
 - out of draft;
 - near the thermostat;
