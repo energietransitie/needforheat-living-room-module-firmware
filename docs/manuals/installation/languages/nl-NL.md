@@ -16,6 +16,7 @@ In de doos die u heeft ontvangen zit de CO2L sensor nog niet vastgeklikt op de h
 ## 2. Zoek een geschikte plek voor de woonkamermodule.
 
 Zoek een plek in de woonkamer:
+
 - uit de zon;
 - uit de tocht;
 - in de buurt van de thermostaat;
