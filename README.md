@@ -30,7 +30,7 @@ This measurement device is a combination of two devices that were developed in t
 | Sensor | Property           | Unit | [Printf format](https://en.wikipedia.org/wiki/Printf_format_string) | Default measurement interval \[h:mm:ss\] | Description                            |
 |--------|--------------------|------|--------|-------------------|----------------------------------------|
 | [SCD41](https://sensirion.com/products/catalog/SCD41/)  | `co2__ppm` | ppm  | %u     | 0:10:00           | CO₂ concentration                      |
-| [SCD41](https://sensirion.com/products/catalog/SCD41/)  | `rel_humidity__0` | %RH  | %.1f   | 0:10:00           | Relative humidity                      |
+| [SCD41](https://sensirion.com/products/catalog/SCD41/)  | `rel_humidity__0` | RH  | %.3f   | 0:10:00           | Relative humidity (1.00 = 100%)                      |
 | [SCD41](https://sensirion.com/products/catalog/SCD41/)  | `temp_in__degC`         | °C   | %.1f   | 0:10:00           | Air temperature                        |
 | Bluetooth  | `occupancy__p`         | [-]   | %u   | 0:10:00           | number of smartphones responding to Bluetooth name request                        |
 

@@ -94,7 +94,7 @@ float scd41_temp_raw_to_celsius(uint16_t);
  *
  * @return Humidity in percent
  */
-float scd41_rh_raw_to_percent(uint16_t raw);
+float scd41_rh_raw_to_fraction(uint16_t raw);
 
 #ifdef __cplusplus
 }

@@ -38,6 +38,6 @@ void SCD41Task(void *taskInfo)
 	Measurements::Measurement roomTemp("temp_in__degC", scd41_temp_raw_to_celsius(scd41Data[1]));
 	secureUploadQueue.AddMeasurement(roomTemp);
 
-	Measurements::Measurement relativeHumidity("rel_humidity__0", scd41_rh_raw_to_percent(scd41Data[2]));
+	Measurements::Measurement relativeHumidity("rel_humidity__0", scd41_rh_raw_to_fraction(scd41Data[2]));
 	secureUploadQueue.AddMeasurement(relativeHumidity);
 }
