@@ -15,7 +15,7 @@ void SCD41Task(void *taskInfo)
 	// Add formatters for all the measurements.
 	Measurements::Measurement::AddFormatter("co2__ppm", "%u");
 	Measurements::Measurement::AddFormatter("temp_in__degC", "%.1f");
-	Measurements::Measurement::AddFormatter("rel_humidity__0", "%.1f");
+	Measurements::Measurement::AddFormatter("rel_humidity__0", "%.3f");
 
 	co2_init(SCD41_ADDR);
 
