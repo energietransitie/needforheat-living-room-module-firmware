@@ -236,7 +236,7 @@ float scd41_temp_raw_to_celsius(uint16_t raw)
 {
 	return ((float)-45 + (float)175 * (float)raw / 65536);
 }
-float scd41_rh_raw_to_percent(uint16_t raw)
+float scd41_rh_raw_to_fraction(uint16_t raw)
 {
-	return ((float)100 * (float)raw / 65536);
+	return ((float)raw / 65536);
 }
