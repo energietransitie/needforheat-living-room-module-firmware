@@ -65,11 +65,15 @@ jobs:
       - name: Import SECURE_BOOTLOADER_SIGNING_KEY
         env:
           SECURE_BOOTLOADER_SIGNING_KEY: ${{ secrets.SECURE_BOOTLOADER_SIGNING_KEY }}
+        if: ${{ env.SECURE_BOOTLOADER_SIGNING_KEY != '' }}
         run: echo "$SECURE_BOOTLOADER_SIGNING_KEY" > ./secure_boot_signing_key.pem
         
       # Sign the firmware
       - name: Sign firmware
         uses: espressif/esp-idf-ci-action@main
+        env:
+          SECURE_BOOTLOADER_SIGNING_KEY: ${{ secrets.SECURE_BOOTLOADER_SIGNING_KEY }}
+        if: ${{ env.SECURE_BOOTLOADER_SIGNING_KEY != '' }}
         with:
           command: espsecure.py sign_data -v1 --keyfile secure_boot_signing_key.pem --output $BUILD_DIR/firmware-signed_${{ matrix.platformio_env }}_${{ matrix.twomes_server_env }}.bin $BUILD_DIR/firmware.bin
       
