@@ -9,9 +9,10 @@ Elke 10 minuten meet de woonkamermodule:
 - de binnentemperatuur;
 - de CO₂-concentratie;
 - de luchtvochtigheid;
-- het aantal bewoners[^1] dat aanwezig is.
+- het aantal bewoners* dat aanwezig is.
 
-[^1]: Het apparaatje telt alleen smartphones mee als ze zijn aangemeld zijn op dit apparaat om meegeteld te worden door dit apparaat; zie ook vraag 4.
+* Het apparaatje telt alleen smartphones mee als ze zijn aangemeld zijn op dit apparaat om meegeteld te worden door dit apparaat; zie ook vraag [4. Hoe kan ik smartphones laten meetellen?](#4-hoe-kan-ik-smartphones-laten-meetellen)
+.
 
 ## 2. Hoe kan ik het apparaatje installeren?
 
@@ -29,7 +30,7 @@ De wifi-reset werkt als volgt:
 4. De Info? Scan! QR-code wordt vervangen door een QR-code zonder onderschrift.
 5. Scan deze QR-code met de NeedForHeat app en volg de aanwijzingen.
 
-## 4. Hoe kan ik mijn smartphone en die van mijn huisgenoten aanmelden voor het meetellen?
+## 4. Hoe kan ik smartphones laten meetellen?
 
 Voor het onderzoek is het nodig dat dit apparaatje de aanwezigheid van jou en je huisgenoten kan tellen. Dat doet dit apparaatje door af en toe het aantal aanwezige smartphones te tellen. Je moet hiervoor aan het begin van de meetperiode de smartphone van jezelf en die van elke huisgenoot éénmalig aanmelden op het apparaatje. Zo worden alleen huigenoten meegeteld (en niet buren). Om een smartphone aan te melden, ga je als volgt te werk:
 
@@ -65,8 +66,11 @@ Ja. Verder hoef je niets te doen; detectie en meetellen van aanwezigheid gaat ge
 
 Dit apparaatje gebruikt [Bluetooth name requests om aanwezigheid van smartphones te detecteren](https://github.com/energietransitie/twomes-generic-esp-firmware/blob/main/src/presence_detection/README.md#general-info).
 
+## 8. Wat moet ik doen als het e-ink-scherm heldere of donkere vlekken heeft??
 
-## 8. Waar kan ik meer technisch info vinden over dit apparaatje?
+Gebruik het zwarte wielthe met de knop aan de zijkant (dit brengt je naar het `SMARTPHONES:` scherm) en verlaat vervolgens opnieuw dit menu. Hiermee wordt het scherm weer hersteld in zijn oorspronkelijke glorie.
+
+## 9. Waar kan ik meer technisch info vinden over dit apparaatje?
 
 De broncode van dit meetapparaatje is openbaar beschibaar via GitHub via  [twomes-co2-occupancy-scd41-m5coreink-firmware](https://github.com/energietransitie/twomes-co2-occupancy-scd41-m5coreink-firmware).
 
