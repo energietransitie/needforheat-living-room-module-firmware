@@ -69,6 +69,6 @@ This device uses [Bluetooth name requests to detect the presence of smartphones]
 
 The source code of this measurement device is publicly available on GitHub under [twomes-co2-occupancy-scd41-m5coreink-firmware](https://github.com/energietransitie/twomes-co2-occupancy-scd41-m5coreink-firmware).
 
-## What is I have other quesions or remarks?
+## What if I have other quesions or remarks?
 Please send an email to the NeedForHeat research helpdesk via [needforheatonderzoek@windesheim.nl](needforheatonderzoek@windesheim.nl).
 
