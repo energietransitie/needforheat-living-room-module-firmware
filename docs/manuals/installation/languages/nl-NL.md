@@ -17,13 +17,15 @@ In de doos die u heeft ontvangen zit de CO2L sensor nog niet vastgeklikt op de h
 
 Zoek een plek in de woonkamer:
 
-- uit de zon;
+- uit de zon en fel verlichte omgevingen*;
 - uit de tocht;
 - in de buurt van de thermostaat;
 - binnen bereik van uw wifinetwerk thuis;
 - binnen bereik van een vrij stopcontact.
 
 Plaats de woonkamermodule daar.
+
+* Dit in verband met goed temperatuurmetingen, maar ook om vegen en strepen op het e-ink te voorkomen: het e-ink scherm van de woonkamermodule is gevoelig voor zonlicht en fel daglicht: dit kan lichte of donkere plekken veroorzaken. Mocht u toch last krijgen van deze vlekken p het scherm, kijk dan in de [FAQ](../../faq/) hoe u deze kunt verhelpen.
 
 ## 3. Steek de stekker in het stopcontact.
 

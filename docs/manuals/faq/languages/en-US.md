@@ -9,9 +9,9 @@ Every 10 minutes, the living room module measures:
 - indoor temperature;
 - CO₂ concentration;
 - humidity;
-- the number of occupants[^1] present.
+- the number of occupants* present.
 
-[^1]: The device only counts the number of smartphone housemates that were registered via this device to be counted by this device; see also question 4.
+*: The device only counts the number of smartphone housemates that were registered via this device to be counted by this device; see also question [4. How can I register smartphones for occupancy detection?](#4-how-can-i-register-smartphones-for-occupancy-detection)
 
 ## 2. How can I install the device?
 
@@ -29,7 +29,7 @@ The Wi-Fi reset works as follows:
 4. The Info? Scan! QR code will be replaced by a QR code without a caption.
 5. Scan this QR code with the NeedForHeat app and follow the instructions.
 
-## 4. How can I register my smartphone and those of my housemates for occupancy detection?
+## 4. How can I register smartphones for occupancy detection?
 
 For the research, device count the presence of occupants (i.e., you and your  housemates). The device does this by occasionally counting the number of smartphones present that belong to occupants. To do this, you need to register the smartphone of each occupant on the device at the beginning of the measurement period. This way, only occupants are counted (not neighbors). To register a smartphone for this purpose, follow these steps:
 
@@ -65,10 +65,14 @@ Yes. You don't need to do anything else; detection and counting of presence are 
 
 This device uses [Bluetooth name requests to detect the presence of smartphones](https://github.com/energietransitie/twomes-generic-esp-firmware/blob/main/src/presence_detection/README.md#general-info).
 
-## 8. Where can I find more technical information about this device?
+## 8. What should I do if the e-ink screen has bright or dark spots??
+
+Use the black wheel with the button on the side (this will take you to the `SMARTPHONES:` screen) and then exit this menu again. This will restore the screen to its original glory.
+
+## 9. Where can I find more technical information about this device?
 
 The source code of this measurement device is publicly available on GitHub under [twomes-co2-occupancy-scd41-m5coreink-firmware](https://github.com/energietransitie/twomes-co2-occupancy-scd41-m5coreink-firmware).
 
-## What is I have other quesions or remarks?
+## What if I have other quesions or remarks?
 Please send an email to the NeedForHeat research helpdesk via [needforheatonderzoek@windesheim.nl](needforheatonderzoek@windesheim.nl).
 

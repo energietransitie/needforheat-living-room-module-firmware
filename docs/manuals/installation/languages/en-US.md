@@ -17,13 +17,15 @@ In the box you received, the CO2L sensor is not yet attached to the main module.
 
 Find a suitable spot in the living room:
 
-- out of the sun;
-- out of draft;
+- out of the sun and brightly lit environments*;
+- away of draft;
 - near the thermostat;
 - in reach of your home Wi-Fi network;
 - within reach of a free electrical outlet.
 
 Place the living room module there.
+
+* This is related to accurate temperature measurements, but also to prevent smudges and streaks on the e-ink display. The e-ink screen of the living room module is sensitive to sunlight and bright daylight, which can cause light or dark spots. If you experience these spots on the screen, please refer to the [FAQ](../../faq/) to learn how to resolve them.
 ## 3. Plug in the power cord.
 
 Make sure the USB cord is connected to the power adapter and to the device. Plug the power cord into the power outlet.
