@@ -25,13 +25,13 @@ The Wi-Fi reset works as follows:
 
 1. Hold down the button on top of the module (you will feel a distinct click).
 2. After 10 seconds, you will see a green light near the button blink 5 times (in bright ambient light, you may not see it).
-3. Release the button afterward.
-4. The Info? Scan! QR code will be replaced by a QR code without a caption.
+3. Release the button.
+4. The `Info? Scan!` QR code will be replaced by a QR code without a caption.
 5. Scan this QR code with the NeedForHeat app and follow the instructions.
 
 ## 4. How can I register smartphones for occupancy detection?
 
-For the research, device count the presence of occupants (i.e., you and your  housemates). The device does this by occasionally counting the number of smartphones present that belong to occupants. To do this, you need to register the smartphone of each occupant on the device at the beginning of the measurement period. This way, only occupants are counted (not neighbors). To register a smartphone for this purpose, follow these steps:
+For the research, the measurement device needs to be able to count the presence of occupants (i.e., you and your housemates). The device does this by occasionally counting the number of smartphones present that belong to occupants. To do this, you need to register the smartphone of each occupant on the device at the beginning of the measurement period. This way, only occupants are counted and not neighbors, for example. To register a smartphone for this purpose, follow these steps:
 
 1. Use the black wheel with the button on the side (this will take you to the `SMARTPHONES:` screen).
 2. Make sure that the menu item `+ toevoegen` is highlighed and press the black wheel briefly inward to select this menu item.
@@ -55,7 +55,7 @@ If you have not used the black wheel on the side for 2 minutes, the measurement 
 
 ## 5. Does the smartphone remain connected to the device?
 
-No, once a smartphone is paired with `NeedForHeat_OK` for the first time, the connection is immediately terminated. Once paired, devices are automatically counted, even without an active connection.
+No, once a smartphone is paired with `NeedForHeat_OK` for the first time, the connection is immediately terminated. Afterwards devices are automatically counted, even without an active connection.
 
 ## 6. Does Bluetooth need to remain on throughout the entire measurement period on the registered smartphones?
 
