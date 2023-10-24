@@ -1,4 +1,4 @@
-# Living Room Module - FAQ
+# Living room module - FAQ
 
 Frequently asked information about the living room module.
 
@@ -25,37 +25,37 @@ The Wi-Fi reset works as follows:
 
 1. Hold down the button on top of the module (you will feel a distinct click).
 2. After 10 seconds, you will see a green light near the button blink 5 times (in bright ambient light, you may not see it).
-3. Release the button afterward.
-4. The Info? Scan! QR code will be replaced by a QR code without a caption.
+3. Release the button.
+4. The 'Info? Scan!' QR code will be replaced by a QR code without a caption.
 5. Scan this QR code with the NeedForHeat app and follow the instructions.
 
 ## 4. How can I register smartphones for occupancy detection?
 
-For the research, device count the presence of occupants (i.e., you and your  housemates). The device does this by occasionally counting the number of smartphones present that belong to occupants. To do this, you need to register the smartphone of each occupant on the device at the beginning of the measurement period. This way, only occupants are counted (not neighbors). To register a smartphone for this purpose, follow these steps:
+For the research, the measurement device needs to be able to count the presence of occupants (i.e., you and your housemates). The device does this by occasionally counting the number of smartphones present that belong to occupants. To do this, you need to register the smartphone of each occupant on the device at the beginning of the measurement period. This way, only occupants are counted and not neighbors, for example. To register a smartphone for this purpose, follow these steps:
 
-1. Use the black wheel with the button on the side (this will take you to the `SMARTPHONES:` screen).
-2. Make sure that the menu item `+ toevoegen` is highlighed and press the black wheel briefly inward to select this menu item.
-3. You will now see the `TOEVOEGEN?` screen with instructions on what to do on the smartphone.
+1. Use the black wheel with the button on the side (this will take you to the 'SMARTPHONES:' screen).
+2. Make sure that the menu item '+ toevoegen' is highlighed and press the black wheel briefly inward to select this menu item.
+3. You will now see the 'TOEVOEGEN?' screen with instructions on what to do on the smartphone.
 4. Proceed on the smartphone (either an iPhone or Android smartphone).
     1. Ensure that the smartphone is turned on and unlocked.
-    2. Go to `Settings` > `Bluetooth`.
+    2. Go to 'Settings' > 'Bluetooth'.
     3. Ensure that Bluetooth is enabled by toggling the switch.
-    4. Your smartphone will now automatically search for available devices. Wait until `NeedForHeat_OK` appears in the list.
-    5. Tap on `NeedForHeat_OK` to initiate the pairing.
+    4. Your smartphone will now automatically search for available devices. Wait until 'NeedForHeat_OK' appears in the list.
+    5. Tap on 'NeedForHeat_OK' to initiate the pairing.
 
 5. A successful pairing will confirm the device with a clear beep, and the name of the added smartphone will be displayed on the screen of the measurement device.
 
 If it doesn't work the first time, please try again.
 
-You can always exit a menu on the screen by scrolling to `terug` using the black wheel on the side and selecting it by pressing the black wheel.
+You can always exit a menu on the screen by scrolling to 'terug' using the black wheel on the side and selecting it by pressing the black wheel.
 
 If you have added the wrong smartphone or no longer want it to be counted, you can remove it by scrolling to the name of the smartphone, selecting it (pressing the black wheel), and confirming the removal.
 
-If you have not used the black wheel on the side for 2 minutes, the measurement device will automatically return to the normal state with the QR code labeled `Info? Scan!`
+If you have not used the black wheel on the side for 2 minutes, the measurement device will automatically return to the normal state with the QR code labeled 'Info? Scan!'
 
 ## 5. Does the smartphone remain connected to the device?
 
-No, once a smartphone is paired with `NeedForHeat_OK` for the first time, the connection is immediately terminated. Once paired, devices are automatically counted, even without an active connection.
+No, once a smartphone is paired with 'NeedForHeat_OK' for the first time, the connection is immediately terminated. Afterwards devices are automatically counted, even without an active connection.
 
 ## 6. Does Bluetooth need to remain on throughout the entire measurement period on the registered smartphones?
 
@@ -67,7 +67,7 @@ This device uses [Bluetooth name requests to detect the presence of smartphones]
 
 ## 8. What should I do if the e-ink screen has bright or dark spots??
 
-Use the black wheel with the button on the side (this will take you to the `SMARTPHONES:` screen) and then exit this menu again. This will restore the screen to its original glory.
+Use the black wheel with the button on the side (this will take you to the 'SMARTPHONES:' screen) and then exit this menu again. This will restore the screen to its original glory.
 
 ## 9. Where can I find more technical information about this device?
 
