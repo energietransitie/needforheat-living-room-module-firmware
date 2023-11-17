@@ -32,6 +32,10 @@ Plaats de woonkamermodule daar.
 
 Stop de stekker in het stopcontact.
 
+Hieronder volgt een voorbeeld van een aangesloten woonkamermodule:
+
+![aangesloten woonkamermodule](../assets/device-installed.jpg)
+
 ## 4. Verbind het apparaat met wifi.
 
 Ga verder in de NeedForHeat-app om het apparaat met uw wifinetwerk thuis te verbinden.
