@@ -26,9 +26,14 @@ Find a suitable spot in the living room:
 Place the living room module there.
 
 \* This is related to accurate temperature measurements, but also to prevent smudges and streaks on the e-ink display. The e-ink screen of the living room module is sensitive to sunlight and bright daylight, which can cause light or dark spots. If you experience these spots on the screen, please refer to the [FAQ](../../faq/) to learn how to resolve them.
+
 ## 3. Plug in the power cord.
 
 Plug the power cord into the power outlet.
+
+This is what a connected living room module may look like:
+
+![living room module connected](../assets/device-installed.jpg)
 
 ## 4. Connect the device with your home Wi-Fi.
 
