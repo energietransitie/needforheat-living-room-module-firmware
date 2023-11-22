@@ -15,7 +15,7 @@ Elke 10 minuten meet de woonkamermodule:
 
 ## 2. Hoe kan ik het apparaatje installeren?
 
-Zie hiervoor de [installatiehandleiding](../../installation/).
+Zie hiervoor de [installatiehandleiding](../../../installation/).
 
 ## 3. Hoe kan ik het apparaatje opnieuw koppelen aan wifi?
 

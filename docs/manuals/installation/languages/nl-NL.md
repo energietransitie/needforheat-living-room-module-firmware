@@ -26,7 +26,7 @@ Zoek een plek in de woonkamer:
 
 Plaats de woonkamermodule daar.
 
-\* Dit in verband met goede temperatuurmetingen, maar ook om vegen en strepen op het e-ink te voorkomen: het e-ink scherm van de woonkamermodule is gevoelig voor zonlicht en fel daglicht: dit kan lichte of donkere plekken veroorzaken. Mocht u toch last krijgen van deze vlekken op het scherm, kijk dan in de [FAQ](../../faq/) hoe u deze kunt verhelpen.
+\* Dit in verband met goede temperatuurmetingen, maar ook om vegen en strepen op het e-ink te voorkomen: het e-ink scherm van de woonkamermodule is gevoelig voor zonlicht en fel daglicht: dit kan lichte of donkere plekken veroorzaken. Mocht u toch last krijgen van deze vlekken op het scherm, kijk dan in de [FAQ](../../../faq/) hoe u deze kunt verhelpen.
 
 ## 3. Steek de stekker in het stopcontact.
 
